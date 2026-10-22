@@ -648,6 +648,12 @@
       renderDashboard();
     }
 
+    document.querySelectorAll('[data-tab]').forEach(button => {
+      button.addEventListener('click', (event) => {
+        showTab(event.currentTarget.dataset.tab);
+      });
+    });
+
     document.getElementById('loginForm').addEventListener('submit', submitLogin);
     document.getElementById('weekForm').addEventListener('submit', saveWeek);
     document.getElementById('clearWeekForm').addEventListener('click', clearWeekForm);
