@@ -12,14 +12,12 @@
       color-scheme: light;
       font-family: "Figtree", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
-
     * { box-sizing:border-box; }
     html { scroll-behavior:smooth; }
     body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Figtree", sans-serif; }
     button, input, select, textarea { font:inherit; }
     .hidden { display:none !important; }
     .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
-
     header {
       position:sticky; top:0; z-index:30; background:rgba(255,255,255,0.92);
       backdrop-filter: blur(8px); border-bottom:1px solid var(--line);
@@ -38,11 +36,9 @@
       padding:8px 14px; cursor:pointer; transition:.2s ease;
     }
     nav button.active { background:var(--g); color:white; box-shadow:0 1px 3px rgba(0,0,0,.18); }
-
     main { max-width:1180px; margin:0 auto; padding:18px 22px 60px; }
     .section { display:none; }
     .section.active { display:block; }
-
     .grid { display:grid; gap:14px; }
     .row { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
     .card {
@@ -55,14 +51,12 @@
     .kpi strong { display:block; font-size:30px; margin-top:6px; }
     .kpi span { display:block; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--mut); }
     .kpi small { display:block; margin-top:4px; color:var(--mut); }
-
     .toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
     h2 { font-size:16px; margin:0 0 10px; }
     .tag { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; background:var(--line); border-radius:999px; font-size:12px; font-weight:600; }
     .tag.success { background:rgba(31,138,94,.12); color:var(--success); }
     .tag.warning { background:rgba(201,138,27,.12); color:var(--warning); }
     .tag.danger { background:rgba(209,74,93,.12); color:var(--danger); }
-
     table { width:100%; border-collapse:collapse; font-size:13px; }
     th, td { padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
     th { color:var(--mut); font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; background:var(--bg); }
@@ -75,15 +69,12 @@
     .btn.warn { background:var(--a); border-color:var(--a); }
     .btn.danger { background:var(--r); border-color:var(--r); }
     .btn.ghost { background:transparent; color:var(--ink); border-color:var(--line); }
-
     .f { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px; }
     label { display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--mut); font-weight:600; }
     input, select, textarea {
       width:100%; min-height:38px; background:var(--card); border:1px solid var(--line); border-radius:9px; padding:8px 10px; color:var(--ink);
     }
     textarea { min-height:100px; resize:vertical; }
-    .form-actions { margin-top:12px; }
-
     .info-box {
       border-left:4px solid var(--a); background:rgba(217,154,28,.08); border-radius:12px; padding:12px 14px; color:var(--ink);
       margin-bottom:14px;
@@ -96,7 +87,6 @@
     .sync-badge.success { background:rgba(31,138,94,.12); color:var(--success); }
     .sync-badge.error { background:rgba(209,74,93,.12); color:var(--danger); }
     .sync-badge.pending { background:rgba(217,154,28,.12); color:var(--warning); }
-
     .lock-screen {
       position:fixed; inset:0; background:linear-gradient(135deg,#edf5f2,#f7faf9); display:grid; place-items:center; z-index:999;
       padding:24px;
@@ -114,7 +104,6 @@
     }
     .lock-box button { width:100%; margin-top:4px; }
     .error-message { min-height:18px; color:var(--danger); font-size:12px; font-weight:600; }
-
     @media (max-width: 640px) {
       main { padding:14px 14px 32px; }
       .card { padding:14px; }
@@ -154,6 +143,20 @@
 
   <main>
     <section id="dashboard" class="section active">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="toolbar">
+          <h2>Período do painel</h2>
+          <label class="note" style="display:flex; align-items:center; gap:8px; margin:0;">
+            <span>Exibir</span>
+            <select id="periodFilter" style="min-width:180px;">
+              <option value="all">Todas as semanas</option>
+              <option value="last4">Últimas 4 semanas</option>
+              <option value="last">Última semana</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
       <div class="grid kpis">
         <div class="card kpi">
           <span>Consultas hoje</span>
@@ -192,7 +195,6 @@
           <h2>Lançar semana</h2>
           <button id="addWeekBtn" type="button" class="btn secondary">+ Nova semana</button>
         </div>
-
         <form id="weekForm">
           <div class="f">
             <label>Semana
@@ -251,7 +253,6 @@
           <h2>Consultas</h2>
           <span class="tag">Acompanhamento e reagendamento</span>
         </div>
-
         <div class="wrap">
           <table>
             <thead>
@@ -273,7 +274,7 @@
     <section id="config" class="section">
       <div class="card status-box">
         <div class="status-row">
-          <h2>Sincronização com SheetD</h2>
+          <h2>Sincronização com SheetDB</h2>
           <span id="syncBadge" class="sync-badge pending">Pendente</span>
         </div>
         <div class="status-row">
@@ -285,10 +286,13 @@
           <span id="syncStatusLabel">Aguardando envio</span>
         </div>
         <div class="status-row">
+          <strong>Próxima sincronização automática:</strong>
+          <span id="nextSyncLabel">Segunda a sexta, às 19:00</span>
+        </div>
+        <div class="status-row">
           <button id="manualSyncBtn" type="button" class="btn">Nova tentativa</button>
         </div>
       </div>
-
       <div class="card" style="margin-top:14px;">
         <h2>Verificação de erros</h2>
         <div id="configErrors" class="info-box">Nenhum erro detectado.</div>
@@ -297,39 +301,46 @@
   </main>
 
   <script>
-    const STORAGE_KEY = 'kommo-dashboard-v1';
+    const STORAGE_KEY = 'kommo_dashboard_v1';
     const DEFAULT_PASSWORD = 'Lucas830';
+    const SHEETDB_URL = 'https://sheetdb.io/api/v1/4se00czhiq0s8';
 
-    const defaultData = {
+    const defaultState = {
+      period: 'all',
       weeks: [
-        { id: 1, semana: '01/2026', paciente: 'Marina Silva', data: '2026-01-06', status: 'Em andamento', obs: 'Primeira revisão.' },
-        { id: 2, semana: '02/2026', paciente: 'João Pereira', data: '2026-01-13', status: 'Concluído', obs: 'Acompanhamento ok.' }
+        { id: 1, semana: '24/2026', paciente: 'Maria Oliveira', data: '2026-09-24', status: 'Em andamento', obs: 'Acompanhamento inicial.' },
+        { id: 2, semana: '25/2026', paciente: 'Carlos Santos', data: '2026-09-30', status: 'Concluído', obs: 'Consulta realizada.' }
       ],
       consultas: [
-        { id: 1, paciente: 'Ana Costa', dataOriginal: '2026-01-08', reagendar: 'Sim', novaData: '2026-01-15', observacoes: 'Cliente solicitou reagendamento.' },
-        { id: 2, paciente: 'Rafael Souza', dataOriginal: '2026-01-10', reagendar: 'Não', novaData: '', observacoes: 'Presença confirmada.' }
+        { id: 1, paciente: 'Ana Costa', dataOriginal: '2026-09-25', reagendar: 'Sim', novaData: '2026-09-30', observacoes: 'Solicitou reagendamento.' },
+        { id: 2, paciente: 'Pedro Silva', dataOriginal: '2026-09-28', reagendar: 'Não', novaData: '', observacoes: 'Compareceu normalmente.' }
       ],
-      sync: {
-        lastSync: null,
-        success: false,
-        attempts: 0
-      }
+      sync: { lastSync: null, success: false, statusMessage: 'Aguardando envio' }
     };
 
-    const state = loadState();
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
 
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(defaultData);
+        if (!raw) return clone(defaultState);
         const parsed = JSON.parse(raw);
-        return { ...structuredClone(defaultData), ...parsed, weeks: parsed.weeks || structuredClone(defaultData.weeks), consultas: parsed.consultas || structuredClone(defaultData.consultas), sync: { ...structuredClone(defaultData.sync), ...(parsed.sync || {}) } };
-      } catch (e) {
-        return structuredClone(defaultData);
+        return {
+          period: parsed.period || 'all',
+          weeks: Array.isArray(parsed.weeks) ? parsed.weeks : clone(defaultState.weeks),
+          consultas: Array.isArray(parsed.consultas) ? parsed.consultas : clone(defaultState.consultas),
+          sync: { ...clone(defaultState.sync), ...(parsed.sync || {}) }
+        };
+      } catch (error) {
+        return clone(defaultState);
       }
     }
 
-    function persistState() {
+    let state = loadState();
+
+    function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     }
 
@@ -338,8 +349,16 @@
       document.querySelectorAll('[data-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
     }
 
+    function getFilteredWeeks() {
+      const arr = [...state.weeks].sort((a, b) => new Date(b.data || '2000-01-01') - new Date(a.data || '2000-01-01'));
+      if (state.period === 'last') return arr.slice(0, 1);
+      if (state.period === 'last4') return arr.slice(0, 4);
+      return arr;
+    }
+
     function renderDashboard() {
-      const totalSemanas = state.weeks.length;
+      const visibleWeeks = getFilteredWeeks();
+      const totalSemanas = visibleWeeks.length;
       const reagendadas = state.consultas.filter(item => item.reagendar === 'Sim').length;
       const hoje = new Date().toISOString().slice(0, 10);
       const hojeCount = state.consultas.filter(item => item.dataOriginal === hoje).length;
@@ -350,21 +369,18 @@
       document.getElementById('kpiSemanas').textContent = totalSemanas;
       document.getElementById('kpiErros').textContent = errors.length;
 
-      const summaryBadge = document.getElementById('summaryBadge');
+      const badge = document.getElementById('summaryBadge');
       if (errors.length === 0) {
-        summaryBadge.textContent = 'Tudo ok';
-        summaryBadge.className = 'tag success';
+        badge.textContent = 'Tudo ok';
+        badge.className = 'tag success';
       } else {
-        summaryBadge.textContent = `${errors.length} erro(s)`;
-        summaryBadge.className = 'tag danger';
+        badge.textContent = `${errors.length} erro(s)`;
+        badge.className = 'tag danger';
       }
 
       const summary = document.getElementById('errorSummary');
-      if (errors.length === 0) {
-        summary.textContent = 'Nenhuma inconsistência identificada nas semanas ou consultas.';
-      } else {
-        summary.innerHTML = errors.map(error => `<div>• ${error}</div>`).join('');
-      }
+      if (errors.length === 0) summary.textContent = 'Nenhuma inconsistência identificada nas semanas ou consultas.';
+      else summary.innerHTML = errors.map(error => `<div>• ${error}</div>`).join('');
     }
 
     function renderWeeks() {
@@ -384,7 +400,6 @@
           </td>
         </tr>
       `).join('');
-
       document.getElementById('weeksCount').textContent = `${state.weeks.length} registros`;
     }
 
@@ -417,38 +432,34 @@
       const badge = document.getElementById('syncBadge');
       const lastSyncLabel = document.getElementById('lastSyncLabel');
       const syncStatusLabel = document.getElementById('syncStatusLabel');
+      const nextSyncLabel = document.getElementById('nextSyncLabel');
+      nextSyncLabel.textContent = 'Segunda a sexta, às 19:00';
 
       if (!state.sync.lastSync) {
         badge.textContent = 'Pendente';
         badge.className = 'sync-badge pending';
         lastSyncLabel.textContent = 'Nunca';
-        syncStatusLabel.textContent = 'Aguardando envio';
+        syncStatusLabel.textContent = state.sync.statusMessage || 'Aguardando envio';
       } else if (state.sync.success) {
         badge.textContent = 'Sucesso';
         badge.className = 'sync-badge success';
         lastSyncLabel.textContent = formatDateTime(state.sync.lastSync);
-        syncStatusLabel.textContent = 'Sincronização concluída com sucesso';
+        syncStatusLabel.textContent = state.sync.statusMessage || 'Sincronização concluída com sucesso';
       } else {
         badge.textContent = 'Falhou';
         badge.className = 'sync-badge error';
         lastSyncLabel.textContent = formatDateTime(state.sync.lastSync);
-        syncStatusLabel.textContent = 'Sincronização falhou';
+        syncStatusLabel.textContent = state.sync.statusMessage || 'Sincronização falhou';
       }
 
       const errors = getErrors();
       const configErrors = document.getElementById('configErrors');
-      if (errors.length === 0) {
-        configErrors.textContent = 'Nenhum erro detectado.';
-        configErrors.className = 'info-box';
-      } else {
-        configErrors.innerHTML = errors.map(error => `<div>• ${error}</div>`).join('');
-        configErrors.className = 'info-box';
-      }
+      configErrors.innerHTML = errors.length ? errors.map(error => `<div>• ${error}</div>`).join('') : 'Nenhum erro detectado.';
+      configErrors.className = 'info-box';
     }
 
     function getErrors() {
       const errors = [];
-
       state.weeks.forEach((week, index) => {
         if (!week.semana) errors.push(`Semana ${index + 1}: faltando identificação da semana.`);
         if (!week.paciente) errors.push(`Semana ${index + 1}: paciente não informado.`);
@@ -459,7 +470,6 @@
         if (!item.paciente) errors.push(`Consulta ${index + 1}: paciente não informado.`);
         if (item.reagendar === 'Sim' && !item.novaData) errors.push(`Consulta ${index + 1}: nova data obrigatória quando o reagendamento foi confirmado.`);
       });
-
       return errors;
     }
 
@@ -485,18 +495,41 @@
       }
     }
 
-    document.getElementById('nav').addEventListener('click', (event) => {
-      const btn = event.target.closest('[data-tab]');
-      if (!btn) return;
-      showTab(btn.dataset.tab);
-    });
+    function renderAll() {
+      renderDashboard();
+      renderWeeks();
+      renderConsultas();
+      renderConfig();
+    }
 
-    document.getElementById('weekForm').addEventListener('submit', function (event) {
+    function submitLogin(event) {
       event.preventDefault();
+      const password = document.getElementById('passwordInput').value;
+      const error = document.getElementById('loginError');
+      if (password === DEFAULT_PASSWORD) {
+        document.getElementById('lockScreen').classList.add('hidden');
+        error.textContent = '';
+        document.getElementById('passwordInput').value = '';
+        renderAll();
+      } else {
+        error.textContent = 'Senha incorreta. Tente novamente.';
+        document.getElementById('passwordInput').focus();
+      }
+    }
 
-      const id = Number(document.getElementById('weekForm').dataset.editId || 0);
+    function clearWeekForm() {
+      const form = document.getElementById('weekForm');
+      form.reset();
+      delete form.dataset.editId;
+      document.getElementById('weekStatus').value = 'Em andamento';
+    }
+
+    function saveWeek(event) {
+      event.preventDefault();
+      const form = document.getElementById('weekForm');
+      const editId = Number(form.dataset.editId || 0);
       const item = {
-        id: id || Date.now(),
+        id: editId || Date.now(),
         semana: document.getElementById('weekNumber').value.trim(),
         paciente: document.getElementById('weekPaciente').value.trim(),
         data: document.getElementById('weekDate').value,
@@ -509,121 +542,135 @@
         return;
       }
 
-      if (id) {
-        const idx = state.weeks.findIndex(w => w.id === id);
-        if (idx >= 0) state.weeks[idx] = { ...state.weeks[idx], ...item };
-      } else {
-        state.weeks.unshift(item);
-      }
+      const index = state.weeks.findIndex(week => week.id === item.id);
+      if (index >= 0) state.weeks[index] = item;
+      else state.weeks.unshift(item);
 
-      persistState();
+      saveState();
       renderAll();
       clearWeekForm();
-    });
-
-    function clearWeekForm() {
-      document.getElementById('weekForm').reset();
-      delete document.getElementById('weekForm').dataset.editId;
-      document.getElementById('weekStatus').value = 'Em andamento';
     }
 
-    document.getElementById('clearWeekForm').addEventListener('click', clearWeekForm);
-
-    document.getElementById('addWeekBtn').addEventListener('click', () => {
-      clearWeekForm();
-      document.getElementById('weekNumber').focus();
-    });
-
-    document.getElementById('weeksTableBody').addEventListener('click', (event) => {
+    function handleEditDeleteWeek(event) {
       const editBtn = event.target.closest('[data-edit-week]');
       const deleteBtn = event.target.closest('[data-delete-week]');
       if (editBtn) {
         const id = Number(editBtn.dataset.editWeek);
-        const week = state.weeks.find(w => w.id === id);
+        const week = state.weeks.find(item => item.id === id);
         if (!week) return;
-        document.getElementById('weekForm').dataset.editId = String(id);
+        const form = document.getElementById('weekForm');
+        form.dataset.editId = String(id);
         document.getElementById('weekNumber').value = week.semana;
         document.getElementById('weekPaciente').value = week.paciente;
         document.getElementById('weekDate').value = week.data;
-        document.getElementById('weekStatus').value = week.status;
+        document.getElementById('weekStatus').value = week.status || 'Em andamento';
         document.getElementById('weekObs').value = week.obs || '';
         showTab('weeks');
       }
 
       if (deleteBtn) {
         const id = Number(deleteBtn.dataset.deleteWeek);
-        state.weeks = state.weeks.filter(w => w.id !== id);
-        persistState();
+        state.weeks = state.weeks.filter(item => item.id !== id);
+        saveState();
         renderAll();
       }
-    });
-
-    document.getElementById('consultasTableBody').addEventListener('change', (event) => {
-      const select = event.target.closest('[data-consulta-reagendar]');
-      if (select) {
-        const id = Number(select.dataset.consultaReagendar);
-        const item = state.consultas.find(c => c.id === id);
-        if (!item) return;
-        item.reagendar = select.value;
-        if (item.reagendar === 'Não') item.novaData = '';
-        persistState();
-        renderConsultas();
-      }
-    });
-
-    document.getElementById('consultasTableBody').addEventListener('click', (event) => {
-      const saveBtn = event.target.closest('[data-save-consulta]');
-      if (!saveBtn) return;
-      const id = Number(saveBtn.dataset.saveConsulta);
-      const item = state.consultas.find(c => c.id === id);
-      if (!item) return;
-
-      const dateInput = document.querySelector(`[data-consulta-date="${id}"]`);
-      const obsInput = document.querySelector(`[data-consulta-obs="${id}"]`);
-      item.novaData = dateInput ? dateInput.value : '';
-      item.observacoes = obsInput ? obsInput.value.trim() : '';
-      persistState();
-      renderDashboard();
-      renderConfig();
-      alert('Dados da consulta atualizados com sucesso.');
-    });
-
-    document.getElementById('manualSyncBtn').addEventListener('click', () => {
-      state.sync.attempts += 1;
-      state.sync.lastSync = new Date().toISOString();
-      state.sync.success = Math.random() > 0.2;
-      persistState();
-      renderConfig();
-      renderDashboard();
-    });
-
-    document.getElementById('loginForm').addEventListener('submit', function (event) {
-      event.preventDefault();
-      const input = document.getElementById('passwordInput');
-      const error = document.getElementById('loginError');
-
-      if (input.value === DEFAULT_PASSWORD) {
-        document.getElementById('lockScreen').classList.add('hidden');
-        error.textContent = '';
-        input.value = '';
-        renderAll();
-      } else {
-        error.textContent = 'Senha incorreta. Tente novamente.';
-        input.focus();
-      }
-    });
-
-    function renderAll() {
-      renderDashboard();
-      renderWeeks();
-      renderConsultas();
-      renderConfig();
     }
 
+    function handleConsultaChange(event) {
+      const select = event.target.closest('[data-consulta-reagendar]');
+      if (!select) return;
+      const id = Number(select.dataset.consultaReagendar);
+      const item = state.consultas.find(entry => entry.id === id);
+      if (!item) return;
+      item.reagendar = select.value;
+      if (item.reagendar === 'Não') item.novaData = '';
+      const dateInput = document.querySelector(`[data-consulta-date="${id}"]`);
+      if (dateInput) dateInput.disabled = item.reagendar !== 'Sim';
+      saveState();
+      renderAll();
+    }
+
+    function handleConsultaSave(event) {
+      const btn = event.target.closest('[data-save-consulta]');
+      if (!btn) return;
+      const id = Number(btn.dataset.saveConsulta);
+      const item = state.consultas.find(entry => entry.id === id);
+      if (!item) return;
+      const dateInput = document.querySelector(`[data-consulta-date="${id}"]`);
+      const obsInput = document.querySelector(`[data-consulta-obs="${id}"]`);
+      const selectInput = document.querySelector(`[data-consulta-reagendar="${id}"]`);
+      item.reagendar = selectInput ? selectInput.value : item.reagendar;
+      item.novaData = item.reagendar === 'Sim' ? (dateInput ? dateInput.value : '') : '';
+      item.observacoes = obsInput ? obsInput.value.trim() : '';
+      saveState();
+      renderAll();
+      alert('Dados da consulta atualizados com sucesso.');
+    }
+
+    async function syncToSheetDB() {
+      state.sync.lastSync = new Date().toISOString();
+      try {
+        const payload = {
+          data: state.weeks.map(week => ({
+            semana: week.semana,
+            paciente: week.paciente,
+            data: week.data,
+            status: week.status,
+            observacao: week.obs || ''
+          }))
+        };
+
+        const response = await fetch(SHEETDB_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Erro no envio');
+        state.sync.success = true;
+        state.sync.statusMessage = 'Sincronização concluída com sucesso.';
+      } catch (error) {
+        state.sync.success = false;
+        state.sync.statusMessage = 'Sincronização falhou. Dados salvos localmente.';
+      }
+      saveState();
+      renderConfig();
+      renderDashboard();
+    }
+
+    function handleManualSync() {
+      syncToSheetDB();
+    }
+
+    function handlePeriodChange(event) {
+      state.period = event.target.value;
+      saveState();
+      renderDashboard();
+    }
+
+    document.getElementById('loginForm').addEventListener('submit', submitLogin);
+    document.getElementById('weekForm').addEventListener('submit', saveWeek);
+    document.getElementById('clearWeekForm').addEventListener('click', clearWeekForm);
+    document.getElementById('addWeekBtn').addEventListener('click', () => { clearWeekForm(); document.getElementById('weekNumber').focus(); });
+    document.getElementById('weeksTableBody').addEventListener('click', handleEditDeleteWeek);
+    document.getElementById('consultasTableBody').addEventListener('change', handleConsultaChange);
+    document.getElementById('consultasTableBody').addEventListener('click', handleConsultaSave);
+    document.getElementById('manualSyncBtn').addEventListener('click', handleManualSync);
+    document.getElementById('periodFilter').addEventListener('change', handlePeriodChange);
+
     document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('periodFilter').value = state.period;
       renderAll();
       showTab('dashboard');
       clearWeekForm();
+      setInterval(() => {
+        const now = new Date();
+        const hour = now.getHours();
+        const day = now.getDay();
+        if (day >= 1 && day <= 5 && hour >= 19 && hour < 20) {
+          syncToSheetDB();
+        }
+      }, 60000);
     });
   </script>
 </body>
