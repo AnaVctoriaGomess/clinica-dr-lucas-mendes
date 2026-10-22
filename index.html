@@ -285,6 +285,10 @@
           <span id="syncStatusLabel">Aguardando envio</span>
         </div>
         <div class="status-row">
+          <strong>Próxima sincronização automática:</strong>
+          <span id="nextSyncLabel">Segunda a sexta, às 19:00</span>
+        </div>
+        <div class="status-row">
           <button id="manualSyncBtn" type="button" class="btn">Nova tentativa</button>
         </div>
       </div>
@@ -312,20 +316,53 @@
       sync: {
         lastSync: null,
         success: false,
-        attempts: 0
+        attempts: 0,
+        statusMessage: 'Aguardando envio'
       }
     };
 
+    const cloneData = (value) => JSON.parse(JSON.stringify(value));
+
     const state = loadState();
+
+    function isWeekday(date) {
+      const day = date.getDay();
+      return day >= 1 && day <= 5;
+    }
+
+    function isSameDay(dateA, dateB) {
+      return dateA.getFullYear() === dateB.getFullYear() &&
+        dateA.getMonth() === dateB.getMonth() &&
+        dateA.getDate() === dateB.getDate();
+    }
+
+    function getNextSyncText() {
+      const now = new Date();
+      if (!isWeekday(now)) return 'Final de semana — sem envio automático';
+      return `Segunda a sexta, às 19:00 (${new Intl.DateTimeFormat('pt-BR', { weekday: 'long' }).format(now)})`;
+    }
 
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(defaultData);
+        if (!raw) return cloneData(defaultData);
+
         const parsed = JSON.parse(raw);
-        return { ...structuredClone(defaultData), ...parsed, weeks: parsed.weeks || structuredClone(defaultData.weeks), consultas: parsed.consultas || structuredClone(defaultData.consultas), sync: { ...structuredClone(defaultData.sync), ...(parsed.sync || {}) } };
-      } catch (e) {
-        return structuredClone(defaultData);
+        const safeWeeks = Array.isArray(parsed.weeks) && parsed.weeks.length ? parsed.weeks : cloneData(defaultData.weeks);
+        const safeConsultas = Array.isArray(parsed.consultas) && parsed.consultas.length ? parsed.consultas : cloneData(defaultData.consultas);
+        const safeSync = {
+          ...cloneData(defaultData.sync),
+          ...(parsed.sync || {})
+        };
+
+        return {
+          weeks: safeWeeks,
+          consultas: safeConsultas,
+          sync: safeSync
+        };
+      } catch (error) {
+        console.error('Erro ao carregar dados do painel:', error);
+        return cloneData(defaultData);
       }
     }
 
@@ -417,22 +454,25 @@
       const badge = document.getElementById('syncBadge');
       const lastSyncLabel = document.getElementById('lastSyncLabel');
       const syncStatusLabel = document.getElementById('syncStatusLabel');
+      const nextSyncLabel = document.getElementById('nextSyncLabel');
+
+      nextSyncLabel.textContent = getNextSyncText();
 
       if (!state.sync.lastSync) {
         badge.textContent = 'Pendente';
         badge.className = 'sync-badge pending';
         lastSyncLabel.textContent = 'Nunca';
-        syncStatusLabel.textContent = 'Aguardando envio';
+        syncStatusLabel.textContent = state.sync.statusMessage || 'Aguardando envio';
       } else if (state.sync.success) {
         badge.textContent = 'Sucesso';
         badge.className = 'sync-badge success';
         lastSyncLabel.textContent = formatDateTime(state.sync.lastSync);
-        syncStatusLabel.textContent = 'Sincronização concluída com sucesso';
+        syncStatusLabel.textContent = state.sync.statusMessage || 'Sincronização concluída com sucesso';
       } else {
         badge.textContent = 'Falhou';
         badge.className = 'sync-badge error';
         lastSyncLabel.textContent = formatDateTime(state.sync.lastSync);
-        syncStatusLabel.textContent = 'Sincronização falhou';
+        syncStatusLabel.textContent = state.sync.statusMessage || 'Sincronização falhou';
       }
 
       const errors = getErrors();
@@ -485,6 +525,39 @@
       }
     }
 
+    function runSync({ manual = false } = {}) {
+      const now = new Date();
+      const hasErrors = getErrors().length > 0;
+      const success = !hasErrors;
+
+      if (manual) state.sync.attempts += 1;
+      state.sync.lastSync = now.toISOString();
+      state.sync.success = success;
+      state.sync.statusMessage = success
+        ? 'Sincronização concluída com sucesso.'
+        : 'Sincronização falhou. Corrija os erros antes de tentar novamente.';
+
+      persistState();
+      renderDashboard();
+      renderConfig();
+
+      if (!success && manual) {
+        alert('Não foi possível sincronizar porque há erros pendentes. Corrija os campos antes de tentar novamente.');
+      }
+
+      return success;
+    }
+
+    function checkAutomaticSync() {
+      const now = new Date();
+      if (!isWeekday(now)) return;
+      const lastSync = state.sync.lastSync ? new Date(state.sync.lastSync) : null;
+      const shouldFire = now.getHours() >= 19 && !lastSync || (lastSync && !isSameDay(lastSync, now) && now.getHours() >= 19);
+      if (shouldFire) {
+        runSync({ manual: false });
+      }
+    }
+
     document.getElementById('nav').addEventListener('click', (event) => {
       const btn = event.target.closest('[data-tab]');
       if (!btn) return;
@@ -494,9 +567,10 @@
     document.getElementById('weekForm').addEventListener('submit', function (event) {
       event.preventDefault();
 
-      const id = Number(document.getElementById('weekForm').dataset.editId || 0);
+      const form = document.getElementById('weekForm');
+      const editId = form.dataset.editId ? Number(form.dataset.editId) : 0;
       const item = {
-        id: id || Date.now(),
+        id: Number.isFinite(editId) && editId > 0 ? editId : Date.now(),
         semana: document.getElementById('weekNumber').value.trim(),
         paciente: document.getElementById('weekPaciente').value.trim(),
         data: document.getElementById('weekDate').value,
@@ -509,9 +583,9 @@
         return;
       }
 
-      if (id) {
-        const idx = state.weeks.findIndex(w => w.id === id);
-        if (idx >= 0) state.weeks[idx] = { ...state.weeks[idx], ...item };
+      const existingIndex = state.weeks.findIndex(week => week.id === item.id);
+      if (existingIndex >= 0) {
+        state.weeks[existingIndex] = { ...state.weeks[existingIndex], ...item };
       } else {
         state.weeks.unshift(item);
       }
@@ -522,8 +596,9 @@
     });
 
     function clearWeekForm() {
-      document.getElementById('weekForm').reset();
-      delete document.getElementById('weekForm').dataset.editId;
+      const form = document.getElementById('weekForm');
+      form.reset();
+      delete form.dataset.editId;
       document.getElementById('weekStatus').value = 'Em andamento';
     }
 
@@ -537,10 +612,12 @@
     document.getElementById('weeksTableBody').addEventListener('click', (event) => {
       const editBtn = event.target.closest('[data-edit-week]');
       const deleteBtn = event.target.closest('[data-delete-week]');
+
       if (editBtn) {
         const id = Number(editBtn.dataset.editWeek);
         const week = state.weeks.find(w => w.id === id);
         if (!week) return;
+
         document.getElementById('weekForm').dataset.editId = String(id);
         document.getElementById('weekNumber').value = week.semana;
         document.getElementById('weekPaciente').value = week.paciente;
@@ -564,37 +641,51 @@
         const id = Number(select.dataset.consultaReagendar);
         const item = state.consultas.find(c => c.id === id);
         if (!item) return;
+
         item.reagendar = select.value;
-        if (item.reagendar === 'Não') item.novaData = '';
+        if (item.reagendar === 'Não') {
+          item.novaData = '';
+        }
+
+        const dateInput = document.querySelector(`[data-consulta-date="${id}"]`);
+        if (dateInput) dateInput.disabled = item.reagendar !== 'Sim';
+
         persistState();
         renderConsultas();
+        renderDashboard();
+        renderConfig();
       }
     });
 
     document.getElementById('consultasTableBody').addEventListener('click', (event) => {
       const saveBtn = event.target.closest('[data-save-consulta]');
       if (!saveBtn) return;
+
       const id = Number(saveBtn.dataset.saveConsulta);
       const item = state.consultas.find(c => c.id === id);
       if (!item) return;
 
       const dateInput = document.querySelector(`[data-consulta-date="${id}"]`);
       const obsInput = document.querySelector(`[data-consulta-obs="${id}"]`);
+      const selectInput = document.querySelector(`[data-consulta-reagendar="${id}"]`);
+
+      item.reagendar = selectInput ? selectInput.value : item.reagendar;
       item.novaData = dateInput ? dateInput.value : '';
       item.observacoes = obsInput ? obsInput.value.trim() : '';
+
+      if (item.reagendar === 'Não') {
+        item.novaData = '';
+      }
+
       persistState();
       renderDashboard();
       renderConfig();
+      renderConsultas();
       alert('Dados da consulta atualizados com sucesso.');
     });
 
     document.getElementById('manualSyncBtn').addEventListener('click', () => {
-      state.sync.attempts += 1;
-      state.sync.lastSync = new Date().toISOString();
-      state.sync.success = Math.random() > 0.2;
-      persistState();
-      renderConfig();
-      renderDashboard();
+      runSync({ manual: true });
     });
 
     document.getElementById('loginForm').addEventListener('submit', function (event) {
@@ -624,6 +715,8 @@
       renderAll();
       showTab('dashboard');
       clearWeekForm();
+      checkAutomaticSync();
+      setInterval(checkAutomaticSync, 60000);
     });
   </script>
 </body>
