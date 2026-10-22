@@ -6,51 +6,77 @@
   <title>Painel KOMMO – Follow-up e Agenda</title>
   <style>
     :root {
-      --bg:#f4f6f3; --card:#ffffff; --ink:#16302c; --mut:#5f7571; --line:#dbe3df;
-      --g:#1f7a6d; --a:#d99a1c; --b:#3d6fa8; --r:#c2455a; --k:#9aa8a4; --p:#7a5aa6;
-      --success:#1f8a5e; --warning:#c98a1b; --danger:#d14a5d; --shadow:rgba(16,40,36,.08);
+      --bg:#f4f6f3;
+      --card:#ffffff;
+      --ink:#16302c;
+      --mut:#5f7571;
+      --line:#dbe3df;
+      --g:#1f7a6d;
+      --a:#d99a1c;
+      --b:#3d6fa8;
+      --r:#c2455a;
+      --k:#9aa8a4;
+      --p:#7a5aa6;
+      --success:#1f8a5e;
+      --warning:#c98a1b;
+      --danger:#d14a5d;
+      --shadow:rgba(16,40,36,.08);
+      --header-bg:rgba(255,255,255,0.96);
+      --panel-bg:linear-gradient(180deg, rgba(31,122,109,.04), rgba(255,255,255,.3));
       color-scheme: light;
       font-family: "Figtree", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
+
     * { box-sizing:border-box; }
     html { scroll-behavior:smooth; }
-    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Figtree", sans-serif; }
+    body {
+      margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Figtree", sans-serif;
+    }
     button, input, select, textarea { font:inherit; }
+    a { color:inherit; }
     .hidden { display:none !important; }
     .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+
     header {
-      position:sticky; top:0; z-index:30; background:rgba(255,255,255,0.92);
-      backdrop-filter: blur(8px); border-bottom:1px solid var(--line);
+      position:sticky; top:0; z-index:30; background:var(--header-bg); backdrop-filter: blur(8px); border-bottom:1px solid var(--line);
       padding:12px max(22px, calc((100% - 1180px)/2));
+      box-shadow:0 1px 0 rgba(0,0,0,.02);
     }
     .header-inner {
-      max-width:1180px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:12px;
-      flex-wrap:wrap;
+      max-width:1180px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
     }
-    h1 { margin:0; font-size:22px; }
-    #st { margin-top:2px; font-size:12px; color:var(--mut); }
-    #st::before { content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--g); margin-right:6px; vertical-align:1px; }
-    nav { display:flex; gap:6px; flex-wrap:wrap; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:4px; }
+    .header-title { display:flex; flex-direction:column; gap:2px; }
+    .header-title h1 { margin:0; font-size:22px; }
+    #st { font-size:12px; color:var(--mut); }
+    #st::before {
+      content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--g); margin-right:6px; vertical-align:1px;
+    }
+    nav {
+      display:flex; gap:6px; flex-wrap:wrap; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:4px;
+    }
     nav button {
-      border:0; border-radius:10px; background:transparent; color:var(--mut); font-weight:600;
-      padding:8px 14px; cursor:pointer; transition:.2s ease;
+      border:0; border-radius:10px; background:transparent; color:var(--mut); font-weight:600; padding:8px 14px; cursor:pointer; transition:.2s ease;
     }
     nav button.active { background:var(--g); color:white; box-shadow:0 1px 3px rgba(0,0,0,.18); }
+    nav button:hover { background:rgba(31,122,109,.06); }
+    nav button.active:hover { background:var(--g); }
+
     main { max-width:1180px; margin:0 auto; padding:18px 22px 60px; }
     .section { display:none; }
     .section.active { display:block; }
     .grid { display:grid; gap:14px; }
     .row { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
     .card {
-      background:var(--card); border:1px solid var(--line); border-radius:14px;
-      padding:18px; box-shadow:0 1px 2px rgba(16,40,36,.04), 0 6px 20px -12px rgba(16,40,36,.12);
+      background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; box-shadow:0 1px 2px rgba(16,40,36,.04), 0 6px 20px -12px rgba(16,40,36,.12);
     }
-    .kpis { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:14px; }
+    .card.compact { padding:14px 16px; }
+    .kpis { grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); margin-bottom:14px; }
     .kpi { position:relative; overflow:hidden; padding:16px 16px 14px 18px; }
     .kpi::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--g); }
     .kpi strong { display:block; font-size:30px; margin-top:6px; }
     .kpi span { display:block; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--mut); }
     .kpi small { display:block; margin-top:4px; color:var(--mut); }
+
     .toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
     h2 { font-size:16px; margin:0 0 10px; }
     .tag { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; background:var(--line); border-radius:999px; font-size:12px; font-weight:600; }
@@ -58,6 +84,7 @@
     .tag.warning { background:rgba(201,138,27,.12); color:var(--warning); }
     .tag.danger { background:rgba(209,74,93,.12); color:var(--danger); }
     .tag.primary { background:rgba(31,122,109,.12); color:var(--g); }
+
     .chart-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:14px; }
     .chart-card { display:grid; gap:8px; }
     .chart-card h3 { margin:0; font-size:14px; }
@@ -71,8 +98,7 @@
     tbody tr:nth-child(even) td { background:rgba(31,122,109,.015); }
     .actions { display:flex; gap:6px; flex-wrap:wrap; }
     button.btn, .btn-like {
-      border:1px solid var(--line); border-radius:9px; background:var(--g); color:#fff; padding:8px 13px; cursor:pointer; font-weight:600;
-      transition:.2s ease;
+      border:1px solid var(--line); border-radius:9px; background:var(--g); color:#fff; padding:8px 13px; cursor:pointer; font-weight:600; transition:.2s ease;
     }
     button.btn:hover { filter:brightness(0.98); }
     .btn.secondary { background:transparent; color:var(--ink); border-color:var(--line); }
@@ -80,6 +106,7 @@
     .btn.danger { background:var(--r); border-color:var(--r); }
     .btn.ghost { background:transparent; color:var(--ink); border-color:var(--line); }
     .btn.small { padding:6px 10px; font-size:12px; }
+
     .f { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; }
     label { display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--mut); font-weight:600; }
     input, select, textarea {
@@ -91,14 +118,14 @@
       border-left:4px solid var(--a); background:rgba(217,154,28,.08); border-radius:12px; padding:12px 14px; color:var(--ink); margin-bottom:14px;
     }
     .status-box {
-      display:grid; gap:10px; padding:18px; border:1px solid var(--line); border-radius:14px;
-      background:linear-gradient(180deg, rgba(31,122,109,.04), rgba(255,255,255,.3));
+      display:grid; gap:10px; padding:18px; border:1px solid var(--line); border-radius:14px; background:var(--panel-bg);
     }
     .status-row { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
     .sync-badge { font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px; }
     .sync-badge.success { background:rgba(31,138,94,.12); color:var(--success); }
     .sync-badge.error { background:rgba(209,74,93,.12); color:var(--danger); }
     .sync-badge.pending { background:rgba(217,154,28,.12); color:var(--warning); }
+
     .lock-screen {
       position:fixed; inset:0; background:linear-gradient(135deg,#edf5f2,#f7faf9); display:grid; place-items:center; z-index:999; padding:24px;
     }
@@ -114,11 +141,15 @@
     }
     .lock-box button { width:100%; margin-top:4px; }
     .error-message { min-height:18px; color:var(--danger); font-size:12px; font-weight:600; }
+
     .toast {
       position:fixed; left:50%; bottom:22px; transform:translateX(-50%); pointer-events:none; background:rgba(22,48,44,.92); color:white;
       padding:10px 14px; border-radius:999px; font-size:12px; font-weight:600; opacity:0; transition:.25s ease; z-index:1000;
     }
     .toast.show { opacity:1; }
+
+    .two-up { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+
     @media (max-width: 640px) {
       main { padding:14px 14px 32px; }
       .card { padding:14px; }
@@ -128,6 +159,9 @@
       nav button { flex:1; min-width:0; }
       .kpis { grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); }
       .chart-grid { grid-template-columns:1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; animation:none !important; }
     }
   </style>
 </head>
@@ -147,7 +181,7 @@
 
   <header>
     <div class="header-inner">
-      <div>
+      <div class="header-title">
         <h1 id="appTitle">Painel KOMMO</h1>
         <div id="st">Dados salvos neste navegador</div>
       </div>
@@ -162,7 +196,7 @@
 
   <main>
     <section id="dashboard" class="section active">
-      <div class="card" style="margin-bottom:14px;">
+      <div class="card compact" style="margin-bottom:14px;">
         <div class="toolbar">
           <h2>Período do painel</h2>
           <label style="display:flex; align-items:center; gap:8px; margin:0;">
@@ -219,6 +253,17 @@
             </thead>
             <tbody id="stageTable"></tbody>
           </table>
+        </div>
+      </div>
+
+      <div class="chart-grid" style="margin-top:14px;">
+        <div class="card chart-card">
+          <h3>Origem das consultas</h3>
+          <div class="chart-wrap"><div id="chartOrigin"></div></div>
+        </div>
+        <div class="card chart-card">
+          <h3>Recuperação de cancelamentos</h3>
+          <div class="chart-wrap"><div id="chartRecovery"></div></div>
         </div>
       </div>
     </section>
@@ -327,7 +372,7 @@
           <span class="tag primary">Acompanhamento e reagendamento</span>
         </div>
         <form id="consultaForm">
-          <div class="f">
+          <div class="two-up">
             <label>Paciente
               <input id="cPaciente" type="text" placeholder="Nome do paciente" required />
             </label>
@@ -377,6 +422,36 @@
           <h2>Consultas registradas</h2>
           <span id="consultasCount" class="tag">0 consultas</span>
         </div>
+
+        <div class="row" style="margin-bottom:12px; gap:12px;">
+          <label>Semana
+            <select id="filterSemana">
+              <option value="all">Todas</option>
+            </select>
+          </label>
+          <label>De
+            <input id="filterDe" type="date" />
+          </label>
+          <label>Até
+            <input id="filterAte" type="date" />
+          </label>
+          <label>Origem
+            <select id="filterOrigem">
+              <option value="all">Todas</option>
+            </select>
+          </label>
+          <label>Status
+            <select id="filterStatus">
+              <option value="all">Todos</option>
+              <option value="Agendada">Agendada</option>
+              <option value="Realizada">Realizada</option>
+              <option value="Cancelada">Cancelada</option>
+              <option value="Reagendada">Reagendada</option>
+            </select>
+          </label>
+          <button type="button" id="clearFilters" class="btn secondary">Limpar filtros</button>
+        </div>
+
         <div class="table-wrap">
           <table>
             <thead>
@@ -400,7 +475,7 @@
     <section id="config" class="section">
       <div class="card status-box">
         <div class="status-row">
-          <h2>Sincronização com SheetDB</h2>
+          <h2>Sincronização</h2>
           <span id="syncBadge" class="sync-badge pending">Pendente</span>
         </div>
         <div class="status-row">
@@ -412,26 +487,34 @@
           <span id="syncStatusLabel">Aguardando envio</span>
         </div>
         <div class="status-row">
-          <strong>Próxima sincronização automática:</strong>
-          <span id="nextSyncLabel">Segunda a sexta, às 19:00</span>
-        </div>
-        <div class="status-row">
           <button id="manualSyncBtn" type="button" class="btn">Enviar agora</button>
         </div>
       </div>
 
       <div class="card" style="margin-top:14px;">
         <h2>Configuração geral</h2>
-        <div class="f">
+        <div class="two-up">
           <label>Nome do painel
             <input id="configTitle" type="text" value="Painel KOMMO" />
           </label>
-          <label>Período padrão ao abrir
+          <label>Período padrão
             <select id="defaultPeriod">
               <option value="all">Todas as semanas</option>
               <option value="last4">Últimas 4 semanas</option>
               <option value="last">Última semana</option>
             </select>
+          </label>
+          <label>Cor principal
+            <input id="themePrimary" type="color" value="#1f7a6d" />
+          </label>
+          <label>Cor secundária
+            <input id="themeSecondary" type="color" value="#3d6fa8" />
+          </label>
+          <label>Cor de destaque
+            <input id="themeAccent" type="color" value="#d99a1c" />
+          </label>
+          <label>Cor de fundo
+            <input id="themeBg" type="color" value="#f4f6f3" />
           </label>
         </div>
         <div class="row" style="margin-top:12px;">
@@ -441,14 +524,25 @@
 
       <div class="card" style="margin-top:14px;">
         <h2>Planilha / SheetDB</h2>
-        <div class="f">
+        <div class="two-up">
           <label>URL da planilha
             <input id="sheetdbUrl" type="text" value="https://sheetdb.io/api/v1/4se00czhiq0s8" />
+          </label>
+          <label>Enviar somente iniciais dos pacientes
+            <select id="sendInitials">
+              <option value="false">Não</option>
+              <option value="true">Sim</option>
+            </select>
           </label>
         </div>
         <div class="row" style="margin-top:12px;">
           <button id="copyColumnsBtn" type="button" class="btn secondary">Copiar cabeçalho das colunas</button>
         </div>
+      </div>
+
+      <div class="card" style="margin-top:14px;">
+        <h2>Verificação de erros</h2>
+        <div id="configErrors" class="info-box">Nenhum erro detectado.</div>
       </div>
     </section>
   </main>
@@ -458,14 +552,15 @@
   <script>
     const STORAGE_KEY = 'kommo_dashboard_v1';
     const DEFAULT_PASSWORD = 'Lucas830';
-    const SHEETDB_URL_DEFAULT = 'https://sheetdb.io/api/v1/4se00czhiq0s8';
-    const SYNC_INTERVAL_MS = 15000;
+    const DEFAULT_SHEET_URL = 'https://sheetdb.io/api/v1/4se00czhiq0s8';
 
-    const baseState = {
+    const defaults = {
       title: 'Painel KOMMO',
       defaultPeriod: 'all',
       period: 'all',
-      sheetdbUrl: SHEETDB_URL_DEFAULT,
+      theme: { primary: '#1f7a6d', secondary: '#3d6fa8', accent: '#d99a1c', bg: '#f4f6f3' },
+      sheetdbUrl: DEFAULT_SHEET_URL,
+      sendInitials: false,
       weeks: [
         { id: 1, data: '2026-09-24', novos: 14, retomadas: 3, ativas: 56, fu2: 33, fu3: 26, fu4: 18, fu5: 12, resp: 20, agend: 9, semresp: 22, pensando: 14, aguard: 10, nao: 7, cagend: 10, ccanc: 3, creag: 2, creal: 5 },
         { id: 2, data: '2026-09-30', novos: 18, retomadas: 4, ativas: 63, fu2: 35, fu3: 30, fu4: 20, fu5: 14, resp: 26, agend: 11, semresp: 24, pensando: 15, aguard: 10, nao: 8, cagend: 12, ccanc: 4, creag: 3, creal: 6 }
@@ -479,23 +574,51 @@
     };
 
     function clone(value) { return JSON.parse(JSON.stringify(value)); }
+    function num(value) { return Number.isFinite(Number(value)) ? Number(value) : 0; }
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(value + 'T00:00:00');
+      if (Number.isNaN(date)) return value;
+      return new Intl.DateTimeFormat('pt-BR').format(date);
+    }
+    function formatDateTime(value) {
+      if (!value) return 'Nunca';
+      const date = new Date(value);
+      if (Number.isNaN(date)) return value;
+      return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+    }
+    function pct(numerador, denominador) {
+      if (!denominador || denominador === 0) return 0;
+      return (numerador / denominador) * 100;
+    }
+    function sortWeeks(a, b) {
+      return new Date(b.data || '2000-01-01') - new Date(a.data || '2000-01-01');
+    }
+    function getVisibleWeeks() {
+      const sorted = [...state.weeks].sort(sortWeeks);
+      if (state.period === 'last') return sorted.slice(0, 1);
+      if (state.period === 'last4') return sorted.slice(0, 4);
+      return sorted;
+    }
 
     function loadState() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return clone(baseState);
+        if (!raw) return clone(defaults);
         const parsed = JSON.parse(raw);
         return {
-          title: parsed.title || baseState.title,
-          defaultPeriod: parsed.defaultPeriod || baseState.defaultPeriod,
-          period: parsed.period || baseState.period,
-          sheetdbUrl: parsed.sheetdbUrl || SHEETDB_URL_DEFAULT,
-          weeks: Array.isArray(parsed.weeks) && parsed.weeks.length ? parsed.weeks : clone(baseState.weeks),
-          consultas: Array.isArray(parsed.consultas) ? parsed.consultas : clone(baseState.consultas),
-          sync: { ...clone(baseState.sync), ...(parsed.sync || {}) }
+          title: parsed.title || defaults.title,
+          defaultPeriod: parsed.defaultPeriod || defaults.defaultPeriod,
+          period: parsed.period || defaults.period,
+          theme: { ...defaults.theme, ...(parsed.theme || {}) },
+          sheetdbUrl: parsed.sheetdbUrl || DEFAULT_SHEET_URL,
+          sendInitials: Boolean(parsed.sendInitials),
+          weeks: Array.isArray(parsed.weeks) && parsed.weeks.length ? parsed.weeks : clone(defaults.weeks),
+          consultas: Array.isArray(parsed.consultas) ? parsed.consultas : clone(defaults.consultas),
+          sync: { ...clone(defaults.sync), ...(parsed.sync || {}) }
         };
       } catch (error) {
-        return clone(baseState);
+        return clone(defaults);
       }
     }
 
@@ -518,33 +641,6 @@
       showToast._timer = setTimeout(() => toast.classList.remove('show'), 2200);
     }
 
-    function formatDate(value) {
-      if (!value) return '-';
-      const date = new Date(value + 'T00:00:00');
-      if (Number.isNaN(date)) return value;
-      return new Intl.DateTimeFormat('pt-BR').format(date);
-    }
-
-    function formatDateTime(value) {
-      if (!value) return 'Nunca';
-      const date = new Date(value);
-      if (Number.isNaN(date)) return value;
-      return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
-    }
-
-    function sortWeeks(a, b) { return new Date(b.data || '2000-01-01') - new Date(a.data || '2000-01-01'); }
-
-    function num(value) { return Number.isFinite(Number(value)) ? Number(value) : 0; }
-
-    function pct(numr, den) { if (!den || den === 0) return 0; return (numr / den) * 100; }
-
-    function getVisibleWeeks() {
-      const sorted = [...state.weeks].sort(sortWeeks);
-      if (state.period === 'last') return sorted.slice(0, 1);
-      if (state.period === 'last4') return sorted.slice(0, 4);
-      return sorted;
-    }
-
     function getErrors() {
       const errors = [];
       state.weeks.forEach((week, index) => {
@@ -560,82 +656,76 @@
     function renderHeader() {
       document.getElementById('appTitle').textContent = state.title;
       document.title = `Painel KOMMO – ${state.title}`;
-      document.getElementById('st').textContent = `Dados salvos neste navegador • ${state.sync.lastSync ? 'Última sincronização: ' + formatDateTime(state.sync.lastSync) : 'sincronização pendente'}`;
+      document.getElementById('st').textContent = `Dados salvos neste navegador • ${state.sync.lastSync ? `Última atualização: ${formatDateTime(state.sync.lastSync)}` : 'Ainda não sincronizado'}`;
     }
 
     function renderDashboardKpis() {
       const visibleWeeks = getVisibleWeeks();
-      const currentWeek = visibleWeeks[0] || { ativas: 0, resp: 0, agend: 0, fu2: 0, fu3: 0, fu4: 0, fu5: 0, semresp: 0, pensando: 0, aguard: 0, nao: 0, novos: 0, creal: 0, ccanc: 0, creag: 0, cagend: 0, retomadas: 0 };
-      const totalMessages = num(currentWeek.fu2) + num(currentWeek.fu3) + num(currentWeek.fu4) + num(currentWeek.fu5);
-      const respRate = pct(num(currentWeek.resp), totalMessages || num(currentWeek.ativas));
-      const convRate = pct(num(currentWeek.agend), num(currentWeek.resp) || 1);
-      const agendaTotal = num(currentWeek.creal) + num(currentWeek.ccanc) + num(currentWeek.creag);
-      const comparecimento = pct(num(currentWeek.creal), agendaTotal || 1);
-      const cancelamento = pct(num(currentWeek.ccanc), agendaTotal || 1);
-      const reagendamento = pct(num(currentWeek.creag), agendaTotal || 1);
-      const recovery = pct(num(currentWeek.creag), num(currentWeek.ccanc) + num(currentWeek.creag) || 1);
+      const currentWeek = visibleWeeks[0] || { ativas:0, resp:0, agend:0, fu2:0, fu3:0, fu4:0, fu5:0, semresp:0, pensando:0, aguard:0, nao:0, novos:0, creal:0, ccanc:0, creag:0, cagend:0, retomadas:0 };
+      const totalFU = num(currentWeek.fu2) + num(currentWeek.fu3) + num(currentWeek.fu4) + num(currentWeek.fu5);
+      const taxaResp = pct(num(currentWeek.resp), totalFU || 1);
+      const taxaAgend = pct(num(currentWeek.agend), num(currentWeek.resp) || 1);
       const totalAgend = state.consultas.filter(item => item.status === 'Agendada' || item.status === 'Realizada').length;
-      const totalLeads = visibleWeeks.reduce((acc, w) => acc + num(w.novos), 0);
+      const totalLeads = visibleWeeks.reduce((acc, week) => acc + num(week.novos), 0);
       const totalSemanas = visibleWeeks.length;
+      const comparecimento = pct(num(currentWeek.creal), (num(currentWeek.creal) + num(currentWeek.ccanc) + num(currentWeek.creag)) || 1);
 
       const cards = [
-        { label: 'Total de conversas ativas', value: num(currentWeek.ativas), meta: 'Sem pendências críticas.' },
-        { label: 'Taxa geral de agendamento (%)', value: `${respRate.toFixed(1)}%`, meta: '84% meta atual.' },
-        { label: 'Conversão do FU em agendamento (%)', value: `${convRate.toFixed(1)}%`, meta: 'Quase no alvo.' },
-        { label: 'Novos leads', value: totalLeads, meta: 'Últimas semanas.' },
-        { label: 'Consultas agendadas', value: totalAgend, meta: 'Ativas no calendário.' },
-        { label: 'Mensagens de follow-up', value: totalMessages, meta: 'Total de tentativas.' },
-        { label: 'Taxa de resposta do FU (%)', value: `${respRate.toFixed(1)}%`, meta: 'Resposta do follow-up.' },
-        { label: 'Comparecimento (%)', value: `${comparecimento.toFixed(1)}%`, meta: 'Consultas realizadas.' },
-        { label: 'Cancelamento (%)', value: `${cancelamento.toFixed(1)}%`, meta: 'Variação da semana.' },
-        { label: 'Reagendamento (%)', value: `${reagendamento.toFixed(1)}%`, meta: 'Recuperação de agenda.' },
-        { label: 'Cancelados recuperados (%)', value: `${recovery.toFixed(1)}%`, meta: 'Sem pendência ativa.' },
-        { label: 'Semanas cadastradas', value: totalSemanas, meta: 'Período exibido.' }
+        { label: 'Conversas ativas', value: num(currentWeek.ativas) },
+        { label: 'Taxa de resposta', value: `${taxaResp.toFixed(1)}%` },
+        { label: 'Conversão do FU', value: `${taxaAgend.toFixed(1)}%` },
+        { label: 'Novos leads', value: totalLeads },
+        { label: 'Consultas agendadas', value: totalAgend },
+        { label: 'Follow-up enviado', value: totalFU },
+        { label: 'Comparecimento', value: `${comparecimento.toFixed(1)}%` },
+        { label: 'Semanas cadastradas', value: totalSemanas }
       ];
 
       const kpis = document.getElementById('kpis');
-      kpis.innerHTML = cards.map(card => `
+      kpis.innerHTML = cards.map(item => `
         <div class="card kpi">
-          <span>${card.label}</span>
-          <strong>${card.value}</strong>
-          <small>${card.meta}</small>
+          <span>${item.label}</span>
+          <strong>${item.value}</strong>
+          <small>Dados do período atual.</small>
         </div>
       `).join('');
 
       const errors = getErrors();
       const badge = document.getElementById('summaryBadge');
-      if (errors.length === 0) { badge.textContent = 'Tudo ok'; badge.className = 'tag success'; }
-      else { badge.textContent = `${errors.length} erro(s)`; badge.className = 'tag danger'; }
+      badge.textContent = errors.length ? `${errors.length} erro(s)` : 'Tudo ok';
+      badge.className = `tag ${errors.length ? 'danger' : 'success'}`;
 
       const summary = document.getElementById('errorSummary');
-      summary.innerHTML = errors.length ? errors.map(error => `<div>• ${error}</div>`).join('') : 'Nenhuma inconsistência identificada nas semanas ou consultas.';
+      summary.innerHTML = errors.length ? errors.map(err => `<div>• ${err}</div>`).join('') : 'Nenhuma inconsistência identificada nas semanas ou consultas.';
     }
 
     function buildBarsChart(labels, series, colors) {
       const width = Math.max(420, labels.length * 72);
       const height = 220;
       const maxVal = Math.max(...series.flat(), 1);
-      const barGap = 28;
+      const gap = 28;
       const leftPad = 30;
-      const rows = [];
-      const grid = [0, 0.25, 0.5, 0.75, 1].map(v => {
-        const y = 18 + (height - 52) * (1 - v);
+      const barW = Math.max(18, (width - leftPad - 24) / Math.max(series[0].length, 1) - 14);
+
+      const gridLines = [0, .25, .5, .75, 1].map(v => {
+        const y = 18 + (height - 42) * (1 - v);
         return `<line x1="${leftPad}" y1="${y}" x2="${width - 8}" y2="${y}" stroke="#dfe8e4" stroke-dasharray="4 4" />`;
       }).join('');
 
+      const rows = [];
       labels.forEach((label, xIndex) => {
-        const xBase = leftPad + xIndex * barGap + 18;
-        rows.push(`<text x="${xBase + 14}" y="${height - 8}" text-anchor="middle" font-size="10" fill="#5f7571">${label}</text>`);
+        const xBase = leftPad + xIndex * gap + 18;
+        rows.push(`<text x="${xBase + barW/2}" y="${height - 8}" text-anchor="middle" font-size="10" fill="#5f7571">${label}</text>`);
         series.forEach((serie, sIndex) => {
           const value = serie[xIndex] || 0;
-          const barH = (value / maxVal) * (height - 54);
-          const x = xBase + sIndex * 18;
+          const barH = (value / maxVal) * (height - 64);
+          const x = xBase + sIndex * (barW + 8);
           const y = height - 22 - barH;
-          rows.push(`<rect x="${x}" y="${y}" width="16" height="${barH}" rx="6" fill="${colors[sIndex]}"></rect>`);
+          rows.push(`<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="6" fill="${colors[sIndex]}"></rect>`);
         });
       });
 
-      return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMinYMid meet">${grid}${rows.join('')}</svg>`;
+      return `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMinYMid meet">${gridLines}${rows.join('')}</svg>`;
     }
 
     function buildLineChart(labels, dataSeries, colors) {
@@ -647,7 +737,13 @@
       const bottomPad = 26;
       const innerH = height - topPad - bottomPad;
       const innerW = width - leftPad - rightPad;
-      const maxVal = Math.max(...dataSeries.flat(), 1);
+      const maxVal = Math.max(...dataSeries.flat(), 100);
+
+      const grid = [0,.25,.5,.75,1].map(v => {
+        const y = topPad + innerH * (1 - v);
+        return `<line x1="${leftPad}" y1="${y}" x2="${width - rightPad}" y2="${y}" stroke="#dfe8e4" stroke-dasharray="4 4" />`;
+      }).join('');
+
       const seriesMarkup = dataSeries.map((series, sIndex) => {
         const path = series.map((v, i) => {
           const x = leftPad + (innerW / Math.max(series.length - 1, 1)) * i;
@@ -662,11 +758,6 @@
             return `<circle cx="${x}" cy="${y}" r="4" fill="${colors[sIndex]}" />`;
           }).join('')}
         `;
-      }).join('');
-
-      const grid = [0, 0.25, 0.5, 0.75, 1].map(v => {
-        const y = topPad + innerH * (1 - v);
-        return `<line x1="${leftPad}" y1="${y}" x2="${width - rightPad}" y2="${y}" stroke="#dfe8e4" stroke-dasharray="4 4" />`;
       }).join('');
 
       const labelsMarkup = labels.map((label, i) => {
@@ -688,7 +779,7 @@
       const maxVal = Math.max(...labels.map((_, i) => stackedSeries.reduce((sum, series) => sum + (series[i] || 0), 0)), 1);
       const barW = Math.max(22, (innerW / labels.length) * 0.7);
 
-      const grid = [0, 0.25, 0.5, 0.75, 1].map(v => {
+      const grid = [0,.25,.5,.75,1].map(v => {
         const y = topPad + innerH * (1 - v);
         return `<line x1="${leftPad}" y1="${y}" x2="${width - 16}" y2="${y}" stroke="#dfe8e4" stroke-dasharray="4 4" />`;
       }).join('');
@@ -697,8 +788,8 @@
         let running = 0;
         const x = leftPad + 12 + i * (innerW / labels.length);
         const rects = stackedSeries.map((series, sIndex) => {
-          const v = series[i] || 0;
-          const h = (v / maxVal) * innerH;
+          const value = series[i] || 0;
+          const h = (value / maxVal) * innerH;
           const y = height - bottomPad - h - running;
           running += h;
           return `<rect x="${x + 4}" y="${y}" width="${barW}" height="${h}" fill="${colors[sIndex]}" rx="6"></rect>`;
@@ -712,6 +803,7 @@
     function renderCharts() {
       const sortedWeeks = [...state.weeks].sort(sortWeeks).slice(0, 6).reverse();
       const labels = sortedWeeks.map(week => new Date(week.data + 'T00:00:00').toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' }).replace('.', ''));
+
       const fuSeries = [
         sortedWeeks.map(w => num(w.fu2)),
         sortedWeeks.map(w => num(w.fu3)),
@@ -721,7 +813,7 @@
       document.getElementById('chartFU').innerHTML = buildBarsChart(labels, fuSeries, ['#1f7a6d', '#3d6fa8', '#d99a1c', '#c2455a']);
 
       const respSeries = [
-        sortedWeeks.map(w => pct(num(w.resp), num(w.fu2)+num(w.fu3)+num(w.fu4)+num(w.fu5) || 1)),
+        sortedWeeks.map(w => pct(num(w.resp), (num(w.fu2)+num(w.fu3)+num(w.fu4)+num(w.fu5)) || 1)),
         sortedWeeks.map(w => pct(num(w.agend), num(w.resp) || 1))
       ];
       document.getElementById('chartResp').innerHTML = buildLineChart(labels, respSeries, ['#1f7a6d', '#3d6fa8']);
@@ -730,7 +822,7 @@
         sortedWeeks.map(w => num(w.semresp)),
         sortedWeeks.map(w => num(w.pensando)),
         sortedWeeks.map(w => num(w.aguard)),
-        sortedWeeks.map(w => num(w.nao || 0))
+        sortedWeeks.map(w => num(w.nao))
       ];
       document.getElementById('chartStatus').innerHTML = buildStackedBar(labels, statusSeries, ['#3d6fa8', '#d99a1c', '#7a5aa6', '#c2455a']);
 
@@ -740,6 +832,21 @@
         sortedWeeks.map(w => num(w.creag))
       ];
       document.getElementById('chartAgenda').innerHTML = buildBarsChart(labels, agendaSeries, ['#1f7a6d', '#c2455a', '#d99a1c']);
+
+      const origemMap = {};
+      state.consultas.forEach(item => {
+        const origem = item.origem || 'Não informado';
+        origemMap[origem] = (origemMap[origem] || 0) + 1;
+      });
+      const origens = Object.entries(origemMap).slice(0, 6);
+      document.getElementById('chartOrigin').innerHTML = buildBarsChart(origens.map(([k]) => k.slice(0, 10)), [origens.map(([, v]) => v)], ['#1f7a6d']);
+
+      const recoveryData = [
+        ['Sim', state.consultas.filter(c => c.reagendar === 'Sim').length],
+        ['Em contato', state.consultas.filter(c => c.reagendar === 'Em contato').length],
+        ['Não', state.consultas.filter(c => c.reagendar === 'Não').length]
+      ];
+      document.getElementById('chartRecovery').innerHTML = buildBarsChart(recoveryData.map(([k]) => k), [recoveryData.map(([, v]) => v)], ['#1f7a6d']);
 
       renderStageTable();
     }
@@ -790,9 +897,123 @@
       document.getElementById('weeksCount').textContent = `${weeks.length} registros`;
     }
 
+    function renderFilters() {
+      const weekSelect = document.getElementById('filterSemana');
+      const origemSelect = document.getElementById('filterOrigem');
+      const weeks = [...state.weeks].sort(sortWeeks);
+      const uniqueOrigens = [...new Set(state.consultas.map(item => item.origem).filter(Boolean))];
+
+      weekSelect.innerHTML = '<option value="all">Todas</option>' + weeks.map(week => `<option value="${week.id}">${formatDate(week.data)}</option>`).join('');
+      origemSelect.innerHTML = '<option value="all">Todas</option>' + uniqueOrigens.map(value => `<option value="${value}">${value}</option>`).join('');
+    }
+
+    function getWeekByDate(dateString) {
+      if (!dateString) return null;
+      const target = new Date(dateString + 'T00:00:00');
+      const items = [...state.weeks].sort(sortWeeks);
+      return items.find(week => new Date(week.data + 'T00:00:00') <= target) || null;
+    }
+
+    function fillWeekForm(week) {
+      if (!week) return;
+      document.getElementById('wData').value = week.data || '';
+      document.getElementById('wNovos').value = week.novos ?? 0;
+      document.getElementById('wRetomadas').value = week.retomadas ?? 0;
+      document.getElementById('wAtivas').value = week.ativas ?? 0;
+      document.getElementById('wFu2').value = week.fu2 ?? 0;
+      document.getElementById('wFu3').value = week.fu3 ?? 0;
+      document.getElementById('wFu4').value = week.fu4 ?? 0;
+      document.getElementById('wFu5').value = week.fu5 ?? 0;
+      document.getElementById('wResp').value = week.resp ?? 0;
+      document.getElementById('wAgend').value = week.agend ?? 0;
+      document.getElementById('wSemresp').value = week.semresp ?? 0;
+      document.getElementById('wPensando').value = week.pensando ?? 0;
+      document.getElementById('wAguard').value = week.aguard ?? 0;
+      document.getElementById('wNao').value = week.nao ?? 0;
+      document.getElementById('wCagend').value = week.cagend ?? 0;
+      document.getElementById('wCcanc').value = week.ccanc ?? 0;
+      document.getElementById('wCreag').value = week.creag ?? 0;
+      document.getElementById('wCreal').value = week.creal ?? 0;
+    }
+
+    function clearWeekForm() {
+      const form = document.getElementById('weekForm');
+      form.reset();
+      delete form.dataset.editId;
+      document.getElementById('wData').value = '';
+      ['wNovos','wRetomadas','wAtivas','wFu2','wFu3','wFu4','wFu5','wResp','wAgend','wSemresp','wPensando','wAguard','wNao','wCagend','wCcanc','wCreag','wCreal']
+        .forEach(id => { const el = document.getElementById(id); if (el) el.value = 0; });
+    }
+
+    function getWeekFormData() {
+      return {
+        data: document.getElementById('wData').value,
+        novos: num(document.getElementById('wNovos').value),
+        retomadas: num(document.getElementById('wRetomadas').value),
+        ativas: num(document.getElementById('wAtivas').value),
+        fu2: num(document.getElementById('wFu2').value),
+        fu3: num(document.getElementById('wFu3').value),
+        fu4: num(document.getElementById('wFu4').value),
+        fu5: num(document.getElementById('wFu5').value),
+        resp: num(document.getElementById('wResp').value),
+        agend: num(document.getElementById('wAgend').value),
+        semresp: num(document.getElementById('wSemresp').value),
+        pensando: num(document.getElementById('wPensando').value),
+        aguard: num(document.getElementById('wAguard').value),
+        nao: num(document.getElementById('wNao').value),
+        cagend: num(document.getElementById('wCagend').value),
+        ccanc: num(document.getElementById('wCcanc').value),
+        creag: num(document.getElementById('wCreag').value),
+        creal: num(document.getElementById('wCreal').value)
+      };
+    }
+
+    function saveWeek(event) {
+      event.preventDefault();
+      const form = document.getElementById('weekForm');
+      const payload = getWeekFormData();
+      if (!payload.data) {
+        alert('Informe a data da semana.');
+        return;
+      }
+
+      const existingIndex = state.weeks.findIndex(item => item.data === payload.data);
+      if (existingIndex >= 0 && !form.dataset.editId) {
+        state.weeks[existingIndex] = { ...state.weeks[existingIndex], ...payload };
+      } else {
+        const id = Number(form.dataset.editId || Date.now());
+        const item = { id, ...payload };
+        const index = state.weeks.findIndex(week => week.id === id);
+        if (index >= 0) state.weeks[index] = item;
+        else state.weeks.push(item);
+      }
+
+      saveState();
+      renderAll();
+      clearWeekForm();
+      showToast('Semana salva com sucesso.');
+    }
+
     function renderConsultasTable() {
       const tbody = document.getElementById('consultasTableBody');
-      const filtered = [...state.consultas].filter(item => item && item.paciente);
+      const filterSemana = document.getElementById('filterSemana').value;
+      const filterDe = document.getElementById('filterDe').value;
+      const filterAte = document.getElementById('filterAte').value;
+      const filterOrigem = document.getElementById('filterOrigem').value;
+      const filterStatus = document.getElementById('filterStatus').value;
+
+      const filtered = state.consultas.filter(item => {
+        if (filterSemana !== 'all') {
+          const semana = getWeekByDate(item.agendadaEm);
+          if (!semana || String(semana.id) !== filterSemana) return false;
+        }
+        if (filterDe && item.dataConsulta < filterDe) return false;
+        if (filterAte && item.dataConsulta > filterAte) return false;
+        if (filterOrigem !== 'all' && item.origem !== filterOrigem) return false;
+        if (filterStatus !== 'all' && item.status !== filterStatus) return false;
+        return true;
+      });
+
       tbody.innerHTML = filtered.map(item => `
         <tr>
           <td>${item.paciente || '-'}</td>
@@ -823,94 +1044,8 @@
           </td>
         </tr>
       `).join('');
+
       document.getElementById('consultasCount').textContent = `${filtered.length} consultas`;
-    }
-
-    function fillWeekForm(week) {
-      if (!week) return;
-      const mapping = [
-        ['wData', week.data || ''],
-        ['wNovos', week.novos ?? 0],
-        ['wRetomadas', week.retomadas ?? 0],
-        ['wAtivas', week.ativas ?? 0],
-        ['wFu2', week.fu2 ?? 0],
-        ['wFu3', week.fu3 ?? 0],
-        ['wFu4', week.fu4 ?? 0],
-        ['wFu5', week.fu5 ?? 0],
-        ['wResp', week.resp ?? 0],
-        ['wAgend', week.agend ?? 0],
-        ['wSemresp', week.semresp ?? 0],
-        ['wPensando', week.pensando ?? 0],
-        ['wAguard', week.aguard ?? 0],
-        ['wNao', week.nao ?? 0],
-        ['wCagend', week.cagend ?? 0],
-        ['wCcanc', week.ccanc ?? 0],
-        ['wCreag', week.creag ?? 0],
-        ['wCreal', week.creal ?? 0]
-      ];
-      mapping.forEach(([id, value]) => {
-        const el = document.getElementById(id);
-        if (el) el.value = value;
-      });
-    }
-
-    function getWeekFormData() {
-      return {
-        data: document.getElementById('wData').value,
-        novos: num(document.getElementById('wNovos').value),
-        retomadas: num(document.getElementById('wRetomadas').value),
-        ativas: num(document.getElementById('wAtivas').value),
-        fu2: num(document.getElementById('wFu2').value),
-        fu3: num(document.getElementById('wFu3').value),
-        fu4: num(document.getElementById('wFu4').value),
-        fu5: num(document.getElementById('wFu5').value),
-        resp: num(document.getElementById('wResp').value),
-        agend: num(document.getElementById('wAgend').value),
-        semresp: num(document.getElementById('wSemresp').value),
-        pensando: num(document.getElementById('wPensando').value),
-        aguard: num(document.getElementById('wAguard').value),
-        nao: num(document.getElementById('wNao').value),
-        cagend: num(document.getElementById('wCagend').value),
-        ccanc: num(document.getElementById('wCcanc').value),
-        creag: num(document.getElementById('wCreag').value),
-        creal: num(document.getElementById('wCreal').value)
-      };
-    }
-
-    function clearWeekForm() {
-      const form = document.getElementById('weekForm');
-      form.reset();
-      delete form.dataset.editId;
-      document.getElementById('wData').value = '';
-      ['wNovos','wRetomadas','wAtivas','wFu2','wFu3','wFu4','wFu5','wResp','wAgend','wSemresp','wPensando','wAguard','wNao','wCagend','wCcanc','wCreag','wCreal']
-        .forEach(id => document.getElementById(id).value = 0);
-    }
-
-    function saveWeek(event) {
-      event.preventDefault();
-      const form = document.getElementById('weekForm');
-      const payload = getWeekFormData();
-      if (!payload.data) {
-        alert('Informe a data da semana.');
-        return;
-      }
-
-      const existing = state.weeks.find(item => item.data === payload.data);
-      if (existing && !form.dataset.editId) {
-        Object.assign(existing, payload);
-      } else {
-        const id = Number(form.dataset.editId || Date.now());
-        const item = { id, ...payload };
-        const index = state.weeks.findIndex(week => week.id === id);
-        if (index >= 0) state.weeks[index] = item;
-        else state.weeks.push(item);
-      }
-
-      saveState();
-      renderAll();
-      clearWeekForm();
-      syncToSheetDB();
-      showToast('Semana salva com sucesso.');
     }
 
     function handleEditDeleteWeek(event) {
@@ -923,6 +1058,7 @@
         form.dataset.editId = String(id);
         fillWeekForm(week);
         showTab('weeks');
+        return;
       }
 
       const deleteBtn = event.target.closest('[data-delete-week]');
@@ -931,7 +1067,6 @@
         state.weeks = state.weeks.filter(item => item.id !== id);
         saveState();
         renderAll();
-        syncToSheetDB();
         showToast('Semana removida.');
       }
     }
@@ -958,8 +1093,30 @@
       saveState();
       renderAll();
       document.getElementById('consultaForm').reset();
-      syncToSheetDB();
+      document.getElementById('cStatus').value = 'Agendada';
+      document.getElementById('cReagendar').value = 'Em contato';
       showToast('Consulta adicionada.');
+    }
+
+    function handleConsultaTableChange(event) {
+      const statusSelect = event.target.closest('[data-consulta-status]');
+      const reagendarSelect = event.target.closest('[data-consulta-reagendar]');
+      const dateInput = event.target.closest('[data-consulta-nova-data]');
+      if (!statusSelect && !reagendarSelect && !dateInput) return;
+
+      const id = Number((statusSelect || reagendarSelect || dateInput).dataset.consultaStatus || (reagendarSelect || statusSelect || dateInput).dataset.consultaReagendar || (dateInput && dateInput.dataset.consultaNovaData));
+      const item = state.consultas.find(entry => entry.id === id);
+      if (!item) return;
+
+      if (statusSelect) item.status = statusSelect.value;
+      if (reagendarSelect) {
+        item.reagendar = reagendarSelect.value;
+        if (item.reagendar !== 'Sim') item.novaData = '';
+      }
+      if (dateInput) item.novaData = dateInput.value;
+
+      saveState();
+      renderAll();
     }
 
     function handleConsultaTableClick(event) {
@@ -977,7 +1134,6 @@
         item.novaData = item.reagendar === 'Sim' ? (dateEl ? dateEl.value : '') : '';
         saveState();
         renderAll();
-        syncToSheetDB();
         showToast('Consulta atualizada.');
       }
 
@@ -987,19 +1143,23 @@
         state.consultas = state.consultas.filter(item => item.id !== id);
         saveState();
         renderAll();
-        syncToSheetDB();
         showToast('Consulta removida.');
       }
     }
 
     function applyTheme() {
-      if (state.theme) {
-        const root = document.documentElement;
-        root.style.setProperty('--g', state.theme.primary || '#1f7a6d');
-        root.style.setProperty('--b', state.theme.secondary || '#3d6fa8');
-        root.style.setProperty('--a', state.theme.accent || '#d99a1c');
-        root.style.setProperty('--bg', state.theme.bg || '#f4f6f3');
-      }
+      document.documentElement.style.setProperty('--g', state.theme.primary);
+      document.documentElement.style.setProperty('--b', state.theme.secondary);
+      document.documentElement.style.setProperty('--a', state.theme.accent);
+      document.documentElement.style.setProperty('--bg', state.theme.bg);
+      document.getElementById('configTitle').value = state.title;
+      document.getElementById('defaultPeriod').value = state.defaultPeriod;
+      document.getElementById('themePrimary').value = state.theme.primary;
+      document.getElementById('themeSecondary').value = state.theme.secondary;
+      document.getElementById('themeAccent').value = state.theme.accent;
+      document.getElementById('themeBg').value = state.theme.bg;
+      document.getElementById('sheetdbUrl').value = state.sheetdbUrl;
+      document.getElementById('sendInitials').value = String(state.sendInitials);
     }
 
     function renderConfig() {
@@ -1022,139 +1182,71 @@
         lastSyncLabel.textContent = formatDateTime(state.sync.lastSync);
         syncStatusLabel.textContent = state.sync.statusMessage || 'Sincronização falhou';
       }
-    }
 
-    async function fetchRemoteState() {
-      if (!state.sheetdbUrl) return;
-      try {
-        const res = await fetch(state.sheetdbUrl, { method: 'GET', headers: { 'Accept': 'application/json' } });
-        if (!res.ok) throw new Error('Remote fetch failed');
-        const rows = await res.json();
-        if (!Array.isArray(rows) || !rows.length) return;
-
-        const parsedWeeks = [];
-        const parsedConsultas = [];
-
-        rows.forEach(row => {
-          if (row.tipo === 'semana' || row.semana) {
-            parsedWeeks.push({
-              id: Number(row.id || Date.now() + Math.random()),
-              data: row.semana || row.data || '',
-              novos: Number(row.novos || 0),
-              retomadas: Number(row.antigas || row.retomadas || 0),
-              ativas: Number(row.ativas || 0),
-              fu2: Number(row.fu2 || 0),
-              fu3: Number(row.fu3 || 0),
-              fu4: Number(row.fu4 || 0),
-              fu5: Number(row.fu5 || 0),
-              resp: Number(row.resp || 0),
-              agend: Number(row.agend || 0),
-              semresp: Number(row.semresp || 0),
-              pensando: Number(row.pensando || 0),
-              aguard: Number(row.aguard || 0),
-              nao: Number(row.nao || 0),
-              cagend: Number(row.cagend || 0),
-              ccanc: Number(row.ccanc || 0),
-              creag: Number(row.creag || 0),
-              creal: Number(row.creal || 0)
-            });
-          }
-
-          if (row.tipo === 'consulta' || row.paciente) {
-            parsedConsultas.push({
-              id: Number(row.id || Date.now() + Math.random()),
-              paciente: row.paciente || '',
-              origem: row.origem || 'Novo lead',
-              agendadaEm: row.agendadaEm || '',
-              dataConsulta: row.dataConsulta || '',
-              status: row.status || 'Agendada',
-              reagendar: row.reagendar || 'Em contato',
-              novaData: row.novaData || ''
-            });
-          }
-        });
-
-        if (parsedWeeks.length) state.weeks = parsedWeeks;
-        if (parsedConsultas.length) state.consultas = parsedConsultas;
-        saveState();
-      } catch (error) {
-        console.warn('Não foi possível carregar dados da planilha:', error);
-      }
+      const configErrors = document.getElementById('configErrors');
+      const errors = getErrors();
+      configErrors.innerHTML = errors.length ? errors.map(error => `<div>• ${error}</div>`).join('') : 'Nenhum erro detectado.';
     }
 
     async function syncToSheetDB() {
+      state.sync.lastSync = new Date().toISOString();
       const payload = {
-        data: [
-          ...state.weeks.map(week => ({
-            tipo: 'semana',
-            semana: week.data,
-            novos: week.novos,
-            antigas: week.retomadas,
-            ativas: week.ativas,
-            fu2: week.fu2,
-            fu3: week.fu3,
-            fu4: week.fu4,
-            fu5: week.fu5,
-            resp: week.resp,
-            agend: week.agend,
-            semresp: week.semresp,
-            pensando: week.pensando,
-            aguard: week.aguard,
-            nao: week.nao,
-            cagend: week.cagend,
-            ccanc: week.ccanc,
-            creag: week.creag,
-            creal: week.creal,
-            updatedAt: new Date().toISOString()
-          })),
-          ...state.consultas.map(item => ({
-            tipo: 'consulta',
-            paciente: item.paciente,
-            origem: item.origem,
-            agendadaEm: item.agendadaEm,
-            dataConsulta: item.dataConsulta,
-            status: item.status,
-            reagendar: item.reagendar,
-            novaData: item.novaData,
-            updatedAt: new Date().toISOString()
-          }))
-        ]
+        data: state.weeks.map(week => ({
+          chave: `S-${week.data}`,
+          tipo: 'semana',
+          semana: week.data,
+          atualizacao_em: new Date().toISOString(),
+          novos: week.novos,
+          antigas: week.retomadas,
+          ativas: week.ativas,
+          fu2: week.fu2,
+          fu3: week.fu3,
+          fu4: week.fu4,
+          fu5: week.fu5,
+          resp: week.resp,
+          agend: week.agend,
+          semresp: week.semresp,
+          pensando: week.pensando,
+          aguard: week.aguard,
+          nao: week.nao,
+          cagend: week.cagend,
+          ccanc: week.ccanc,
+          creag: week.creag,
+          creal: week.creal
+        }))
       };
 
-      state.sync.lastSync = new Date().toISOString();
       try {
-        const res = await fetch(state.sheetdbUrl, {
+        const response = await fetch(state.sheetdbUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload.data)
+          body: JSON.stringify(payload)
         });
-
-        if (!res.ok) throw new Error('Erro de sync');
+        if (!response.ok) throw new Error('requisicao-falhou');
         state.sync.success = true;
         state.sync.statusMessage = 'Sincronização concluída com sucesso.';
-        showToast('Sincronização concluída.');
       } catch (error) {
         state.sync.success = false;
-        state.sync.statusMessage = 'Sincronização falhou. Dados salvos localmente.';
-        showToast('Falha na sincronização.');
+        state.sync.statusMessage = 'Sincronização falhou. Os dados continuam salvos localmente.';
       }
+
       saveState();
       renderConfig();
-    }
-
-    function handlePeriodChange(event) {
-      state.period = event.target.value;
-      saveState();
-      renderDashboardKpis();
-      renderCharts();
+      showToast(state.sync.success ? 'Sincronização concluída.' : 'Falha na sincronização.');
     }
 
     function applyConfigForm() {
       state.title = document.getElementById('configTitle').value.trim() || 'Painel KOMMO';
       state.defaultPeriod = document.getElementById('defaultPeriod').value;
       state.period = state.defaultPeriod;
-      state.sheetdbUrl = document.getElementById('sheetdbUrl').value || SHEETDB_URL_DEFAULT;
+      state.theme.primary = document.getElementById('themePrimary').value;
+      state.theme.secondary = document.getElementById('themeSecondary').value;
+      state.theme.accent = document.getElementById('themeAccent').value;
+      state.theme.bg = document.getElementById('themeBg').value;
+      state.sheetdbUrl = document.getElementById('sheetdbUrl').value || DEFAULT_SHEET_URL;
+      state.sendInitials = document.getElementById('sendInitials').value === 'true';
       saveState();
+      applyTheme();
       renderHeader();
       renderDashboardKpis();
       renderCharts();
@@ -1162,7 +1254,7 @@
     }
 
     function copySheetHeader() {
-      const header = 'tipo,semana,novos,antigas,ativas,fu2,fu3,fu4,fu5,resp,agend,semresp,pensando,aguard,nao,cagend,ccanc,creag,creal,paciente,origem,agendadaEm,dataConsulta,status,reagendar,novaData,updatedAt';
+      const header = 'chave,tipo,semana,atualizado_em,novos,antigas,ativas,fu2,fu3,fu4,fu5,resp,agend,semresp,pensando,aguard,nao,cagend,ccanc,creag,creal';
       navigator.clipboard.writeText(header).then(() => showToast('Cabeçalho copiado.'));
     }
 
@@ -1177,7 +1269,6 @@
         renderAll();
       } else {
         error.textContent = 'Senha incorreta. Tente novamente.';
-        document.getElementById('passwordInput').focus();
       }
     }
 
@@ -1187,6 +1278,7 @@
       renderWeeksTable();
       renderCharts();
       renderConfig();
+      renderFilters();
       renderConsultasTable();
       applyTheme();
       document.getElementById('periodFilter').value = state.period;
@@ -1203,33 +1295,46 @@
         if (previous) {
           fillWeekForm(previous);
           showToast('Valores da semana anterior copiados.');
-        } else showToast('Sem semana anterior.');
+        } else {
+          showToast('Sem semana anterior.');
+        }
       });
       document.getElementById('weeksTableBody').addEventListener('click', handleEditDeleteWeek);
       document.getElementById('consultaForm').addEventListener('submit', handleConsultaSubmit);
+      document.getElementById('consultasTableBody').addEventListener('change', handleConsultaTableChange);
       document.getElementById('consultasTableBody').addEventListener('click', handleConsultaTableClick);
-      document.getElementById('periodFilter').addEventListener('change', handlePeriodChange);
-      document.getElementById('manualSyncBtn').addEventListener('click', () => syncToSheetDB());
+      document.getElementById('periodFilter').addEventListener('change', (event) => {
+        state.period = event.target.value;
+        saveState();
+        renderDashboardKpis();
+        renderCharts();
+      });
+      document.getElementById('manualSyncBtn').addEventListener('click', syncToSheetDB);
       document.getElementById('saveConfigBtn').addEventListener('click', applyConfigForm);
       document.getElementById('copyColumnsBtn').addEventListener('click', copySheetHeader);
-      document.querySelectorAll('[data-tab]').forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
-    }
-
-    async function boot() {
-      state = loadState();
-      document.getElementById('periodFilter').value = state.period;
-      document.getElementById('defaultPeriod').value = state.defaultPeriod;
-      document.getElementById('sheetdbUrl').value = state.sheetdbUrl || SHEETDB_URL_DEFAULT;
-      renderAll();
-      showTab('dashboard');
-      clearWeekForm();
-      await fetchRemoteState();
-      renderAll();
-      setInterval(() => { fetchRemoteState(); renderAll(); }, SYNC_INTERVAL_MS);
+      document.getElementById('clearFilters').addEventListener('click', () => {
+        document.getElementById('filterSemana').value = 'all';
+        document.getElementById('filterDe').value = '';
+        document.getElementById('filterAte').value = '';
+        document.getElementById('filterOrigem').value = 'all';
+        document.getElementById('filterStatus').value = 'all';
+        renderConsultasTable();
+      });
+      ['filterSemana','filterDe','filterAte','filterOrigem','filterStatus'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', renderConsultasTable);
+        el.addEventListener('input', renderConsultasTable);
+      });
+      document.querySelectorAll('[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => showTab(btn.dataset.tab));
+      });
     }
 
     initEvents();
-    boot();
+    renderAll();
+    clearWeekForm();
+    showTab('dashboard');
   </script>
 </body>
 </html>
