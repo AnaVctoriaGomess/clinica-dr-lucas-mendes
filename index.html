@@ -30,26 +30,12 @@
     h1 { margin:0; font-size:22px; }
     #st { margin-top:2px; font-size:12px; color:var(--mut); }
     #st::before { content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--g); margin-right:6px; vertical-align:1px; }
-    nav {
-      display:flex; gap:6px; flex-wrap:wrap; background:var(--bg); border:1px solid var(--line);
-      border-radius:12px; padding:4px; max-width:520px; width:100%; justify-content:center;
-    }
+    nav { display:flex; gap:6px; flex-wrap:wrap; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:4px; }
     nav button {
-      flex:1 1 0; min-width:120px; border:1px solid transparent; border-radius:10px; background:transparent;
-      color:var(--mut); font-weight:700; padding:9px 14px; cursor:pointer; transition:all .2s ease;
-      letter-spacing:0.01em;
+      border:0; border-radius:10px; background:transparent; color:var(--mut); font-weight:600;
+      padding:8px 14px; cursor:pointer; transition:.2s ease;
     }
-    nav button:hover:not(.active) {
-      background:rgba(31,122,109,.06); color:var(--ink); transform:translateY(-1px);
-    }
-    nav button.active {
-      background:linear-gradient(135deg, var(--g) 0%, #246d62 100%);
-      color:white; box-shadow:0 8px 18px -12px rgba(31,122,109,.9), inset 0 1px 0 rgba(255,255,255,.2);
-      border-color:rgba(31,122,109,.35);
-    }
-    nav button:focus-visible {
-      outline:2px solid rgba(31,122,109,.6); outline-offset:2px;
-    }
+    nav button.active { background:var(--g); color:white; box-shadow:0 1px 3px rgba(0,0,0,.18); }
     main { max-width:1180px; margin:0 auto; padding:18px 22px 60px; }
     .section { display:none; }
     .section.active { display:block; }
@@ -119,10 +105,6 @@
     .lock-box button { width:100%; margin-top:4px; }
     .error-message { min-height:18px; color:var(--danger); font-size:12px; font-weight:600; }
     @media (max-width: 640px) {
-      header { padding:10px 14px; }
-      .header-inner { flex-direction:column; align-items:stretch; }
-      nav { max-width:none; width:100%; }
-      nav button { flex:1 1 calc(50% - 4px); min-width:0; }
       main { padding:14px 14px 32px; }
       .card { padding:14px; }
       th, td { white-space:normal; }
@@ -148,7 +130,8 @@
     <div class="header-inner">
       <div>
         <h1 id="ttl">Painel KOMMO</h1>
-        <div id="st">Sistema ativo</div>
+        <div id="st">Dados salvos no Sheets</div>
+        <div id="sheetStatusText" class="small">Sincronização online ativa</div>
       </div>
       <nav id="nav" aria-label="Menu principal">
         <button type="button" class="active" data-tab="dashboard">Painel</button>
@@ -360,6 +343,9 @@
 
     function saveState() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (navigator.onLine) {
+        syncToSheetDB();
+      }
     }
 
     function showTab(tabName) {
@@ -451,7 +437,9 @@
       const lastSyncLabel = document.getElementById('lastSyncLabel');
       const syncStatusLabel = document.getElementById('syncStatusLabel');
       const nextSyncLabel = document.getElementById('nextSyncLabel');
+      const sheetStatusText = document.getElementById('sheetStatusText');
       nextSyncLabel.textContent = 'Segunda a sexta, às 19:00';
+      sheetStatusText.textContent = state.sync.success ? 'Sincronização online ativa' : 'Sincronização online pendente';
 
       if (!state.sync.lastSync) {
         badge.textContent = 'Pendente';
