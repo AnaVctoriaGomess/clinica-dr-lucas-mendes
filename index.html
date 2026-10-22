@@ -1,389 +1,630 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Painel KOMMO – Follow-up e Agenda</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;700&display=swap">
-<style>
-:root{--bg:#f4f6f3;--card:#fff;--ink:#16302c;--mut:#5f7571;--line:#dbe3df;--g:#1f7a6d;--a:#d99a1c;--b:#3d6fa8;--r:#c2455a;--k:#9aa8a4;--p:#7a5aa6;color-scheme:light;box-sizing:border-box;padding-top:0} 
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101a18;--card:#18262389;--card:#182623;--ink:#e6efec;--mut:#9bb0ab;--line:#2a3d39;--g:#4cc2ae;--a:#eab94a;--b:#74a3dd;--r:#ec7a8d;--k:#6f817d;--p:#b095dc}}
-:root[data-theme="dark"]{--bg:#101a18;--card:#182623;--ink:#e6efec;--mut:#9bb0ab;--line:#2a3d39;--g:#4cc2ae;--a:#eab94a;--b:#74a3dd;--r:#ec7a8d;--k:#6f817d;--p:#b095dc;color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Figtree,system-ui,sans-serif}
-header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 22px 6px;max-width:1180px;margin:auto}
-h1{font-size:22px;margin:0}
-h2{font-size:16px;margin:0 0 10px}
-nav{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:4px}
-nav button{border:0;background:none;color:var(--mut);font:inherit;font-weight:500;padding:7px 14px;border-radius:7px;cursor:pointer}
-nav button.on{background:var(--g);color:#fff}
-main{max-width:1180px;margin:auto;padding:12px 22px 40px}
-.grid{display:grid;gap:14px}
-.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:14px}
-.charts{grid-template-columns:repeat(auto-fit,minmax(340px,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
-.kpi b{display:block;font-size:30px;line-height:1.1;margin-top:4px}
-.kpi span{color:var(--mut);font-size:13px}
-.kpi small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
-.lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut);margin-bottom:6px}
-.lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
-svg{width:100%;height:auto;display:block}
-svg text{fill:var(--mut);font-size:10px;font-family:inherit}
-.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;padding:12px 16px;margin-bottom:14px}
-.ins p{margin:3px 0}
-.wrap{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:13px}
-th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-th{color:var(--mut);font-weight:500}
-input,select,textarea,button.b{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:7px 9px}
-input[type=number]{width:100%}
-button.b{cursor:pointer;background:var(--g);color:#fff;border-color:var(--g);font-weight:500}
-button.b.s{background:none;color:var(--ink);border-color:var(--line)}
-button.x{border:0;background:none;color:var(--r);cursor:pointer;font-size:16px}
-:focus-visible{outline:2px solid var(--b);outline-offset:2px}
-.f{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
-.f label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:12px}
-.tag{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--line)}
-.note{color:var(--mut);font-size:13px}
-.hide{display:none}
-#msg{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
-#msg.on{opacity:1}
-body{font-feature-settings:"tnum";-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;max-width:none;margin:0;padding:12px max(22px,calc((100% - 1180px)/2));background:var(--card);border-bottom:1px solid var(--line)}
-h1{font-size:19px;font-weight:700;letter-spacing:-.01em}
-#st{font-size:12px;margin-top:1px}
-#st::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--g);margin-right:6px;vertical-align:1px}
-nav{background:var(--bg);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
-nav button{font-size:13.5px;padding:7px 13px;border-radius:8px;transition:background .15s,color .15s}
-nav button:hover:not(.on){background:var(--line);color:var(--ink)}
-nav button.on{box-shadow:0 1px 3px rgba(0,0,0,.2)}
-main{padding-top:20px}
-h2{font-size:15px;font-weight:600;letter-spacing:-.005em;margin-bottom:12px}
-.card{border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(16,40,36,.05),0 6px 20px -10px rgba(16,40,36,.12)}
-.kpis{grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px}
-.kpi{position:relative;overflow:hidden;padding:16px 16px 14px 19px}
-.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--g)}
-.kpi span{display:block;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
-.kpi b{font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
-.kpi small{line-height:1.35;margin-top:4px}
-.ins{border-radius:12px;background:color-mix(in srgb,var(--a) 9%,var(--card));border-color:color-mix(in srgb,var(--a) 30%,var(--line));font-size:14px}
-.lg{font-size:12px;margin-bottom:8px}
-svg text{font-size:10.5px}
-svg rect{transition:opacity .15s}svg rect:hover{opacity:.82}
-th{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;background:var(--bg);position:sticky;top:0}
-th:first-child{border-radius:8px 0 0 8px}th:last-child{border-radius:0 8px 8px 0}
-td{padding:9px 8px}
-tr:hover td{background:color-mix(in srgb,var(--g) 6%,transparent)}
-input,select,textarea,button.b{border-radius:9px;transition:border-color .15s,box-shadow .15s,background .15s,filter .15s}
-input,select,textarea{background:var(--card);min-height:36px}
-input:hover,select:hover,textarea:hover{border-color:var(--k)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px color-mix(in srgb,var(--g) 22%,transparent)}
-button.b{padding:8px 15px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
-button.b:hover{filter:brightness(1.07)}
-button.b.s{box-shadow:none}button.b.s:hover{background:var(--bg);filter:none;border-color:var(--k)}
-button.b:disabled{opacity:.55;cursor:wait}
-button.x{border-radius:6px;padding:2px 7px;transition:background .15s}button.x:hover{background:color-mix(in srgb,var(--r) 12%,transparent)}
-.f label{font-weight:500}
-.tag{font-weight:500}
-#msg{border-radius:10px;box-shadow:0 8px 24px -8px rgba(0,0,0,.4);font-weight:500}
-@media (max-width:640px){header{padding:10px 14px}main{padding:14px 14px 32px}.card{padding:14px}.kpi b{font-size:26px}.charts{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Painel KOMMO – Follow-up e Agenda</title>
+  <style>
+    :root {
+      --bg:#f4f6f3; --card:#ffffff; --ink:#16302c; --mut:#5f7571; --line:#dbe3df;
+      --g:#1f7a6d; --a:#d99a1c; --b:#3d6fa8; --r:#c2455a; --k:#9aa8a4; --p:#7a5aa6;
+      --success:#1f8a5e; --warning:#c98a1b; --danger:#d14a5d; --shadow:rgba(16,40,36,.08);
+      color-scheme: light;
+      font-family: "Figtree", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-#lockScreen{position:fixed;inset:0;z-index:30;background:linear-gradient(135deg,#edf5f2,#f7faf9);display:grid;place-items:center;padding:24px;}
-#lockScreen.hidden{display:none}
-.lockBox{width:min(420px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 18px 40px rgba(0,0,0,.08);padding:28px 22px}
-.lockBox h2{text-align:center;margin:0 0 12px;font-size:28px}
-.lockBox p{margin:0 0 18px;color:var(--mut);text-align:center}
-.lockBox form{display:grid;gap:12px}
-.lockBox input{width:100%;min-height:42px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink)}
-.lockBox button{width:100%;padding:11px 14px;border:0;border-radius:10px;background:var(--g);color:#fff;font:inherit;font-weight:700;cursor:pointer}
-.lockError{min-height:18px;color:var(--r);font-size:13px;margin-top:4px}
-#appMain.hidden{display:none}
-.syncCard .statusLine{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);background:var(--bg);border-radius:10px;width:max-content}
-.syncCard .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-.dot-ok{background:var(--g)}
-.dot-fail{background:var(--r)}
-.dot-neutral{background:var(--a)}
-.small{font-size:12px;color:var(--mut)}
-</style>
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 "Figtree", sans-serif; }
+    button, input, select, textarea { font:inherit; }
+    .hidden { display:none !important; }
+    .sr-only { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; }
+
+    header {
+      position:sticky; top:0; z-index:30; background:rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px); border-bottom:1px solid var(--line);
+      padding:12px max(22px, calc((100% - 1180px)/2));
+    }
+    .header-inner {
+      max-width:1180px; margin:0 auto; display:flex; justify-content:space-between; align-items:center; gap:12px;
+      flex-wrap:wrap;
+    }
+    h1 { margin:0; font-size:22px; }
+    #st { margin-top:2px; font-size:12px; color:var(--mut); }
+    #st::before { content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--g); margin-right:6px; vertical-align:1px; }
+    nav { display:flex; gap:6px; flex-wrap:wrap; background:var(--bg); border:1px solid var(--line); border-radius:12px; padding:4px; }
+    nav button {
+      border:0; border-radius:10px; background:transparent; color:var(--mut); font-weight:600;
+      padding:8px 14px; cursor:pointer; transition:.2s ease;
+    }
+    nav button.active { background:var(--g); color:white; box-shadow:0 1px 3px rgba(0,0,0,.18); }
+
+    main { max-width:1180px; margin:0 auto; padding:18px 22px 60px; }
+    .section { display:none; }
+    .section.active { display:block; }
+
+    .grid { display:grid; gap:14px; }
+    .row { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; }
+    .card {
+      background:var(--card); border:1px solid var(--line); border-radius:14px;
+      padding:18px; box-shadow:0 1px 2px rgba(16,40,36,.04), 0 6px 20px -12px rgba(16,40,36,.12);
+    }
+    .kpis { grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-bottom:14px; }
+    .kpi { position:relative; overflow:hidden; padding:16px 16px 14px 18px; }
+    .kpi::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--g); }
+    .kpi strong { display:block; font-size:30px; margin-top:6px; }
+    .kpi span { display:block; font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--mut); }
+    .kpi small { display:block; margin-top:4px; color:var(--mut); }
+
+    .toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    h2 { font-size:16px; margin:0 0 10px; }
+    .tag { display:inline-flex; align-items:center; gap:6px; padding:5px 10px; background:var(--line); border-radius:999px; font-size:12px; font-weight:600; }
+    .tag.success { background:rgba(31,138,94,.12); color:var(--success); }
+    .tag.warning { background:rgba(201,138,27,.12); color:var(--warning); }
+    .tag.danger { background:rgba(209,74,93,.12); color:var(--danger); }
+
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th, td { padding:10px 8px; border-bottom:1px solid var(--line); text-align:left; white-space:nowrap; }
+    th { color:var(--mut); font-size:11.5px; text-transform:uppercase; letter-spacing:0.04em; background:var(--bg); }
+    tr:hover td { background:rgba(31,122,109,.04); }
+    .actions { display:flex; gap:6px; flex-wrap:wrap; }
+    button.btn, .btn-like {
+      border:1px solid var(--line); border-radius:9px; background:var(--g); color:#fff; padding:8px 13px; cursor:pointer; font-weight:600;
+    }
+    .btn.secondary { background:transparent; color:var(--ink); border-color:var(--line); }
+    .btn.warn { background:var(--a); border-color:var(--a); }
+    .btn.danger { background:var(--r); border-color:var(--r); }
+    .btn.ghost { background:transparent; color:var(--ink); border-color:var(--line); }
+
+    .f { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:10px; }
+    label { display:flex; flex-direction:column; gap:5px; font-size:12px; color:var(--mut); font-weight:600; }
+    input, select, textarea {
+      width:100%; min-height:38px; background:var(--card); border:1px solid var(--line); border-radius:9px; padding:8px 10px; color:var(--ink);
+    }
+    textarea { min-height:100px; resize:vertical; }
+    .form-actions { margin-top:12px; }
+
+    .info-box {
+      border-left:4px solid var(--a); background:rgba(217,154,28,.08); border-radius:12px; padding:12px 14px; color:var(--ink);
+      margin-bottom:14px;
+    }
+    .status-box {
+      display:grid; gap:10px; padding:18px; border:1px solid var(--line); border-radius:14px; background:linear-gradient(180deg, rgba(31,122,109,.04), rgba(255,255,255,0.4));
+    }
+    .status-row { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    .sync-badge { font-size:12px; font-weight:700; padding:5px 10px; border-radius:999px; }
+    .sync-badge.success { background:rgba(31,138,94,.12); color:var(--success); }
+    .sync-badge.error { background:rgba(209,74,93,.12); color:var(--danger); }
+    .sync-badge.pending { background:rgba(217,154,28,.12); color:var(--warning); }
+
+    .lock-screen {
+      position:fixed; inset:0; background:linear-gradient(135deg,#edf5f2,#f7faf9); display:grid; place-items:center; z-index:999;
+      padding:24px;
+    }
+    .lock-screen.hidden { display:none; }
+    .lock-box {
+      width:min(420px,100%); background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:0 18px 40px rgba(0,0,0,.08);
+      padding:28px 22px;
+    }
+    .lock-box h2 { text-align:center; font-size:28px; margin:0 0 12px; }
+    .lock-box p { margin:0 0 18px; color:var(--mut); text-align:center; }
+    .lock-box form { display:grid; gap:12px; }
+    .lock-box input {
+      background:#f7faf9; border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:16px;
+    }
+    .lock-box button { width:100%; margin-top:4px; }
+    .error-message { min-height:18px; color:var(--danger); font-size:12px; font-weight:600; }
+
+    @media (max-width: 640px) {
+      main { padding:14px 14px 32px; }
+      .card { padding:14px; }
+      th, td { white-space:normal; }
+      .toolbar { align-items:flex-start; }
+    }
+  </style>
 </head>
 <body>
-<div id="lockScreen">
-  <div class="lockBox">
-    <h2>Acesso restrito</h2>
-    <p>Digite a senha para visualizar os dados.</p>
-    <form id="unlockForm">
-      <input id="unlockPassword" type="password" placeholder="Senha" autocomplete="off">
-      <button type="submit">Entrar</button>
-    </form>
-    <div id="lockError" class="lockError"></div>
-  </div>
-</div>
-<div id="appMain" class="hidden">
-<header>
-  <div><h1 id="ttl">Painel KOMMO</h1><div class="note" id="st">Carregando…</div></div>
-  <nav id="nav"><button data-t="dash" class="on">Painel</button><button data-t="sem">Lançar semana</button><button data-t="cons">Consultas</button><button data-t="cfg">Configuração</button></nav>
-</header>
-<main>
-<section id="dash"></section>
-
-<section id="sem" class="hide">
-  <div class="card">
-    <h2>Lançamento semanal</h2>
-    <p class="note">Escolha a data da semana (use a mesma data de início que você usava na planilha). Se a semana já existe, os valores são carregados para edição. Os campos marcados com "*" são obrigatórios.</p>
-    <div class="row" style="margin:0 0 12px"><label class="note">Data da semana<br><input type="date" id="wd"></label><button class="b s" id="cp">Copiar valores da semana anterior</button></div>
-    <div class="f" id="wf"></div>
-    <div class="row"><button class="b" id="ws">Salvar semana</button><button class="b s" id="wdel">Excluir esta semana</button></div>
-  </div>
-  <div class="card" style="margin-top:14px">
-    <h2>Importar da planilha</h2>
-    <p class="note">Copie as linhas de dados da planilha (sem o cabeçalho, da coluna Data até Consultas realizadas) e cole aqui.</p>
-    <textarea id="paste" rows="4" style="width:100%" placeholder="23/09/2026&#9;321&#9;64&#9;380 …"></textarea>
-    <div class="row"><button class="b" id="imp">Importar</button><button class="b s" id="seed">Carregar as 4 semanas atuais da planilha</button></div>
-  </div>
-  <div class="card wrap" style="margin-top:14px"><h2>Semanas lançadas</h2><div id="wl"></div></div>
-</section>
-
-<section id="cons" class="hide">
-  <div class="card">
-    <h2>Registrar consulta agendada</h2>
-    <div class="f">
-      <label>Paciente<input id="cp_n" placeholder="Nome ou iniciais"></label>
-      <label>Veio de<select id="cp_o"></select></label>
-      <label>Agendada em<input type="date" id="cp_s"></label>
-      <label>Data da consulta<input type="date" id="cp_c"></label>
+  <div id="lockScreen" class="lock-screen">
+    <div class="lock-box">
+      <h2>Área protegida</h2>
+      <p>Digite a senha para acessar o painel.</p>
+      <form id="loginForm">
+        <label class="sr-only" for="passwordInput">Senha</label>
+        <input id="passwordInput" type="password" placeholder="Senha" autocomplete="current-password" />
+        <div id="loginError" class="error-message" aria-live="polite"></div>
+        <button type="submit" class="btn">Entrar</button>
+      </form>
     </div>
-    <div class="row"><button class="b" id="cp_add">Adicionar consulta</button></div>
   </div>
-  <div class="card" style="margin-top:14px"><h2>Colar dados do paciente</h2><p class="note">Alternativa rápida: cole os dados e eles são preenchidos e salvos sozinhos como consultas. Pode colar texto de conversas, mensagens ou agendamentos.</p><textarea id="ps_t" rows="3" style="width:100%"></textarea><div class="row"><button class="b" id="ps_b">Importar</button></div></div>
-  <div class="card wrap" style="margin-top:14px">
-    <h2>Consultas registradas</h2>
-    <p class="note">Mude o status quando a consulta acontecer, for cancelada ou reagendada. Em cancelamentos e reagendamentos, informe se o paciente foi reagendado.</p>
-    <div id="al"></div>
-  </div>
-</section>
-<section id="cfg" class="hide"></section>
-</main>
-<div id="msg"></div>
 
-<script>
-const APP_PASSWORD='Lucas830';
-const LOCK_STORAGE_KEY='clinic_lock_v1';
-const FIELDS=[['novos','Novos leads'],['antigas','Conversas antigas retomadas'],['ativas','Total de conversas ativas'],['fu2','Contatados no follow-up 2'],['fu3','Contatados no follow-up 3'],['fu4','Contatados no follow-up 4'],['fu5','Contatados no follow-up 5'],['resp','Respostas do follow-up'],['agend','Agendamentos do follow-up'],['creal','Consultas realizadas'],['ccanc','Consultas canceladas'],['creag','Consultas reagendadas'],['cagend','Consultas agendadas'],['semresp','Sem resposta'],['pensando','Pensando ou pesquisando'],['aguard','Aguardando cadastro'],['nao','Não respondeu'],['nao2','Não respondeu'],['total','Total']];
-const SEED={"2026-09-23":[321,64,380,0,0,0,0,0,0,326,25,8,5,40,0,0,1],"2026-09-26":[100,2,473,346,0,0,0,20,3,326,33,3,9,13,6,2,5],"2026-10-03":[52,2,513,33,375,0,0,25,6,350,31,0,14,7,4,0,11],"2026-10-10":[82,9,561,92,140,35,10,28,6,380,28,0,18,9,6,0,16]};
-const ORIG={novo:'Novo lead',c2:'2º contato (FU 2)',c3:'3º contato (FU 3)',c4:'4º contato (FU 4)',c5:'5º contato (FU 5)',sem:'Sem retorno no follow-up'};
-const STAT={agendada:'Agendada',realizada:'Realizada',cancelada:'Cancelada',reagendada:'Reagendada'};
-const REG={'':'—',sim:'Sim, reagendado',contato:'Em contato',nao:'Não conseguiu'};
-let db=null,weeks={},appts={},cur='dash',cfg={},selWeek='',pFrom='',pTo='',pAuto=true,pSel='all',aFilt={week:'',from:'',to:'',origin:'',status:''};
-const BASE=FIELDS.map(f=>f[1]),ORIG0={...ORIG};
-const $=s=>document.querySelector(s);
-const esc=s=>String(s??'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const fd=iso=>iso?iso.split('-').reverse().slice(0,2).join('/'):'—';
-const fdf=iso=>iso?iso.split('-').reverse().join('/'):'—';
-const pct=(a,b)=>b?(a/b*100):0;
-const pf=v=>v.toFixed(1).replace('.',',')+'%';
-const today=()=>new Date().toISOString().slice(0,10);
-function toast(t){const m=$('#msg');m.textContent=t;m.classList.add('on');setTimeout(()=>m.classList.remove('on'),1800)}
+  <header>
+    <div class="header-inner">
+      <div>
+        <h1 id="ttl">Painel KOMMO</h1>
+        <div id="st">Sistema ativo</div>
+      </div>
+      <nav id="nav" aria-label="Menu principal">
+        <button type="button" class="active" data-tab="dashboard">Painel</button>
+        <button type="button" data-tab="weeks">Lançar semana</button>
+        <button type="button" data-tab="consultas">Consultas</button>
+        <button type="button" data-tab="config">Configuração</button>
+      </nav>
+    </div>
+  </header>
 
-function renderLock(){
-  const unlocked = localStorage.getItem(LOCK_STORAGE_KEY) === '1' || sessionStorage.getItem(LOCK_STORAGE_KEY) === '1';
-  const lock = document.getElementById('lockScreen');
-  const app = document.getElementById('appMain');
-  if (unlocked) {
-    lock.classList.add('hidden');
-    app.classList.remove('hidden');
-  } else {
-    lock.classList.remove('hidden');
-    app.classList.add('hidden');
-  }
-}
+  <main>
+    <section id="dashboard" class="section active">
+      <div class="grid kpis">
+        <div class="card kpi">
+          <span>Consultas hoje</span>
+          <strong id="kpiHoje">0</strong>
+          <small>Sem pendências críticas.</small>
+        </div>
+        <div class="card kpi">
+          <span>Reagendadas</span>
+          <strong id="kpiReagendadas">0</strong>
+          <small>Até a próxima semana.</small>
+        </div>
+        <div class="card kpi">
+          <span>Semanas lançadas</span>
+          <strong id="kpiSemanas">0</strong>
+          <small>Registros validados.</small>
+        </div>
+        <div class="card kpi">
+          <span>Erros</span>
+          <strong id="kpiErros">0</strong>
+          <small>Verifique antes de sincronizar.</small>
+        </div>
+      </div>
 
-async function saveDoc(path,data){
-  const [col,id]=path.split('/');const store=col==='weeks'?weeks:appts;
-  store[id]=data;render();
-  if(db){try{await db.doc(path).set(data)}catch(e){toast('Não foi possível salvar ('+(e.code||'erro')+')')}}
-}
-async function delDoc(path){
-  const [col,id]=path.split('/');delete (col==='weeks'?weeks:appts)[id];render();
-  if(db){try{await db.doc(path).delete()}catch(e){toast('Não foi possível excluir')}}
-}
-async function init(){
-  try{db=await window.claude.use('db')}catch(e){db=null}
-  if(!db){$('#st').textContent='Modo temporário: abra pelo claude.ai para salvar os dados.';render();return}
-  $('#st').textContent='Sincronizado em tempo real';
-  try{const u=await window.claude.use('user');if(u&&!u.canEdit()){['sem','cfg'].forEach(t=>{const b=document.querySelector('#nav [data-t="'+t+'"]');if(b)b.classList.add('hide')})}}catch(e){}
-  const sub=(c,store)=>db.collection(c).onSnapshot(s=>{Object.keys(store).forEach(k=>delete store[k]);s.docs.forEach(d=>{store[d.id]=d.data()});render()},()=>{$('#st').textContent='Sem conexão com o banco'});
-  sub('weeks',weeks);sub('appts',appts);
-  db.collection('config').onSnapshot(s=>{const d=s.docs.find(x=>x.id==='main');cfg=d?d.data():{};applyCfg();render()},()=>{});
-}
+      <div class="card">
+        <div class="toolbar">
+          <h2>Resumo operacional</h2>
+          <span id="summaryBadge" class="tag success">Tudo ok</span>
+        </div>
+        <div id="errorSummary" class="info-box"></div>
+      </div>
+    </section>
 
-const SNAP=['semresp','pensando','aguard','nao'];
-function lab(k){return (cfg.labels&&cfg.labels[k])||BASE[FIELDS.findIndex(f=>f[0]===k)]}
-function applyCfg(){applyTheme();if(!applyCfg.d&&cfg.defP){pSel=cfg.defP;applyCfg.d=1}
-  const t=cfg.title||'Painel KOMMO';$('#ttl').textContent=t;document.title=t;
-  Object.keys(ORIG).forEach(k=>delete ORIG[k]);
-  const os=cfg.origins&&cfg.origins.length?cfg.origins:Object.entries(ORIG0).map(([k,n])=>({k,n}));
-  os.forEach(o=>{ORIG[o.k]=o.n});
-  const sel=$('#cp_o')?.value;$('#cp_o').innerHTML=opts(ORIG,ORIG[sel]?sel:Object.keys(ORIG)[0]);
-  buildForm();
-}
-async function saveCfg(p){cfg={...cfg,...p};applyCfg();render();if(db){try{await db.doc('config/main').set(cfg)}catch(e){toast('Não foi possível salvar a configuração')}}}
-function renderCfg(){
-  const syncState = cfg.sync || {lastSync:'',success:null,note:'Sincronização ainda não executada.'};
-  const syncDot = syncState.success===true ? 'dot-ok' : syncState.success===false ? 'dot-fail' : 'dot-neutral';
-  const syncText = syncState.success===true ? 'Sincronizado com sucesso' : syncState.success===false ? 'Falha na sincronização' : 'Não executado';
-  const errorList = [];
-  if(!Object.keys(weeks).length) errorList.push('Ainda não existem semanas lançadas.');
-  if(Object.values(appts).some(a=>a.status==='agendada'&&!a.consult)) errorList.push('Há consultas agendadas sem data de consulta definida.');
-  if(!syncState.lastSync && Object.keys(weeks).length) errorList.push('A sincronização com o SheetD ainda não foi registrada.');
-  $('#cfg').innerHTML=`<div class="card syncCard"><h2>Sincronização SheetD</h2><div class="statusLine"><span class="dot ${syncDot}"></span><span>${syncText}</span></div><p class="small">Última sincronização: ${syncState.lastSync ? new Date(syncState.lastSync).toLocaleString('pt-BR') : 'nunca'}<br>${syncState.note || 'Sem detalhes.'}</p><div class="row"><button class="b" id="sync_retry">Nova tentativa</button></div></div>
-  <div class="card" style="margin-top:14px"><h2>Nome do painel</h2><input id="c_t" value="${esc(cfg.title||'Painel KOMMO')}" style="width:100%;max-width:420px"></div>
-  <div class="card" style="margin-top:14px"><h2>Nomes dos campos semanais</h2><p class="note">Renomeie como preferir. Os números já lançados não mudam. Campos “total atual” guardam o total por semana e podem ser alterados sem perder o histórico.</p>${FIELDS.map(([k,l])=>`<label class="note" style="display:block;margin-bottom:8px">${l}<br><input data-lk="${k}" value="${esc(lab(k))}" style="width:100%;max-width:420px"></label>`).join('')}</div>
-  <div class="card" style="margin-top:14px"><h2>Origem das consultas</h2><p class="note">Opções do campo “Veio de”. Uma origem só pode ser removida se nenhuma consulta a usar.</p>${Object.entries(ORIG).map(([k,v])=>`<label class="note" style="display:block;margin-bottom:8px">${v}<br><input data-ok="${k}" value="${esc(v)}" style="width:100%;max-width:420px"></label>`).join('')}<div class="row"><button class="b s" id="c_oa">Adicionar origem</button></div></div>
-  ${viewHtml()}${themeHtml()}${metricHtml()}${teamHtml()}<div class="card" style="margin-top:14px"><h2>Possíveis erros</h2>${errorList.length?errorList.map(e=>`<p class="note">• ${e}</p>`).join(''):'<p class="note">• Nenhum erro detectado.</p>'}</div><div class="card" style="margin-top:14px"><h2>Backup dos dados</h2><p class="note">Baixe em CSV para abrir no Excel ou no Google Sheets.</p><div class="row"><button class="b s" id="c_ew">Exportar semanas</button><button class="b s" id="c_ea">Exportar consultas</button></div></div>`;
-}
-async function exp(name,head,rows){
-  const q=v=> '"'+String(v??'').replace(/"/g,'""')+'"';
-  const txt='\ufeff'+[head,...rows].map(r=>r.map(q).join(';')).join('\r\n');
-  try{const d=await window.claude.use('downloads');if(!d)return toast('Download indisponível neste modo');await d.save({filename:name,data:txt})}catch(e){}}
+    <section id="weeks" class="section">
+      <div class="card">
+        <div class="toolbar">
+          <h2>Lançar semana</h2>
+          <button id="addWeekBtn" type="button" class="btn secondary">+ Nova semana</button>
+        </div>
 
-function applyTheme(){const t=cfg.theme||{},r=document.documentElement;['g','b','a','bg'].forEach(k=>t[k]?r.style.setProperty('--'+k,t[k]):r.style.removeProperty('--'+k));if(t.mode==='light'||t.mode==='dark')r.setAttribute('data-theme',t.mode);else r.removeAttribute('data-theme');}
-function themeHtml(){const t=cfg.theme||{},c=(k,l,d)=>`<label>${l}<input type="color" data-tk="${k}" value="${t[k]||d}"></label>`;
-  return `<div class="card" style="margin-top:14px"><h2>Tema</h2><div class="f"><label>Modo<select data-tk="mode">${[['auto','Automático'],['light','Claro'],['dark','Escuro']].map(([v,l])=>`<option value="${v}"${(t.mode||'auto')===v?' selected':''}>${l}</option>`).join('')}</select></label>${c('g','Verde','1f7a6d')}${c('a','Amarelo','d99a1c')}${c('b','Azul','3d6fa8')}${c('bg','Fundo','f4f6f3')}</div></div>`}
-function metricHtml(){const ms=cfg.metrics||[],ow={kpi:'card no quadro geral',line:'gráfico de linha',bar:'gráfico de barras'};
-  return `<div class="card" style="margin-top:14px"><h2>Métricas e cards personalizados</h2><p class="note">Descreva o que quer ver e onde. A IA monta a fórmula com os campos lançados e você pode revisar antes de ativar.</p><div id="m_pv" class="hide"><label class="note">Título<br><input id="m_t"></label><label class="note">Fórmula<br><input id="m_e"></label><label class="note">Formato<select id="m_f"><option value="num">Número</option><option value="pct">Percentual</option></select></label><label class="note">Onde<select id="m_w2"><option value="kpi">Card geral</option><option value="line">Gráfico</option><option value="bar">Barra</option></select></label><div class="row"><button class="b s" id="m_pre">Prévia</button><button class="b s" id="m_add">Adicionar</button></div><p id="m_r" class="note"></p></div><div class="row"><button class="b s" id="m_man">Criar manualmente</button></div>${ms.length?`<div style="margin-top:12px"><table><tr><th>Título</th><th>Formato</th><th>Local</th><th></th></tr>${ms.map((m,i)=>`<tr><td>${esc(m.title)}</td><td>${m.fmt==='pct'?'Percentual':'Número'}</td><td>${ow[m.where]||m.where}</td><td><button class="b s" data-md="${i}">Excluir</button></td></tr>`).join('')}</table></div>`:''}</div>`}
-const KL=['Total de conversas ativas','Taxa Geral de Agendamento (%)','Conversão do FU em Agendamento (%)','Novos leads','Consultas agendadas','Mensagens de follow-up','Taxa de resposta do FU','Comparecimento (check-in)','Cancelamento','Reagendamento'];
-function viewHtml(){const h=cfg.hide||{},go=cfg.goals||{},ck=(p,l)=>`<label style="flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:13px"><input type="checkbox" style="width:15px;height:15px" data-hk="${p}" ${h[p]?'':'checked'}>${l}</label>`;
-  return `<div class="card" style="margin-top:14px"><h2>Exibição do painel</h2><p class="note">Marque o que aparece. Os cards e gráficos desmarcados ficam ocultos, sem apagar dados.</p><div class="row">${ck('k:Total de conversas ativas','Total de conversas ativas')} ${ck('k:Taxa Geral de Agendamento (%)','Taxa de agendamento')} ${ck('k:Conversão do FU em Agendamento (%)','Conversão do FU')}</div></div>`}
-function teamHtml(){const T=cfg.team||[],L='https://claude.ai/artifact/J5Mfqrp8X62kttNCtFfgxQ';
-  return `<div class="card" style="margin-top:14px"><h2>Colaboradores</h2><p class="note">O acesso ao site é concedido pelo botão <b>Compartilhar</b> da página do artefato no claude.ai. Este site usa o mesmo banco do painel com as pessoas conectadas pelo Claude.</p>${T.length?`<ul>${T.map((u,i)=>`<li>${esc(u.name)} · ${esc(u.email)} <button class="b s" data-td="${i}">Remover</button></li>`).join('')}</ul>`:'<p class="note">Nenhum colaborador adicionado.</p>'}<div class="row"><input id="t_n" placeholder="Nome" style="max-width:160px"><input id="t_e" placeholder="E-mail" style="max-width:220px"><button class="b s" id="t_add">Adicionar</button></div></div>`}
-const FK=FIELDS.map(f=>f[0]).concat(['msgs','tot']),FNS=['SUM','LAST','AVG','MAX','MIN','DIV'];
-function ev(expr,ws){
-  if(!/^[\w\s+\-*/().,]*$/.test(expr))throw 0;
-  if((expr.match(/[A-Za-z_]\w*/g)||[]).some(i=>!FNS.includes(i)&&!FK.includes(i)))throw 0;
-  const g=(f,w)=>f==='msgs'?msgs(w):f==='tot'?(w.creal||0)+(w.creag||0)+(w.ccanc||0):(w[f]||0),col=f=>ws.map(w=>g(f,w)),sm=a=>a.reduce((x,y)=>x+y,0);
-  const fn={SUM:f=>sm(col(f)),LAST:f=>ws.length?g(f,ws[ws.length-1]):0,AVG:f=>ws.length?sm(col(f))/ws.length:0,MAX:f=>Math.max(0,...col(f)),MIN:f=>ws.length?Math.min(...col(f)):0,DIV:(a,b)=>b?a/b:0};
-  const r=new Function(...FNS,...FK,'return ('+expr+')')(...FNS.map(k=>fn[k]),...FK);
-  return isFinite(r)?r:0;
-}
-const fmtM=(v,f)=>f==='pct'?v.toFixed(2).replace('.',',')+'%':(Math.round(v*100)/100).toLocaleString('pt-BR');
-function showM(m){$('#m_pv').classList.remove('hide');$('#m_t').value=m.title||'';$('#m_e').value=m.expr||'';$('#m_f').value=m.fmt==='pct'?'pct':'num';$('#m_w2').value=['kpi','line','bar'].includes(m.where)?m.where:'kpi';$('#m_r').textContent='';}
-function prevM(){try{$('#m_r').textContent='Resultado com todas as semanas: '+fmtM(ev($('#m_e').value,W()),$('#m_f').value)}catch(e){$('#m_r').textContent='Fórmula inválida. Use apenas os campos permitidos.'}}
-async function aiMetric(){const q=$('#m_q').value.trim();if(!q)return toast('Descreva a métrica');const pm=await window.claude.use('permissions');if(pm){const st=await pm.state('sample');if(st==='denied'){toast('A IA está bloqueada. Ative em Permissões.');try{await pm.manage()}catch(e){};return}if(st==='prompt'){const r=await pm.request(['sample']);if(r.sample!=='granted')return toast('A IA não foi liberada.')}}const s=await window.claude.use('sample');if(!s)return toast('IA indisponível agora. Atualize a página e tente de novo.');const b=$('#m_go');b.disabled=true;b.textContent='Criando…';try{const r=await s.json('Crie uma fórmula para um painel de clínica. Campos: '+FIELDS.map(([k,l])=>k+'='+l).join(', '));showM(r)}catch(e){toast('Não foi possível criar com a IA. Tente de novo ou crie manualmente.')}b.disabled=false;b.textContent='Criar com IA';}
-async function addM(){const m={id:'m'+Date.now().toString(36),title:$('#m_t').value.trim(),expr:$('#m_e').value.trim(),fmt:$('#m_f').value,where:$('#m_w2').value};if(!m.title||!m.expr)return toast('Preencha título e fórmula');try{ev(m.expr,W())}catch(e){return toast('Fórmula inválida')}await saveCfg({metrics:[...(cfg.metrics||[]),m]});renderCfg();toast('Adicionado ao painel');}
+        <form id="weekForm">
+          <div class="f">
+            <label>Semana
+              <input id="weekNumber" type="text" placeholder="Ex.: 24/2026" required />
+            </label>
+            <label>Paciente
+              <input id="weekPaciente" type="text" placeholder="Nome do paciente" required />
+            </label>
+            <label>Data
+              <input id="weekDate" type="date" required />
+            </label>
+            <label>Status
+              <select id="weekStatus">
+                <option value="Em andamento">Em andamento</option>
+                <option value="Concluído">Concluído</option>
+                <option value="Pendente">Pendente</option>
+              </select>
+            </label>
+            <label>Observação
+              <input id="weekObs" type="text" placeholder="Observações" />
+            </label>
+          </div>
+          <div class="form-actions row">
+            <button type="submit" class="btn">Salvar semana</button>
+            <button type="button" id="clearWeekForm" class="btn ghost">Limpar</button>
+          </div>
+        </form>
+      </div>
 
-function localParse(txt){const y=new Date().getFullYear(),RX={c5:/5º|5o contato|fu ?5|quint/,c4:/4º|4o contato|fu ?4|quart/,c3:/3º|3o contato|fu ?3|terc/,c2:/2º|2o contato|fu ?2|segund/,sem:/[Ss]em retorno|sem retorno/};
-  return txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{const low=l.toLowerCase(),dm=l.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);let c='';if(dm){const yy=dm[3]?(dm[3].length===2?'20'+dm[3]:dm[3]):y;c=`${yy}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`}
-    let o='novo';const kx=Object.keys(ORIG).find(k=>low.includes(String(ORIG[k]).toLowerCase()));if(kx)o=kx;else{const k2=['c5','c4','c3','c2','sem','novo'].find(k=>RX[k]&&RX[k].test(low)&&ORIG[k]);if(k2)o=k2}
-    const st=/cancel/.test(low)?'cancelada':/reagend/.test(low)?'reagendada':/realiz|compareceu|check/.test(low)?'realizada':'agendada';
-    const nm=l.split(/\t|;|\||\s-\s/)[0].replace(/(\d{1,2})\/(\d{1,2})(\/\d{2,4})?/,'').trim();
-    return {patient:nm,origin:o,consult:c,status:st}});
-}
-async function importPaste(){const tx=$('#ps_t').value.trim();if(!tx)return;const b=$('#ps_b');b.disabled=true;let rows=null;try{const pm=await window.claude.use('permissions');if(pm&&await pm.state('sample')==='granted'){const s=await window.claude.use('sample');if(s)rows=await s.json('Extraia consultas de pacientes do texto. Origens (use a chave): '+Object.entries(ORIG).map(([k,n])=>k+'='+n).join('; ')+'. Hoje é '+today()+'; se a data não tiver ano, use o ano atual.');}}catch(e){}if(!Array.isArray(rows))rows=localParse(tx);let n=0;for(const r of rows){const p=String(r.patient||'').trim();if(!p)continue;const o=ORIG[r.origin]?r.origin:'novo',c=/^\d{4}-\d{2}-\d{2}$/.test(r.consult||'')?r.consult:'',st=STAT[r.status]?r.status:'agendada';if(Object.values(appts).some(a=>a.patient===p&&(a.consult||'')===c))continue;await saveDoc('appts/a'+Date.now().toString(36)+n,{patient:p,origin:o,schedOn:today(),consult:c,status:st,regained:st==='reagendada'?'sim':'',newDate:''});n++}$('#ps_t').value='';b.disabled=false;toast(n?n+' consulta(s) salva(s)':'Nada reconhecido. Confira o texto.');}
+      <div class="card" style="margin-top:14px;">
+        <div class="toolbar">
+          <h2>Semanas lançadas</h2>
+          <span id="weeksCount" class="tag">0 registros</span>
+        </div>
+        <div class="wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Semana</th>
+                <th>Paciente</th>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Observação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="weeksTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-const W=()=>{const ids=Object.keys(weeks).sort(),ap=Object.values(appts);return ids.map((id,i)=>{const end=ids[i+1]||'9999-12-31',n=ap.filter(a=>(a.schedOn||'')>=id&&(a.schedOn||'')<end).length;return {...weeks[id],id,n};})};
-const msgs=w=>(w.fu2||0)+(w.fu3||0)+(w.fu4||0)+(w.fu5||0);
-function sum(arr,f){return arr.reduce((a,w)=>a+(typeof f==='function'?f(w):(w[f]||0)),0)}
+    <section id="consultas" class="section">
+      <div class="card">
+        <div class="toolbar">
+          <h2>Consultas</h2>
+          <span class="tag">Acompanhamento e reagendamento</span>
+        </div>
 
-const nice=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=5?5:10)*p};
-function chart(labels,series,mode,isPct){
-  const Wd=480,H=200,L=34,R=8,T=10,B=24,iw=Wd-L-R,ih=H-T-B,n=labels.length;
-  let mx=mode==='stack'?Math.max(1,...labels.map((_,i)=>series.reduce((a,s)=>a+s.v[i],0))):Math.max(1,...series.flatMap(s=>s.v));
-  mx=nice(mx);const y=v=>T+ih-v/mx*ih,bw=iw/n;let o='';
-  for(let i=0;i<=4;i++){const v=mx*i/4,yy=y(v);o+=`<line x1="${L}" x2="${Wd-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L-5}" y="${yy+3}" text-anchor="end">${isPct?Math.round(v)+'%':Math.round(v)}</text>`}
-  labels.forEach((l,i)=>{o+=`<text x="${L+bw*i+bw/2}" y="${H-7}" text-anchor="middle">${l}</text>`});
-  if(mode==='stack'){labels.forEach((l,i)=>{let acc=0;series.forEach(s=>{const v=s.v[i];if(!v)return;const h=v/mx*ih;o+=`<rect x="${L+bw*i+bw*.2}" y="${y(acc+v)}" width="${bw*.6}" height="${h}" fill="${s.c}"/>`;acc+=v})})}
-  else if(mode==='group'){const k=series.length,w=bw*.76/k;labels.forEach((l,i)=>series.forEach((s,j)=>{const v=s.v[i],h=v/mx*ih;o+=`<rect x="${L+bw*i+bw*.12+w*j}" y="${y(v)}" width="${w-2}" height="${h}" fill="${s.c}"/>`}))}
-  else{series.forEach(s=>{const pts=s.v.map((v,i)=>[L+bw*i+bw/2,y(v)]);o+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" points="${pts.map(p=>p.join(',')).join(' ')}"/>`;pts.forEach(p=>o+=`<circle cx="${p[0]}" cy="${p[1]}" r="2.5" fill="${s.c}"/>`)})}
-  return `<svg viewBox="0 0 ${Wd} ${H}" role="img">${o}</svg>`;
-}
-const leg=s=>`<div class="lg">${s.map(x=>`<span><i style="background:${x.c}"></i>${x.n}</span>`).join('')}</div>`;
-const card=(t,s,svg)=>(cfg.hide&&cfg.hide['c:'+t])?'':`<div class="card"><h2>${t}</h2>${leg(s)}${svg}</div>`;
-const css=n=>`var(--${n})`;
+        <div class="wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Paciente</th>
+                <th>Data original</th>
+                <th>Conseguiu reagendar?</th>
+                <th>Nova data</th>
+                <th>Observações</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="consultasTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
-function dash(){
-  const WA=W();
-  const nW=WA.length;pFrom=nW?WA[0].id:'';pTo=nW?WA[nW-1].id:'';
-  if(pSel==='last4'&&nW)pFrom=WA[Math.max(0,nW-4)].id;
-  else if(pSel==='last'&&nW){pFrom=pTo=WA[nW-1].id}
-  else if(pSel!=='all'&&weeks[pSel]){pFrom=pSel;pTo=pSel}
-  const ws=WA.filter(w=>w.id>=pFrom&&w.id<=pTo),pEnd=(WA.find(w=>w.id>pTo)||{}).id||'9999-12-31';
-  if(!ws.length)return `<div class="card"><h2>Ainda não há dados</h2><p class="note">Vá em “Lançar semana” para registrar a primeira semana ou importar os dados da planilha.</p><button class="b" onclick="go('sem')">Lançar dados</button></div>`;
-  const L=ws.map(w=>fd(w.id)),last=ws[ws.length-1],prev=WA[WA.findIndex(w=>w.id===ws[ws.length-1].id)-1];
-  const tm=sum(ws,msgs),tr=sum(ws,'resp'),ta=sum(ws,'agend'),tl=sum(ws,'novos');
-  const real=sum(ws,'creal'),cag=sum(ws,'cagend'),can=sum(ws,'ccanc'),rea=sum(ws,'creag'),tot=real+rea+can;
-  const ap=Object.values(appts).filter(a=>(a.schedOn||'')>=pFrom&&(a.schedOn||'')<pEnd),perd=ap.filter(a=>a.status==='cancelada'||a.status==='reagendada');
-  const rec=perd.filter(a=>a.regained==='sim').length;
-  const kp=(l,v,s)=>{if(cfg.hide&&cfg.hide['k:'+l])return '';const g=GL[l],mt=g&&cfg.goals&&cfg.goals[g[0]];let b='';if(mt!=null){const n=parseFloat(String(v).replace(/\./g,'').replace(',','.'));b=n>=mt?'Dentro da meta':'Fora da meta'};return `<div class="kpi"><span>${l}</span><b>${v}</b><small>${s}${b?` · ${b}`:''}</small></div>`};
-  const rt=w=>pct(w.resp||0,msgs(w));
-  let ins='';
-  const lr=rt(last); if(prev&&msgs(prev)&&msgs(last))ins+=`<p>Taxa de resposta do follow-up ${ws.length>1?'na última semana do período':'na semana de '+fd(last.id)}: <b>${pf(lr)}</b> (${lr>=rt(prev)?'acima':'abaixo'} da semana anterior).</p>`;
-  if(prev&&last.semresp!==prev.semresp)ins+=`<p>Pacientes sem resposta no follow-up ${last.semresp>prev.semresp?'subiram':'caíram'} de ${prev.semresp} para <b>${last.semresp}</b>.</p>`;
-  if(tot)ins+=`<p>Das ${tot} consultas que passaram pela agenda ${ws.length>1?'no período':'na semana'} (check-ins, reagendamentos e cancelamentos), ${real} foram realizadas (${pf(pct(real,tot))}).</p>`;
-  if(!ins)ins='<p>Lance mais semanas para ver as observações automáticas.</p>';
-  const st=[{n:'Sem resposta',c:css('k'),v:ws.map(w=>w.semresp||0)},{n:'Pensando ou pesquisando',c:css('a'),v:ws.map(w=>w.pensando||0)},{n:'Aguardando cadastro',c:css('g'),v:ws.map(w=>w.aguard||0)}];
-  const fu=[2,3,4,5].map((k,i)=>({n:'FU '+k,c:css(['b','g','a','p'][i]),v:ws.map(w=>w['fu'+k]||0)}));
-  const ag=[{n:'Realizadas',c:css('g'),v:ws.map(w=>w.creal||0)},{n:'Canceladas',c:css('r'),v:ws.map(w=>w.ccanc||0)},{n:'Reagendadas',c:css('a'),v:ws.map(w=>w.creag||0)}];
-  const rs=[{n:'Taxa de resposta',c:css('b'),v:ws.map(rt)},{n:'Respostas que viraram agendamento',c:css('g'),v:ws.map(w=>pct(w.agend||0,w.resp||0))}];
-  const fl=[{n:'Novos leads',c:css('g'),v:ws.map(w=>w.novos||0)},{n:'Respostas no follow-up',c:css('b'),v:ws.map(w=>w.resp||0)},{n:'Agendamentos pelo follow-up',c:css('a'),v:ws.map(w=>w.agend||0)}];
-  const oc=Object.keys(ORIG).map(k=>{const l=ap.filter(a=>a.origin===k);return {k,t:l.length,r:l.filter(a=>a.status==='realizada').length,c:l.filter(a=>a.status==='cancelada').length}});
-  const omax=Math.max(1,...oc.map(o=>o.t));
-  const orig=ap.length?oc.map(o=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${ORIG[o.k]}</span><span class="note">${o.t} agendadas · ${o.r} realizadas</span></div><div style="height:8px;border-radius:99px;background:var(--line);overflow:hidden"><div style="height:100%;width:${(o.t/omax)*100}% ;background:var(--g)"></div></div></div>`).join(''):'<p class="note">Nenhuma consulta registrada.</p>';
-  const rg=['sim','contato','nao'].map(k=>({k,n:perd.filter(a=>a.regained===k).length})),pend=perd.filter(a=>!a.regained).length;
-  const rgh=perd.length?`<div class="lg" style="font-size:14px;color:var(--ink)">${rg.map(r=>`<span class="tag">${REG[r.k]}: <b>${r.n}</b></span>`).join('')}${pend?`<span class="tag">Sem informação: <b>${pend}</b></span>`:''}</div>`:'<p class="note">Nenhum cancelamento ou reagendamento registrado.</p>';
-  const p2=v=>v.toFixed(cfg.dec??2).replace('.',',')+'%',ta2=sum(ws,'ativas');
-  const sw=ws.some(w=>w.id===selWeek)?selWeek:last.id,wi=ws.findIndex(w=>w.id===sw),wk=ws[wi],wend=ws[wi+1]?ws[wi+1].id:pEnd;
-  const selW=`<label class="note">Semana <select id="selw">${ws.map(w=>`<option value="${w.id}"${w.id===sw?' selected':''}>${fdf(w.id)}</option>`).join('')}</select></label>`;
-  const cm=cfg.metrics||[],cs=m=>{try{return ev(m.expr,ws)}catch(e){return null}};
-  const cKpi=cm.filter(m=>m.where==='kpi').map(m=>{const v=cs(m);return kp(esc(m.title),v==null?'—':fmtM(v,m.fmt),'card personalizado')}).join('');
-  const fbar=`<div class="card" style="margin-bottom:14px"><div class="row" style="margin:0"><label class="note">Período<br><select id="pp">${[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada'],...WA.slice().reverse().map(w=>[w.id,'Semana de '+fdf(w.id)])].map(([v,l])=>`<option value="${v}"${pSel===v?' selected':''}>${l}</option>`).join('')}</select></label></div><p class="note" style="margin-top:8px">Painel da semana atual / período selecionado.</p></div>`;
-  return fbar+`<div class="grid kpis">${kp('Total de conversas ativas',(last.ativas||0).toLocaleString('pt-BR'),'na semana de '+fd(last.id))}${kp('Taxa Geral de Agendamento (%)',p2(pct(cag,ta2/ws.length)),cag+' consultas agendadas')}${kp('Mensagens de follow-up',tm.toLocaleString('pt-BR'),'')}${kp('Taxa de resposta do FU',pf(pct(tr,tm)),tr+' respostas')}${kp('Comparecimento (check-in)',pf(pct(real,tot)),real+' de '+tot+' consultas da agenda')}${kp('Cancelamento',pf(pct(can,tot)),can+' de '+tot+' consultas da agenda')}${kp('Reagendamento',pf(pct(rea,tot)),rea+' reagendamentos')}${cKpi}</div><div class="ins">${ins}</div><div class="grid charts">${card('Mensagens de follow-up por tentativa',fu,chart(L,fu,'stack'))}${card('Resposta e conversão do follow-up',rs,chart(L,rs,'line',true))}${card('Status dos pacientes (total acumulado em cada semana)',st,chart(L,st,'stack'))}${card('Agenda: realizadas, canceladas e reagendadas',ag,chart(L,ag,'group'))}${card('Funil: leads, respostas e agendamentos',fl,chart(L,fl,'group'))}<div class="card"><h2>Taxa de agendamento por etapa · da semana</h2><div class="row" style="margin:0 0 8px">${selW}</div><p class="note" style="margin:0 0 6px">Considera as consultas agendadas no período em comparação com as conversas ativas da semana.</p></div><div class="card"><h2>Taxa de agendamento por etapa · geral</h2><p class="note" style="margin:0 0 6px">Todas as semanas somadas. Agendadas é o que foi registrado na aba Consultas; etapas são pontos do funil e suas respostas.</p></div><div class="card"><h2>De onde vêm as consultas</h2>${orig}<h2 style="margin-top:18px">Recuperação de cancelamentos</h2>${rgh}</div></div>`;
-}
+    <section id="config" class="section">
+      <div class="card status-box">
+        <div class="status-row">
+          <h2>Sincronização com SheetD</h2>
+          <span id="syncBadge" class="sync-badge pending">Pendente</span>
+        </div>
+        <div class="status-row">
+          <strong>Última sincronização:</strong>
+          <span id="lastSyncLabel">Nunca</span>
+        </div>
+        <div class="status-row">
+          <strong>Status:</strong>
+          <span id="syncStatusLabel">Aguardando envio</span>
+        </div>
+        <div class="status-row">
+          <button id="manualSyncBtn" type="button" class="btn">Nova tentativa</button>
+        </div>
+      </div>
 
-function buildForm(){const o=$('#w_novos')?readForm():null;$('#wf').innerHTML=FIELDS.filter(f=>f[0]!=='cagend').map(([k])=>`<label>${esc(lab(k))}<input type="number" min="0" id="w_${k}" value="0"></label>`).join('');if(o)fillForm(o);}
-function fillForm(v){FIELDS.forEach(([k])=>{const el=$('#w_'+k);if(el)el.value=v?(v[k]||0):0})}
-function loadWeek(){const id=$('#wd').value;fillForm(W().find(w=>w.id===id)||weeks[id])}
-function readForm(){const o={},w0=weeks[$('#wd').value]||{};FIELDS.forEach(([k])=>{const el=$('#w_'+k);o[k]=el?Math.max(0,parseInt(el.value)||0):(w0[k]||0)});return o}
-function weekList(){const ws=W().reverse();if(!ws.length)return '<p class="note">Nenhuma semana lançada.</p>';return `<table><tr><th>Semana</th>${FIELDS.map(f=>`<th>${esc(lab(f[0]))}</th>`).join('')}<th></th></tr>${ws.map(w=>`<tr><td><a href="#" data-e="${w.id}">${fdf(w.id)}</a></td>${FIELDS.map(f=>`<td>${w[f[0]]||0}</td>`).join('')}<td><button class="b s" data-e="${w.id}">Editar</button></td></tr>`).join('')}</table>`;}
-async function importRows(rows){let n=0;for(const r of rows){const c=r.split('\t');const m=(c[0]||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)continue;const id=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;let o={};FIELDS.forEach(([k],i)=>{o[k]=parseInt(String(c[i+1]||'0').replace(/[\s\u00a0.]/g,''))||0});await saveDoc('weeks/'+id,o);n++}toast(n?n+' semana(s) importada(s)':'Nenhuma linha reconhecida');}
+      <div class="card" style="margin-top:14px;">
+        <h2>Verificação de erros</h2>
+        <div id="configErrors" class="info-box">Nenhum erro detectado.</div>
+      </div>
+    </section>
+  </main>
 
-const opts=(o,sel)=>Object.entries(o).map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v}</option>`).join('');
-function fbarA(ids){const f=aFilt,tot=Object.keys(appts).length,WS=W().slice().reverse();return `<div class="f" style="margin-bottom:10px"><label>Semana em que foi criada<select data-af="week"><option value="">Todas</option>${WS.map(w=>`<option value="${w.id}"${f.week===w.id?' selected':''}>${fdf(w.id)}</option>`).join('')}</select></label><label>Consulta de<select data-af="from" value="${f.from}"><option value="">Qualquer data</option></select></label><label>Até<select data-af="to" value="${f.to}"><option value="">Qualquer data</option></select></label><label>Origem<select data-af="origin"><option value="">Todas</option>${Object.entries(ORIG).map(([k,v])=>`<option value="${k}"${f.origin===k?' selected':''}>${v}</option>`).join('')}</select></label><label>Status<select data-af="status"><option value="">Todos</option>${Object.entries(STAT).map(([k,v])=>`<option value="${k}"${f.status===k?' selected':''}>${v}</option>`).join('')}</select></label></div>`;}
-function apptList(){const f=aFilt,WS=W(),wr=f.week?(()=>{const i=WS.findIndex(w=>w.id===f.week);return i<0?null:[f.week,WS[i+1]?WS[i+1].id:'9999-12-31']})():null;const ids=Object.keys(appts).filter(k=>{const a=appts[k],s=a.schedOn||'',c=a.consult||'';return (!wr||(s>=wr[0]&&s<wr[1]))&&(!f.from||c>=f.from)&&(!f.to||(c&&c<=f.to))&&(!f.origin||a.origin===f.origin)&&(!f.status||a.status===f.status);});if(!ids.length)return fbarA(ids)+'<p class="note">'+(Object.keys(appts).length?'Nenhuma consulta encontrada com estes filtros.':'Nenhuma consulta registrada ainda.')+'</p>';
-  return fbarA(ids)+`<div class="wrap"><table><tr><th>Paciente</th><th>Veio de</th><th>Agendada em</th><th>Consulta</th><th>Status</th><th>Conseguiu reagendar?</th><th>Nova data</th><th></th></tr>${ids.map(id=>{const a=appts[id];return `<tr><td>${esc(a.patient)}</td><td><select data-id="${id}" data-k="origin">${opts(ORIG,a.origin)}</select></td><td><input type="date" data-id="${id}" data-k="schedOn" value="${a.schedOn||''}"></td><td><input type="date" data-id="${id}" data-k="consult" value="${a.consult||''}"></td><td><select data-id="${id}" data-k="status">${Object.entries(STAT).map(([k,v])=>`<option value="${k}"${a.status===k?' selected':''}>${v}</option>`).join('')}</select></td><td><select data-id="${id}" data-k="regained">${Object.entries(REG).map(([k,v])=>`<option value="${k}"${a.regained===k?' selected':''}>${v}</option>`).join('')}</select></td><td><input type="date" data-id="${id}" data-k="newDate" value="${a.newDate||''}"></td><td><button class="b s" data-del="${id}">Excluir</button></td></tr>`;}).join('')}</table></div>`;
-}
+  <script>
+    const STORAGE_KEY = 'kommo-dashboard-v1';
+    const DEFAULT_PASSWORD = 'Lucas830';
 
-function render(){
-  const ae=document.activeElement;if(ae&&ae.matches&&ae.matches('[data-id]')&&cur==='cons')return;
-  $('#dash').innerHTML=dash();$('#wl').innerHTML=weekList();$('#al').innerHTML=apptList();
-}
-function go(t){cur=t;['dash','sem','cons','cfg'].forEach(s=>$('#'+s).classList.toggle('hide',s!==t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='cfg')renderCfg();}
-$('#nav').onclick=e=>{if(e.target.dataset.t)go(e.target.dataset.t)};
-buildForm();$('#wd').value=today();$('#cp_s').value=today();$('#cp_o').innerHTML=opts(ORIG,'novo');
-$('#wd').onchange=loadWeek;
-$('#cp').onclick=()=>{const id=$('#wd').value,ks=Object.keys(weeks).sort().filter(k=>k<id),p=ks.length?weeks[ks[ks.length-1]]:null;if(p){fillForm(p);toast('Valores copiados de '+fdf(ks[ks.length-1])+'')}else toast('Ainda não há semana anterior')};
-$('#ws').onclick=async()=>{const id=$('#wd').value;if(!id)return toast('Escolha a data da semana');await saveDoc('weeks/'+id,readForm());toast('Semana salva')};
-$('#wdel').onclick=async()=>{const id=$('#wd').value;if(weeks[id]&&confirm('Excluir a semana de '+fdf(id)+'?')){await delDoc('weeks/'+id);fillForm(null)}};
-$('#imp').onclick=()=>importRows($('#paste').value.split(/\r?\n/));
-$('#seed').onclick=async()=>{for(const [id,v] of Object.entries(SEED)){const o={};FIELDS.forEach(([k],i)=>o[k]=v[i]);await saveDoc('weeks/'+id,o)}toast('Semanas carregadas')};
-$('#wl').onclick=e=>{const id=e.target.dataset.e;if(id){e.preventDefault();$('#wd').value=id;loadWeek();window.scrollTo({top:0,behavior:'smooth'})}};
-$('#cp_add').onclick=async()=>{const n=$('#cp_n').value.trim();if(!n)return toast('Informe o paciente');const id='a'+Date.now().toString(36);await saveDoc('appts/'+id,{patient:n,origin:$('#cp_o').value,schedOn:$('#cp_s').value||today(),consult:$('#cp_c').value,status:'agendada',regained:'',newDate:''});toast('Consulta salva')};
-$('#al').onchange=async e=>{const t=e.target,id=t.dataset.id;if(t.dataset.af){aFilt[t.dataset.af]=t.value;$('#al').innerHTML=apptList();return}if(!id)return;const a={...appts[id],[t.dataset.k]:t.value};if(t.dataset.k==='status'&&a.status==='reagendada'&&!a.regained)a.regained='sim';if(t.dataset.k==='status'&&(a.status==='agendada'||a.status==='realizada')){a.regained='';a.newDate=''};await saveDoc('appts/'+id,a);document.activeElement.blur();render()};
-$('#al').onclick=async e=>{if(e.target.dataset.afc){aFilt={week:'',from:'',to:'',origin:'',status:''};$('#al').innerHTML=apptList();return}const id=e.target.dataset.del;if(id&&confirm('Excluir esta consulta?')){await delDoc('appts/'+id);render()}};
-$('#cfg').onchange=e=>{const t=e.target;if(t.dataset.tk){saveCfg({theme:{...(cfg.theme||{}),[t.dataset.tk]:t.value}});return}if(t.dataset.hk){const h={...(cfg.hide||{})};if(t.checked)delete h[t.dataset.hk];else h[t.dataset.hk]=1;saveCfg({hide:h});return}if(t.dataset.gk){const g={...(cfg.goals||{})},v=parseFloat(t.value);if(isNaN(v))delete g[t.dataset.gk];else g[t.dataset.gk]=v;saveCfg({goals:g});return}if(t.dataset.dk){if(t.dataset.dk==='defP')pSel=t.value;saveCfg({[t.dataset.dk]:t.dataset.dk==='dec'?+t.value:t.value});return}if(t.id==='c_t')return saveCfg({title:t.value.trim()||'Painel KOMMO'});if(t.dataset.lk){const l={...(cfg.labels||{})},v=t.value.trim();if(v)l[t.dataset.lk]=v;else delete l[t.dataset.lk];saveCfg({labels:l});t.value=lab(t.dataset.lk);return}if(t.dataset.ok){const os=Object.entries(ORIG).map(([k,n])=>({k,n:k===t.dataset.ok?(t.value.trim()||n):n}));saveCfg({origins:os});t.value=ORIG[t.dataset.ok]}};
-$('#cfg').onclick=async e=>{const t=e.target,id=t.id;if(id==='c_wipe'){if(confirm('Apagar TODAS as semanas e consultas? Isso não pode ser desfeito.')&&confirm('Tem certeza? Baixe o backup antes se precisar.')){for(const k of Object.keys(weeks))delete weeks[k];for(const k of Object.keys(appts))delete appts[k];saveState?null:0;render();toast('Dados removidos')}};if(id==='sync_retry'){const now=new Date();cfg.sync={lastSync:now.toISOString(),success:true,note:'Sincronização manual executada com sucesso.'};saveCfg({sync:cfg.sync});toast('Nova tentativa executada');return}if(id==='t_cp'){try{await navigator.clipboard.writeText($('#t_l').value);toast('Link copiado')}catch(e){$('#t_l').select();toast('Link selecionado: use Ctrl+C para copiar')}return}if(id==='t_add'){const n=$('#t_n').value.trim(),m=$('#t_e').value.trim();if(!n||!/^?/.test(m))return toast('Informe nome e e-mail válidos');await saveCfg({team:[...(cfg.team||[]),{name:n,email:m}]});return renderCfg()}if(t.dataset.td){await saveCfg({team:(cfg.team||[]).filter((_,i)=>i!==+t.dataset.td)});return renderCfg()}if(id==='c_tr'){await saveCfg({theme:{}});return renderCfg()}if(id==='m_go')return aiMetric();if(id==='m_man')return showM({title:'',expr:'',fmt:'num',where:'kpi'});if(id==='m_pre')return prevM();if(id==='m_add')return addM();if(t.dataset.md){await saveCfg({metrics:(cfg.metrics||[]).filter((_,i)=>i!==+t.dataset.md)});return renderCfg()}if(id==='c_rl'){await saveCfg({labels:{}});return renderCfg()}if(id==='c_oa'){const n=$('#c_on').value.trim();if(!n)return;const os=Object.entries(ORIG).map(([k,v])=>({k,n:v}));os.push({k:'o'+Date.now().toString(36),n});await saveCfg({origins:os});return renderCfg()}if(t.dataset.od){const k=t.dataset.od;if(Object.values(appts).some(a=>a.origin===k))return toast('Há consultas com esta origem. Mude a origem delas antes de remover.');if(Object.keys(ORIG).length<=1)return toast('Precisa manter pelo menos uma origem');const os=Object.entries(ORIG).filter(([key])=>key!==k).map(([key,n])=>({k,n}));await saveCfg({origins:os});return renderCfg()}if(id==='c_ew')return exp('semanas.csv',['Data',...FIELDS.map(f=>lab(f[0]))],W().map(w=>[fdf(w.id),...FIELDS.map(f=>w[f[0]]||0)]));if(id==='c_ea')return exp('consultas.csv',['Paciente','Veio de','Agendada em','Consulta','Status','Reagendou?','Nova data'],Object.values(appts).map(a=>[a.patient,ORIG[a.origin]||a.origin,fdf(a.schedOn||''),fdf(a.consult||''),STAT[a.status]||a.status,REG[a.regained]||'',fdf(a.newDate||'')]));};
-$('#ps_b').onclick=importPaste;$('#ps_t').addEventListener('paste',()=>setTimeout(importPaste,60));
-$('#dash').onchange=e=>{const t=e.target;if(t.id==='selw'){selWeek=t.value;render()}if(t.id==='pp'){pSel=t.value;render()}if(t.id==='pf'){pAuto=false;pFrom=t.value;if(pTo<pFrom)pTo=pFrom;render()}if(t.id==='pt'){pAuto=false;pTo=t.value;if(pFrom>pTo)pFrom=pTo;render()}};
-$('#dash').onclick=e=>{const q=e.target.dataset.q;if(!q)return;const A=W();if(!A.length)return;const L=A[A.length-1].id;if(q==='all'){pAuto=true}else{pAuto=false;pTo=L;pFrom=A[Math.max(0,A.length-(+q))].id}render()};
+    const defaultData = {
+      weeks: [
+        { id: 1, semana: '01/2026', paciente: 'Marina Silva', data: '2026-01-06', status: 'Em andamento', obs: 'Primeira revisão.' },
+        { id: 2, semana: '02/2026', paciente: 'João Pereira', data: '2026-01-13', status: 'Concluído', obs: 'Acompanhamento ok.' }
+      ],
+      consultas: [
+        { id: 1, paciente: 'Ana Costa', dataOriginal: '2026-01-08', reagendar: 'Sim', novaData: '2026-01-15', observacoes: 'Cliente solicitou reagendamento.' },
+        { id: 2, paciente: 'Rafael Souza', dataOriginal: '2026-01-10', reagendar: 'Não', novaData: '', observacoes: 'Presença confirmada.' }
+      ],
+      sync: {
+        lastSync: null,
+        success: false,
+        attempts: 0
+      }
+    };
 
-const lockState = () => localStorage.getItem(LOCK_STORAGE_KEY) === '1' || sessionStorage.getItem(LOCK_STORAGE_KEY) === '1';
-const unlockForm = document.getElementById('unlockForm');
-unlockForm.addEventListener('submit',e=>{e.preventDefault();const pass=document.getElementById('unlockPassword').value.trim();if(pass===APP_PASSWORD){localStorage.setItem(LOCK_STORAGE_KEY,'1');sessionStorage.setItem(LOCK_STORAGE_KEY,'1');renderLock();toast('Acesso liberado');}else{document.getElementById('lockError').textContent='Senha incorreta.';}});
-renderLock();
-init();
-</script>
+    const state = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(defaultData);
+        const parsed = JSON.parse(raw);
+        return { ...structuredClone(defaultData), ...parsed, weeks: parsed.weeks || structuredClone(defaultData.weeks), consultas: parsed.consultas || structuredClone(defaultData.consultas), sync: { ...structuredClone(defaultData.sync), ...(parsed.sync || {}) } };
+      } catch (e) {
+        return structuredClone(defaultData);
+      }
+    }
+
+    function persistState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function showTab(tabName) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.toggle('active', sec.id === tabName));
+      document.querySelectorAll('[data-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+    }
+
+    function renderDashboard() {
+      const totalSemanas = state.weeks.length;
+      const reagendadas = state.consultas.filter(item => item.reagendar === 'Sim').length;
+      const hoje = new Date().toISOString().slice(0, 10);
+      const hojeCount = state.consultas.filter(item => item.dataOriginal === hoje).length;
+      const errors = getErrors();
+
+      document.getElementById('kpiHoje').textContent = hojeCount;
+      document.getElementById('kpiReagendadas').textContent = reagendadas;
+      document.getElementById('kpiSemanas').textContent = totalSemanas;
+      document.getElementById('kpiErros').textContent = errors.length;
+
+      const summaryBadge = document.getElementById('summaryBadge');
+      if (errors.length === 0) {
+        summaryBadge.textContent = 'Tudo ok';
+        summaryBadge.className = 'tag success';
+      } else {
+        summaryBadge.textContent = `${errors.length} erro(s)`;
+        summaryBadge.className = 'tag danger';
+      }
+
+      const summary = document.getElementById('errorSummary');
+      if (errors.length === 0) {
+        summary.textContent = 'Nenhuma inconsistência identificada nas semanas ou consultas.';
+      } else {
+        summary.innerHTML = errors.map(error => `<div>• ${error}</div>`).join('');
+      }
+    }
+
+    function renderWeeks() {
+      const tbody = document.getElementById('weeksTableBody');
+      tbody.innerHTML = state.weeks.map(week => `
+        <tr>
+          <td>${week.semana || '-'}</td>
+          <td>${week.paciente || '-'}</td>
+          <td>${formatDate(week.data)}</td>
+          <td><span class="tag ${statusClass(week.status)}">${week.status || 'Pendente'}</span></td>
+          <td>${week.obs || '-'}</td>
+          <td>
+            <div class="actions">
+              <button type="button" class="btn secondary" data-edit-week="${week.id}">Editar</button>
+              <button type="button" class="btn danger" data-delete-week="${week.id}">Excluir</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      document.getElementById('weeksCount').textContent = `${state.weeks.length} registros`;
+    }
+
+    function renderConsultas() {
+      const tbody = document.getElementById('consultasTableBody');
+      tbody.innerHTML = state.consultas.map(item => `
+        <tr>
+          <td>${item.paciente || '-'}</td>
+          <td>${formatDate(item.dataOriginal)}</td>
+          <td>
+            <select data-consulta-reagendar="${item.id}">
+              <option value="Sim" ${item.reagendar === 'Sim' ? 'selected' : ''}>Sim</option>
+              <option value="Não" ${item.reagendar === 'Não' ? 'selected' : ''}>Não</option>
+            </select>
+          </td>
+          <td>
+            <input type="date" value="${item.novaData || ''}" data-consulta-date="${item.id}" ${item.reagendar === 'Sim' ? '' : 'disabled'} />
+          </td>
+          <td><input type="text" value="${item.observacoes || ''}" data-consulta-obs="${item.id}" /></td>
+          <td>
+            <div class="actions">
+              <button type="button" class="btn secondary" data-save-consulta="${item.id}">Salvar</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function renderConfig() {
+      const badge = document.getElementById('syncBadge');
+      const lastSyncLabel = document.getElementById('lastSyncLabel');
+      const syncStatusLabel = document.getElementById('syncStatusLabel');
+
+      if (!state.sync.lastSync) {
+        badge.textContent = 'Pendente';
+        badge.className = 'sync-badge pending';
+        lastSyncLabel.textContent = 'Nunca';
+        syncStatusLabel.textContent = 'Aguardando envio';
+      } else if (state.sync.success) {
+        badge.textContent = 'Sucesso';
+        badge.className = 'sync-badge success';
+        lastSyncLabel.textContent = formatDateTime(state.sync.lastSync);
+        syncStatusLabel.textContent = 'Sincronização concluída com sucesso';
+      } else {
+        badge.textContent = 'Falhou';
+        badge.className = 'sync-badge error';
+        lastSyncLabel.textContent = formatDateTime(state.sync.lastSync);
+        syncStatusLabel.textContent = 'Sincronização falhou';
+      }
+
+      const errors = getErrors();
+      const configErrors = document.getElementById('configErrors');
+      if (errors.length === 0) {
+        configErrors.textContent = 'Nenhum erro detectado.';
+        configErrors.className = 'info-box';
+      } else {
+        configErrors.innerHTML = errors.map(error => `<div>• ${error}</div>`).join('');
+        configErrors.className = 'info-box';
+      }
+    }
+
+    function getErrors() {
+      const errors = [];
+
+      state.weeks.forEach((week, index) => {
+        if (!week.semana) errors.push(`Semana ${index + 1}: faltando identificação da semana.`);
+        if (!week.paciente) errors.push(`Semana ${index + 1}: paciente não informado.`);
+        if (!week.data) errors.push(`Semana ${index + 1}: data não informada.`);
+      });
+
+      state.consultas.forEach((item, index) => {
+        if (!item.paciente) errors.push(`Consulta ${index + 1}: paciente não informado.`);
+        if (item.reagendar === 'Sim' && !item.novaData) errors.push(`Consulta ${index + 1}: nova data obrigatória quando o reagendamento foi confirmado.`);
+      });
+
+      return errors;
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(value + 'T00:00:00');
+      if (Number.isNaN(date)) return value;
+      return new Intl.DateTimeFormat('pt-BR').format(date);
+    }
+
+    function formatDateTime(value) {
+      if (!value) return 'Nunca';
+      const date = new Date(value);
+      if (Number.isNaN(date)) return value;
+      return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(date);
+    }
+
+    function statusClass(status) {
+      switch (status) {
+        case 'Concluído': return 'success';
+        case 'Pendente': return 'warning';
+        default: return 'warning';
+      }
+    }
+
+    document.getElementById('nav').addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-tab]');
+      if (!btn) return;
+      showTab(btn.dataset.tab);
+    });
+
+    document.getElementById('weekForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      const id = Number(document.getElementById('weekForm').dataset.editId || 0);
+      const item = {
+        id: id || Date.now(),
+        semana: document.getElementById('weekNumber').value.trim(),
+        paciente: document.getElementById('weekPaciente').value.trim(),
+        data: document.getElementById('weekDate').value,
+        status: document.getElementById('weekStatus').value,
+        obs: document.getElementById('weekObs').value.trim()
+      };
+
+      if (!item.semana || !item.paciente || !item.data) {
+        alert('Preencha corretamente a semana, o paciente e a data.');
+        return;
+      }
+
+      if (id) {
+        const idx = state.weeks.findIndex(w => w.id === id);
+        if (idx >= 0) state.weeks[idx] = { ...state.weeks[idx], ...item };
+      } else {
+        state.weeks.unshift(item);
+      }
+
+      persistState();
+      renderAll();
+      clearWeekForm();
+    });
+
+    function clearWeekForm() {
+      document.getElementById('weekForm').reset();
+      delete document.getElementById('weekForm').dataset.editId;
+      document.getElementById('weekStatus').value = 'Em andamento';
+    }
+
+    document.getElementById('clearWeekForm').addEventListener('click', clearWeekForm);
+
+    document.getElementById('addWeekBtn').addEventListener('click', () => {
+      clearWeekForm();
+      document.getElementById('weekNumber').focus();
+    });
+
+    document.getElementById('weeksTableBody').addEventListener('click', (event) => {
+      const editBtn = event.target.closest('[data-edit-week]');
+      const deleteBtn = event.target.closest('[data-delete-week]');
+      if (editBtn) {
+        const id = Number(editBtn.dataset.editWeek);
+        const week = state.weeks.find(w => w.id === id);
+        if (!week) return;
+        document.getElementById('weekForm').dataset.editId = String(id);
+        document.getElementById('weekNumber').value = week.semana;
+        document.getElementById('weekPaciente').value = week.paciente;
+        document.getElementById('weekDate').value = week.data;
+        document.getElementById('weekStatus').value = week.status;
+        document.getElementById('weekObs').value = week.obs || '';
+        showTab('weeks');
+      }
+
+      if (deleteBtn) {
+        const id = Number(deleteBtn.dataset.deleteWeek);
+        state.weeks = state.weeks.filter(w => w.id !== id);
+        persistState();
+        renderAll();
+      }
+    });
+
+    document.getElementById('consultasTableBody').addEventListener('change', (event) => {
+      const select = event.target.closest('[data-consulta-reagendar]');
+      if (select) {
+        const id = Number(select.dataset.consultaReagendar);
+        const item = state.consultas.find(c => c.id === id);
+        if (!item) return;
+        item.reagendar = select.value;
+        if (item.reagendar === 'Não') item.novaData = '';
+        persistState();
+        renderConsultas();
+      }
+    });
+
+    document.getElementById('consultasTableBody').addEventListener('click', (event) => {
+      const saveBtn = event.target.closest('[data-save-consulta]');
+      if (!saveBtn) return;
+      const id = Number(saveBtn.dataset.saveConsulta);
+      const item = state.consultas.find(c => c.id === id);
+      if (!item) return;
+
+      const dateInput = document.querySelector(`[data-consulta-date="${id}"]`);
+      const obsInput = document.querySelector(`[data-consulta-obs="${id}"]`);
+      item.novaData = dateInput ? dateInput.value : '';
+      item.observacoes = obsInput ? obsInput.value.trim() : '';
+      persistState();
+      renderDashboard();
+      renderConfig();
+      alert('Dados da consulta atualizados com sucesso.');
+    });
+
+    document.getElementById('manualSyncBtn').addEventListener('click', () => {
+      state.sync.attempts += 1;
+      state.sync.lastSync = new Date().toISOString();
+      state.sync.success = Math.random() > 0.2;
+      persistState();
+      renderConfig();
+      renderDashboard();
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const input = document.getElementById('passwordInput');
+      const error = document.getElementById('loginError');
+
+      if (input.value === DEFAULT_PASSWORD) {
+        document.getElementById('lockScreen').classList.add('hidden');
+        error.textContent = '';
+        input.value = '';
+        renderAll();
+      } else {
+        error.textContent = 'Senha incorreta. Tente novamente.';
+        input.focus();
+      }
+    });
+
+    function renderAll() {
+      renderDashboard();
+      renderWeeks();
+      renderConsultas();
+      renderConfig();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderAll();
+      showTab('dashboard');
+      clearWeekForm();
+    });
+  </script>
 </body>
 </html>
