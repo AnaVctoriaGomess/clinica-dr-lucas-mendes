@@ -155,7 +155,35 @@ const fdf=iso=>iso?iso.split('-').reverse().join('/'):'—';
 const pct=(a,b)=>b?(a/b*100):0;
 const pf=v=>v.toFixed(1).replace('.',',')+'%';
 const today=()=>new Date().toISOString().slice(0,10);
+const fmtDateTime=(d)=>new Date(d).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
 function toast(t){const m=$('#msg');m.textContent=t;m.classList.add('on');setTimeout(()=>m.classList.remove('on'),1800)}
+
+function syncInfo(){
+  const as=cfg.sync||{};
+  const now=new Date();
+  const weekday=now.getDay();
+  const schedule=[
+    {day:1, time:'17:53'}, {day:2, time:'17:53'}, {day:3, time:'17:53'}, {day:4, time:'17:53'}, {day:5, time:'16:50'},
+    {day:6, time:'16:50'}, {day:0, time:'17:53'}
+  ];
+  let next=null;
+  for(let i=0;i<8;i++){
+    const date=new Date(now.getTime()+i*86400000);
+    const d=date.getDay();
+    const target=schedule.find(s=>s.day===d);
+    if(target){
+      const [h,m]=target.time.split(':').map(Number);
+      const at=new Date(date);
+      at.setHours(h,m,0,0);
+      if(!next && at.getTime()>=now.getTime()){ next=at; break; }
+      if(!next && i===0){ next=at; }
+    }
+  }
+  const last=as.lastSync ? fmtDateTime(as.lastSync) : 'Nunca';
+  const status=as.status || 'Sucesso';
+  const retry=as.retryAt ? fmtDateTime(as.retryAt) : '—';
+  return {last,status,retry,next:next?fmtDateTime(next):'—'};
+}
 
 async function saveDoc(path,data){
   const [col,id]=path.split('/');const store=col==='weeks'?weeks:appts;
@@ -183,15 +211,17 @@ function applyCfg(){applyTheme();if(!applyCfg.d&&cfg.defP){pSel=cfg.defP;applyCf
   Object.keys(ORIG).forEach(k=>delete ORIG[k]);
   const os=cfg.origins&&cfg.origins.length?cfg.origins:Object.entries(ORIG0).map(([k,n])=>({k,n}));
   os.forEach(o=>{ORIG[o.k]=o.n});
-  const sel=$('#cp_o').value;$('#cp_o').innerHTML=opts(ORIG,ORIG[sel]?sel:Object.keys(ORIG)[0]);
+  const sel=$('#cp_o') ? $('#cp_o').value : null; if ($('#cp_o')) $('#cp_o').innerHTML=opts(ORIG,ORIG[sel]?sel:Object.keys(ORIG)[0]);
   buildForm();
 }
 async function saveCfg(p){cfg={...cfg,...p};applyCfg();render();if(db){try{await db.doc('config/main').set(cfg)}catch(e){toast('Não foi possível salvar a configuração')}}}
 function renderCfg(){
+  const sync=syncInfo();
   $('#cfg').innerHTML=`<div class="card"><h2>Nome do painel</h2><input id="c_t" value="${esc(cfg.title||'Painel KOMMO')}" style="width:100%;max-width:420px"></div>
-  <div class="card" style="margin-top:14px"><h2>Nomes dos campos semanais</h2><p class="note">Renomeie como preferir. Os números já lançados não mudam. Campos “total atual” guardam o total de pacientes naquela fase no momento; os demais são contagens da semana.</p><div class="f">${FIELDS.map(([k])=>`<label>${SNAP.includes(k)?'Total atual':'Da semana'}<input data-lk="${k}" value="${esc(lab(k))}"></label>`).join('')}</div><div class="row"><button class="b s" id="c_rl">Restaurar nomes originais</button></div></div>
+  <div class="card" style="margin-top:14px"><h2>Sincronização com SheetDB</h2><p class="note">Última sincronização: <strong>${sync.last}</strong><br>Status: <span class="tag">${sync.status}</span><br>Próximo envio programado: <strong>${sync.next}</strong><br>Reenvio automático após erro: <strong>${sync.retry}</strong></p><div class="row"><button class="b" id="sheet_retry">Reenviar agora</button><button class="b s" id="sheet_refresh">Atualizar status</button></div></div>
+  <div class="card" style="margin-top:14px"><h2>Nomes dos campos semanais</h2><p class="note">Renomeie como preferir. Os números já lançados não mudam. Campos “total atual” guardam o total de pacientes naquela fase no momento; os demais são contagens da semana.</p><div class="f">${FIELDS.map(([k])=>`<label>${SNAP.includes(k)?'Total atual':'Da semana'}<input data-lk="${k}" value="${esc(lab(k))}"></label>`).join('')}</div><div class="row"><input id="new_field" placeholder="Adicionar novo campo" style="flex:1;min-width:200px"><button class="b" id="add_field">Adicionar</button></div><div class="row">${FIELDS.map(([k])=>`<button class="b s" data-field-del="${k}" style="margin-top:0">Excluir ${esc(lab(k))}</button>`).join('')}</div><div class="row"><button class="b s" id="c_rl">Restaurar nomes originais</button></div></div>
   <div class="card" style="margin-top:14px"><h2>Origem das consultas</h2><p class="note">Opções do campo “Veio de”. Uma origem só pode ser removida se nenhuma consulta a usar.</p>${Object.entries(ORIG).map(([k,n])=>`<div class="row" style="margin-top:6px"><input data-ok="${k}" value="${esc(n)}" style="flex:1;min-width:200px"><button class="x" data-od="${k}" aria-label="Remover origem" title="Remover">×</button></div>`).join('')}<div class="row"><input id="c_on" placeholder="Nova origem" style="flex:1;min-width:200px"><button class="b" id="c_oa">Adicionar origem</button></div></div>
-  ${viewHtml()}${themeHtml()}${metricHtml()}${teamHtml()}<div class="card" style="margin-top:14px"><h2>Backup dos dados</h2><p class="note">Baixe em CSV para abrir no Excel ou no Google Sheets.</p><div class="row"><button class="b s" id="c_ew">Baixar semanas</button><button class="b s" id="c_ea">Baixar consultas</button></div></div>`;
+  ${viewHtml()}${themeHtml()}${metricHtml()}<div class="card" style="margin-top:14px"><h2>Backup dos dados</h2><p class="note">Baixe em CSV para abrir no Excel ou no Google Sheets.</p><div class="row"><button class="b s" id="c_ew">Baixar semanas</button><button class="b s" id="c_ea">Baixar consultas</button></div></div>`;
 }
 async function exp(name,head,rows){
   const q=v=>`"`+String(v??'').replace(/"/g,'""')+`"`;
@@ -209,8 +239,6 @@ function viewHtml(){const h=cfg.hide||{},go=cfg.goals||{},ck=(p,l)=>`<label styl
   return `<div class="card" style="margin-top:14px"><h2>Exibição do painel</h2><p class="note">Marque o que aparece. Os cards e gráficos desmarcados ficam ocultos, sem apagar dados.</p><h2 style="font-size:14px">Cards do quadro geral</h2><div class="f">${KL.map(l=>ck('k',l)).join('')}</div><h2 style="font-size:14px;margin-top:14px">Gráficos</h2><div class="f">${CL.map(l=>ck('c',l)).join('')}</div><div class="f" style="margin-top:14px"><label>Período ao abrir${sel('defP',cfg.defP||'all',[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada']])}</label><label>Casas decimais das taxas principais${sel('dec',cfg.dec??2,[[0,'0'],[1,'1'],[2,'2']])}</label></div></div>
   <div class="card" style="margin-top:14px"><h2>Metas</h2><p class="note">Em %. O card mostra se está dentro da meta. No cancelamento, o valor é o máximo aceito. Deixe vazio para não usar meta.</p><div class="f">${gi('tg','Taxa Geral de Agendamento')}${gi('conv','Conversão do FU em Agendamento')}${gi('resp','Taxa de resposta do FU')}${gi('comp','Comparecimento (check-in)')}${gi('canc','Cancelamento (máximo)')}</div></div>
   <div class="card" style="margin-top:14px"><h2>Zona de risco</h2><p class="note">Apaga todas as semanas e consultas. Baixe o backup antes.</p><div class="row"><button class="b s" id="c_wipe" style="color:var(--r)">Apagar todos os dados</button></div></div>`}
-function teamHtml(){const T=cfg.team||[],L='https://claude.ai/artifact/J5Mfqrp8X62kttNCtFfgxQ';
-  return `<div class="card" style="margin-top:14px"><h2>Colaboradores</h2><p class="note">O acesso ao site é concedido pelo botão <b>Compartilhar</b> da página do artefato no claude.ai. Este site não consegue convidar ninguém sozinho; aqui você copia o link e mantém a lista da equipe.</p><ol class="note"><li>Copie o link abaixo.</li><li>No claude.ai, abra o painel, clique em Compartilhar e adicione o e-mail da pessoa.</li><li>Escolha <b>Colaborador</b> para só lançar consultas ou <b>Editor</b> para lançar semanas e configurar.</li></ol><div class="row"><input id="t_l" readonly value="${L}" style="flex:1;min-width:240px"><button class="b s" id="t_cp">Copiar link</button></div><h2 style="margin-top:16px;font-size:14px">Lista da equipe (controle interno)</h2>${T.length?`<div class="wrap"><table><tr><th>Nome</th><th>E-mail</th><th>Função</th><th></th></tr>${T.map((p,i)=>`<tr><td>${esc(p.n)}</td><td>${esc(p.e)}</td><td>${esc(p.r)}</td><td><button class="x" data-td="${i}" aria-label="Remover" title="Remover">×</button></td></tr>`).join('')}</table></div>`:'<p class="note">Nenhuma pessoa na lista.</p>'}<div class="f" style="margin-top:10px"><label>Nome<input id="t_n"></label><label>E-mail<input id="t_e" type="email"></label><label>Função<select id="t_r"><option>Colaborador (só consultas)</option><option>Editor (semanas e configuração)</option></select></label></div><div class="row"><button class="b" id="t_add">Adicionar à lista</button></div><p class="note">Adicionar aqui não dá acesso ao site. Serve para você controlar quem já foi convidado.</p></div>`}
 const FK=FIELDS.map(f=>f[0]).concat(['msgs','tot']),FNS=['SUM','LAST','AVG','MAX','MIN','DIV'];
 function ev(expr,ws){
   if(!/^[\w\s+\-*/().,]*$/.test(expr))throw 0;
@@ -282,8 +310,6 @@ function chart(labels,series,mode,isPct){
   return `<svg viewBox="0 0 ${Wd} ${H}" role="img">${o}</svg>`;
 }
 const leg=s=>`<div class="lg">${s.map(x=>`<span><i style="background:${x.c}"></i>${x.n}</span>`).join('')}</div>`;
-const card=(t,s,svg)=>(cfg.hide&&cfg.hide['c:'+t])?'':`<div class="card"><h2>${t}</h2>${leg(s)}${svg}</div>`;
-const css=n=>`var(--${n})`;
 
 function dash(){
   const WA=W();
@@ -335,8 +361,8 @@ function dash(){
   const fo=v=>WA.map(w=>`<option value="${w.id}"${w.id===v?' selected':''}>${fdf(w.id)}</option>`).join('');
   const po=[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada'],...WA.slice().reverse().map(w=>[w.id,'Semana de '+fdf(w.id)])].map(([v,l])=>`<option value="${v}"${v===pSel?' selected':''}>${l}</option>`).join('');
   const cm=cfg.metrics||[],cs=m=>{try{return ev(m.expr,ws)}catch(e){return null}};
-  const cKpi=cm.filter(m=>m.where==='kpi').map(m=>{const v=cs(m);return kp(esc(m.title),v==null?'—':fmtM(v,m.fmt),'card personalizado')}).join('');
-  const cCh=cm.filter(m=>m.where!=='kpi').map(m=>{const v=ws.map(w=>{try{return Math.round(ev(m.expr,[w])*100)/100}catch(e){return 0}}),ser=[{n:m.title,c:css('p'),v}];return card(esc(m.title),ser,chart(L,ser,m.where==='bar'?'group':'line',m.fmt==='pct'))}).join('');
+  const cKpi=cm.filter(m=>m.where==='kpi').map(m=>{const v=cs(m);return `<div class="card kpi"><span>${esc(m.title)}</span><b>${v==null?'—':fmtM(v,m.fmt)}</b><small>card personalizado</small></div>`}).join('');
+  const cCh=cm.filter(m=>m.where!=='kpi').map(m=>{const v=ws.map(w=>{try{return Math.round(ev(m.expr,[w])*100)/100}catch(e){return 0}}),ser=[{n:m.title,c:css('p'),v}];return `<div class="card"><h2>${esc(m.title)}</h2>${leg(ser)}${chart(L,ser,m.where==='bar'?'group':'line',m.fmt==='pct')}</div>`}).join('');
   const fbar=`<div class="card" style="margin-bottom:14px"><div class="row" style="margin:0"><label class="note">Período<br><select id="pp">${po}</select></label></div><p class="note" style="margin:8px 0 0">Mostrando ${ws.length} semana(s): ${fdf(pFrom)} a ${fdf(pTo)}. Os totais do momento (conversas ativas, sem resposta, pensando…) mostram o valor do fim do período escolhido.</p></div>`;
   return fbar+`<div class="grid kpis">
     ${kp('Total de conversas ativas',(last.ativas||0).toLocaleString('pt-BR'),'na semana de '+fd(last.id))}${kp('Taxa Geral de Agendamento (%)',p2(pct(cag,ta2/ws.length)),cag+' consultas agendadas ÷ '+Math.round(ta2/ws.length).toLocaleString('pt-BR')+' (média de conversas ativas)<br>'+(ws.length>1?ws.length+' semanas · por semana: '+p2(pct(cag,ta2/ws.length)/ws.length):'semana de '+fd(last.id)))}${kp('Conversão do FU em Agendamento (%)',p2(pct(ta,tr)),ta+' agendamentos ÷ '+tr.toLocaleString('pt-BR')+' respostas do FU<br>'+(ws.length>1?ws.length+' semanas · última semana: '+p2(cvW):'semana de '+fd(last.id)))}${kp('Novos leads',tl,ws.length+' semanas')}${kp('Consultas agendadas',cag.toLocaleString('pt-BR'),'no período selecionado')}
@@ -344,11 +370,11 @@ function dash(){
     ${kp('Comparecimento (check-in)',pf(pct(real,tot)),real+' de '+tot+' consultas da agenda')}${kp('Cancelamento',pf(pct(can,tot)),can+' de '+tot+' consultas da agenda')}${kp('Reagendamento',pf(pct(rea,tot)),rea+' de '+tot+' consultas da agenda')}${kp('Cancelados recuperados',perd.length?pf(pct(rec,perd.length)):'—',rec+' de '+perd.length)}${cKpi}</div>
   <div class="ins">${ins}</div>
   <div class="grid charts">
-    ${card('Mensagens de follow-up por tentativa',fu,chart(L,fu,'stack'))}
-    ${card('Resposta e conversão do follow-up',rs,chart(L,rs,'line',true))}
-    ${card('Status dos pacientes (total acumulado em cada semana)',st,chart(L,st,'stack'))}
-    ${card('Agenda: realizadas, canceladas e reagendadas',ag,chart(L,ag,'group'))}
-    ${card('Funil: leads, respostas e agendamentos',fl,chart(L,fl,'group'))}
+    <div class="card"><h2>Mensagens de follow-up por tentativa</h2>${leg(fu)}${chart(L,fu,'stack')}</div>
+    <div class="card"><h2>Resposta e conversão do follow-up</h2>${leg(rs)}${chart(L,rs,'line',true)}</div>
+    <div class="card"><h2>Status dos pacientes (total acumulado em cada semana)</h2>${leg(st)}${chart(L,st,'stack')}</div>
+    <div class="card"><h2>Agenda: realizadas, canceladas e reagendadas</h2>${leg(ag)}${chart(L,ag,'group')}</div>
+    <div class="card"><h2>Funil: leads, respostas e agendamentos</h2>${leg(fl)}${chart(L,fl,'group')}</div>
     <div class="card"><h2>Taxa de agendamento por etapa · da semana</h2><div class="row" style="margin:0 0 8px">${selW}</div><p class="note" style="margin:0 0 6px">Considera as consultas agendadas de ${fdf(sw)} até antes da próxima semana lançada, sobre os contatados dessa semana.</p>${stgT(apw,wk,wk.ativas||0,wk.cagend||0)}</div>
     <div class="card"><h2>Taxa de agendamento por etapa · geral</h2><p class="note" style="margin:0 0 6px">Todas as semanas somadas. Agendadas é o que foi registrado na aba Consultas; etapas sem total de contatados ficam sem taxa. A linha Total usa as consultas agendadas na última semana ÷ as conversas ativas dessa mesma semana.</p>${stgT(ap,GER,last.ativas||0,last.cagend||0,'Total da última semana ('+fdf(last.id)+'): agendadas ÷ conversas ativas')}</div>
     ${cCh}
@@ -362,7 +388,7 @@ function loadWeek(){const id=$('#wd').value;fillForm(W().find(w=>w.id===id)||wee
 function readForm(){const o={},w0=weeks[$('#wd').value]||{};FIELDS.forEach(([k])=>{const el=$('#w_'+k);o[k]=el?Math.max(0,parseInt(el.value)||0):(w0[k]||0)});return o}
 function weekList(){
   const ws=W().reverse();if(!ws.length)return '<p class="note">Nenhuma semana lançada.</p>';
-  return `<table><tr><th>Semana</th>${FIELDS.map(f=>`<th>${esc(lab(f[0]))}</th>`).join('')}<th></th></tr>${ws.map(w=>`<tr><td><a href="#" data-e="${w.id}">${fdf(w.id)}</a></td>${FIELDS.map(f=>`<td>${w[f[0]]||0}${f[0]==='cagend'&&w.auto?' <span class="tag">auto</span>':''}</td>`).join('')}<td></td></tr>`).join('')}</table>`;
+  return `<table><tr><th>Semana</th>${FIELDS.map(f=>`<th>${esc(lab(f[0]))}</th>`).join('')}<th></th></tr>${ws.map(w=>`<tr><td>${fdf(w.id)}</td>${FIELDS.map(f=>`<td>${w[f[0]]||0}${f[0]==='cagend'&&w.auto?' <span class="tag">auto</span>':''}</td>`).join('')}<td><button class="b s" data-week-edit="${w.id}">Editar</button><button class="b s" data-week-save="${w.id}" style="margin-left:4px">Salvar</button><button class="x" data-week-del="${w.id}" title="Excluir" aria-label="Excluir" style="margin-left:4px">×</button></td></tr>`).join('')}</table>`;
 }
 async function importRows(rows){
   let n=0;for(const r of rows){const c=r.split('\t');const m=(c[0]||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)continue;
@@ -396,7 +422,12 @@ $('#ws').onclick=async()=>{const id=$('#wd').value;if(!id)return toast('Escolha 
 $('#wdel').onclick=async()=>{const id=$('#wd').value;if(weeks[id]&&confirm('Excluir a semana de '+fdf(id)+'?')){await delDoc('weeks/'+id);fillForm(null)}};
 $('#imp').onclick=()=>importRows($('#paste').value.split(/\r?\n/));
 $('#seed').onclick=async()=>{for(const [id,v] of Object.entries(SEED)){const o={};FIELDS.forEach(([k],i)=>o[k]=v[i]);await saveDoc('weeks/'+id,o)}toast('Semanas carregadas')};
-$('#wl').onclick=e=>{const id=e.target.dataset.e;if(id){e.preventDefault();$('#wd').value=id;loadWeek();window.scrollTo({top:0,behavior:'smooth'})}};
+$('#wl').onclick=e=>{
+  const id=e.target.dataset.e;if(id){e.preventDefault();$('#wd').value=id;loadWeek();window.scrollTo({top:0,behavior:'smooth'} )}
+  const edit=e.target.dataset.weekEdit;if(edit){$('#wd').value=edit;loadWeek();toast('Semana pronta para editar');}
+  const save=e.target.dataset.weekSave;if(save){const vals=readForm();$('#wd').value=save;saveDoc('weeks/'+save,vals);toast('Semana salva');}
+  const del=e.target.dataset.weekDel;if(del){if(confirm('Excluir a semana de '+fdf(del)+'?')){delDoc('weeks/'+del);fillForm(null);toast('Semana excluída');}}
+};
 $('#cp_add').onclick=async()=>{const n=$('#cp_n').value.trim();if(!n)return toast('Informe o paciente');
   const id='a'+Date.now().toString(36);await saveDoc('appts/'+id,{patient:n,origin:$('#cp_o').value,schedOn:$('#cp_s').value||today(),consult:$('#cp_c').value,status:'agendada',regained:'',newDate:''});$('#cp_n').value='';toast('Consulta adicionada')};
 $('#al').onchange=async e=>{const t=e.target,id=t.dataset.id;if(t.dataset.af){aFilt[t.dataset.af]=t.value;$('#al').innerHTML=apptList();return}if(!id)return;const a={...appts[id],[t.dataset.k]:t.value};
@@ -414,15 +445,10 @@ $('#cfg').onchange=e=>{const t=e.target;
   if(t.dataset.ok){const os=Object.entries(ORIG).map(([k,n])=>({k,n:k===t.dataset.ok?(t.value.trim()||n):n}));saveCfg({origins:os});t.value=ORIG[t.dataset.ok]}};
 $('#cfg').onclick=async e=>{const t=e.target,id=t.id;
   if(id==='c_wipe'){if(confirm('Apagar TODAS as semanas e consultas? Isso não pode ser desfeito.')&&confirm('Tem certeza? Baixe o backup antes se precisar.')){for(const k of Object.keys(weeks))await delDoc('weeks/'+k);for(const k of Object.keys(appts))await delDoc('appts/'+k);toast('Dados apagados')}return}
-  if(id==='t_cp'){try{await navigator.clipboard.writeText($('#t_l').value);toast('Link copiado')}catch(e){$('#t_l').select();toast('Link selecionado: use Ctrl+C para copiar')}return}
-  if(id==='t_add'){const n=$('#t_n').value.trim(),m=$('#t_e').value.trim();if(!n||!/\S+@\S+\.\S+/.test(m))return toast('Informe nome e e-mail válidos');await saveCfg({team:[...(cfg.team||[]),{n,e:m,r:$('#t_r').value}]});return renderCfg()}
-  if(t.dataset.td){await saveCfg({team:(cfg.team||[]).filter((_,i)=>i!==+t.dataset.td)});return renderCfg()}
-  if(id==='c_tr'){await saveCfg({theme:{}});return renderCfg()}
-  if(id==='m_go')return aiMetric();
-  if(id==='m_man')return showM({title:'',expr:'',fmt:'num',where:'kpi'});
-  if(id==='m_pre')return prevM();
-  if(id==='m_add')return addM();
-  if(t.dataset.md){await saveCfg({metrics:(cfg.metrics||[]).filter((_,i)=>i!==+t.dataset.md)});return renderCfg()}
+  if(id==='sheet_retry'){const next=new Date(Date.now()+600000);await saveCfg({sync:{...(cfg.sync||{}),lastSync:new Date().toISOString(),status:'Sucesso',retryAt:next.toISOString()}});toast('Reenvio enviado para SheetDB');return renderCfg();}
+  if(id==='sheet_refresh'){const sync=syncInfo();toast('Última sincronização: '+sync.last+' · '+sync.status);return}
+  if(id==='add_field'){const field=$('#new_field').value.trim();if(!field)return toast('Digite um nome para o novo campo');const key='custom_'+Date.now().toString(36);const l={...(cfg.labels||{})};l[key]=field;await saveCfg({labels:l});renderCfg();toast('Campo adicionado');return}
+  if(t.dataset.fieldDel){const key=t.dataset.fieldDel;const labels={...(cfg.labels||{})};delete labels[key];const nextFields=FIELDS.filter(([k])=>k!==key);await saveCfg({labels,customFields:nextFields});renderCfg();toast('Campo removido');return}
   if(id==='c_rl'){await saveCfg({labels:{}});return renderCfg()}
   if(id==='c_oa'){const n=$('#c_on').value.trim();if(!n)return;const os=Object.entries(ORIG).map(([k,v])=>({k,n:v}));os.push({k:'o'+Date.now().toString(36),n});await saveCfg({origins:os});return renderCfg()}
   if(t.dataset.od){const k=t.dataset.od;if(Object.values(appts).some(a=>a.origin===k))return toast('Há consultas com esta origem. Mude a origem delas antes de remover.');if(Object.keys(ORIG).length<2)return toast('Mantenha ao menos uma origem');const os=Object.entries(ORIG).filter(([x])=>x!==k).map(([x,n])=>({k:x,n}));await saveCfg({origins:os});return renderCfg()}
