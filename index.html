@@ -13,7 +13,7 @@
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Figtree,system-ui,sans-serif;}
-    header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 22px 6px;max-width:1180px;margin:auto;position:sticky;top:0;z-index:10;background:var(--card);border-bottom:1px solid var(--line)}
+    header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:18px 22px 6px;max-width:1180px;margin:auto;position:sticky;top:0;z-index:10;background:var(--bg)}
     h1{font-size:19px;font-weight:700;letter-spacing:-.01em;margin:0}
     .note{color:var(--mut);font-size:13px}
     nav{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
@@ -25,7 +25,7 @@
     .row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:12px}
     .f{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
     .f label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px;font-weight:500}
-    input,select,textarea,button.b{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 9px;transition:border-color .15s,box-shadow .15s,background .15s,filter .15s}
+    input,select,textarea,button.b{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 9px;transition:border-color .15s,box-shadow .15s,background .15s}
     input,select,textarea{background:var(--card);min-height:36px}
     input:hover,select:hover,textarea:hover{border-color:var(--k)}
     input:focus,select:focus,textarea:focus{outline:none;border-color:var(--g);box-shadow:0 0 0 3px rgba(31,122,109,.15)}
@@ -104,7 +104,7 @@
     <section id="cfg" class="hide"></section>
   </main>
 
-  <div id="msg" class="note" style="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s"></div>
+  <div id="msg" class="note" style="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s ease"></div>
 
   <script>
     const FIELDS = [
@@ -159,6 +159,7 @@
     };
     const toast = (msg) => {
       const m = $('#msg');
+      if (!m) return;
       m.textContent = msg;
       m.style.opacity = '1';
       clearTimeout(toast.timer);
@@ -184,6 +185,27 @@
       }
     }
 
+    function normalizeWeekPayload(payload = {}) {
+      const base = {};
+      FIELDS.forEach(([key]) => {
+        const value = Number(payload[key] ?? 0);
+        base[key] = Number.isFinite(value) ? Math.max(0, value) : 0;
+      });
+      return base;
+    }
+
+    function normalizeAppointment(appt = {}) {
+      return {
+        patient: String(appt.patient || '').trim(),
+        origin: appt.origin || 'novo',
+        schedOn: appt.schedOn || today(),
+        consult: appt.consult || '',
+        status: appt.status || 'agendada',
+        regained: appt.regained || '',
+        newDate: appt.newDate || ''
+      };
+    }
+
     function lab(k) {
       return (cfg.labels && cfg.labels[k]) || FIELDS.find(([key]) => key === k)?.[1] || k;
     }
@@ -199,7 +221,8 @@
 
     function applyCfg() {
       if (!cfg.title) cfg.title = 'Painel KOMMO';
-      $('#ttl').textContent = cfg.title;
+      const ttl = $('#ttl');
+      if (ttl) ttl.textContent = cfg.title;
       document.title = cfg.title;
       buildForm();
       renderCfg();
@@ -209,7 +232,7 @@
       cfg = { ...cfg, ...patch };
       persistLocal(STORAGE.cfg, cfg);
       applyCfg();
-      if (db) {
+      if (db && typeof db.doc === 'function') {
         try {
           await db.doc('config/main').set(cfg);
         } catch (error) {
@@ -219,19 +242,23 @@
     }
 
     function renderDashboard() {
+      const totalWeeks = Object.keys(weeks).length;
+      const totalAppts = Object.keys(appts).length;
+      const statusClass = (cfg.sync && cfg.sync.status === 'Erro') ? 'status-error' : 'status-success';
+      const statusText = (cfg.sync && cfg.sync.status) || 'Sucesso';
       $('#dash').innerHTML = `
         <h2>Resumo</h2>
         <div class="grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-          <div class="card" style="margin:0"><span class="note">Semanas lançadas</span><div style="font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px">${Object.keys(weeks).length}</div></div>
-          <div class="card" style="margin:0"><span class="note">Consultas</span><div style="font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px">${Object.keys(appts).length}</div></div>
-          <div class="card" style="margin:0"><span class="note">Status</span><div style="font-size:20px;font-weight:700;letter-spacing:-.02em;margin-top:6px" class="${(cfg.sync && cfg.sync.status === 'Erro') ? 'status-error' : 'status-success'}">${(cfg.sync && cfg.sync.status) || 'Sucesso'}</div></div>
+          <div class="card" style="margin:0"><span class="note">Semanas lançadas</span><div style="font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px">${totalWeeks}</div></div>
+          <div class="card" style="margin:0"><span class="note">Consultas</span><div style="font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px">${totalAppts}</div></div>
+          <div class="card" style="margin:0"><span class="note">Status</span><div style="font-size:20px;font-weight:700;letter-spacing:-.02em;margin-top:6px" class="${statusClass}">${statusText}</div></div>
         </div>
       `;
     }
 
     function buildForm() {
       const formFields = FIELDS.filter(([key]) => key !== 'creal' && key !== 'ccanc' && key !== 'creag' && key !== 'cagend');
-      $('#wf').innerHTML = formFields.map(([key]) => 
+      $('#wf').innerHTML = formFields.map(([key]) =>
         `<label>${esc(lab(key))}<input type="number" min="0" id="w_${key}" value="0"></label>`
       ).join('');
       $('#cp_o').innerHTML = Object.entries(ORIG).map(([key, label]) => `<option value="${key}">${label}</option>`).join('');
@@ -242,17 +269,16 @@
       const current = values || {};
       FIELDS.forEach(([key]) => {
         const el = document.getElementById('w_' + key);
-        if (el) el.value = current[key] || 0;
+        if (el) el.value = Number(current[key] ?? 0);
       });
     }
 
     function readForm() {
-      const out = {};
-      FIELDS.forEach(([key]) => {
-        const val = document.getElementById('w_' + key);
-        out[key] = val ? Math.max(0, parseInt(val.value || '0', 10) || 0) : 0;
-      });
-      return out;
+      return normalizeWeekPayload(FIELDS.reduce((out, [key]) => {
+        const el = document.getElementById('w_' + key);
+        out[key] = el ? (Number(el.value) || 0) : 0;
+        return out;
+      }, {}));
     }
 
     function loadWeek() {
@@ -263,13 +289,14 @@
 
     function saveWeek(id, payload) {
       if (!id) return toast('Escolha a data da semana');
-      weeks[id] = payload;
+      const safePayload = normalizeWeekPayload(payload || {});
+      weeks[id] = safePayload;
       persistLocal(STORAGE.weeks, weeks);
       renderWeeks();
       renderDashboard();
       toast('Semana salva');
-      if (db) {
-        db.doc('weeks/' + id).set(payload).catch(() => toast('Erro ao salvar no banco'));
+      if (db && typeof db.doc === 'function') {
+        db.doc('weeks/' + id).set(safePayload).catch(() => toast('Erro ao salvar no banco'));
       }
     }
 
@@ -280,7 +307,7 @@
       persistLocal(STORAGE.weeks, weeks);
       renderWeeks();
       renderDashboard();
-      if (db) {
+      if (db && typeof db.doc === 'function') {
         db.doc('weeks/' + id).delete().catch(() => toast('Erro ao excluir no banco'));
       }
       const current = $('#wd').value;
@@ -298,7 +325,7 @@
         return;
       }
       const rows = keys.map((id) => {
-        const item = weeks[id] || {};
+        const item = normalizeWeekPayload(weeks[id] || {});
         const values = FIELDS.filter(([key]) => key !== 'creal' && key !== 'ccanc' && key !== 'creag' && key !== 'cagend')
           .map(([key]) => `<td>${item[key] || 0}</td>`)
           .join('');
@@ -331,7 +358,7 @@
       const patient = $('#cp_n').value.trim();
       if (!patient) return toast('Informe o paciente');
       const id = 'a' + Date.now().toString(36);
-      const appointment = {
+      const appointment = normalizeAppointment({
         patient,
         origin: $('#cp_o').value,
         schedOn: $('#cp_s').value || today(),
@@ -339,13 +366,13 @@
         status: 'agendada',
         regained: '',
         newDate: ''
-      };
+      });
       appts[id] = appointment;
       persistLocal(STORAGE.appts, appts);
       renderAppointments();
       renderDashboard();
       $('#cp_n').value = '';
-      if (db) {
+      if (db && typeof db.doc === 'function') {
         db.doc('appts/' + id).set(appointment).catch(() => toast('Erro ao salvar a consulta'));
       }
       toast('Consulta adicionada');
@@ -370,7 +397,7 @@
             <th></th>
           </tr>
           ${ids.map((id) => {
-            const a = appts[id];
+            const a = normalizeAppointment(appts[id] || {});
             return `
               <tr>
                 <td>${esc(a.patient)}</td>
@@ -454,9 +481,9 @@
       const savedWeeks = loadLocal(STORAGE.weeks, {});
       const savedAppts = loadLocal(STORAGE.appts, {});
       const savedCfg = loadLocal(STORAGE.cfg, {});
-      weeks = savedWeeks;
-      appts = savedAppts;
-      cfg = savedCfg;
+      weeks = savedWeeks || {};
+      appts = savedAppts || {};
+      cfg = savedCfg || {};
 
       try {
         db = await window.claude.use('db');
@@ -537,7 +564,9 @@
         toast('Semana pronta para editar');
       }
       if (saveId) {
-        saveWeek(saveId, readForm());
+        const activeId = $('#wd').value;
+        const payload = (activeId === saveId) ? readForm() : normalizeWeekPayload(weeks[saveId] || {});
+        saveWeek(saveId, payload);
       }
       if (delId) {
         deleteWeek(delId);
@@ -549,7 +578,7 @@
       const id = e.target.dataset.id;
       const key = e.target.dataset.k;
       if (!id || !key) return;
-      const row = appts[id] || {};
+      const row = normalizeAppointment(appts[id] || {});
       row[key] = e.target.value;
       if (key === 'status' && row.status === 'reagendada' && !row.regained) row.regained = 'sim';
       if (key === 'status' && (row.status === 'agendada' || row.status === 'realizada')) {
@@ -560,7 +589,7 @@
       persistLocal(STORAGE.appts, appts);
       renderAppointments();
       renderDashboard();
-      if (db) db.doc('appts/' + id).set(row).catch(() => toast('Erro ao salvar consulta'));
+      if (db && typeof db.doc === 'function') db.doc('appts/' + id).set(row).catch(() => toast('Erro ao salvar consulta'));
     };
     $('#al').onclick = (e) => {
       const id = e.target.dataset.del;
@@ -570,7 +599,7 @@
       persistLocal(STORAGE.appts, appts);
       renderAppointments();
       renderDashboard();
-      if (db) db.doc('appts/' + id).delete().catch(() => toast('Erro ao excluir consulta'));
+      if (db && typeof db.doc === 'function') db.doc('appts/' + id).delete().catch(() => toast('Erro ao excluir consulta'));
     };
 
     $('#cfg').onchange = (e) => {
