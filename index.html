@@ -21,6 +21,10 @@
         --warning:#c98a1b;
         --danger:#d14a5d;
         --shadow:rgba(16, 40, 36, 0.08);
+        --teal-soft:rgba(31,122,109,0.08);
+        --amber-soft:rgba(217,154,28,0.10);
+        --blue-soft:rgba(61,111,168,0.10);
+        --rose-soft:rgba(194,69,90,0.08);
         color-scheme: light;
         font-family: "Figtree", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       }
@@ -237,7 +241,8 @@
       .metric-list,
       .task-list,
       .patient-list,
-      .mini-list {
+      .mini-list,
+      .pill-list {
         list-style:none;
         padding:0;
         margin:0;
@@ -248,7 +253,8 @@
       .metric-list li,
       .task-list li,
       .patient-list li,
-      .mini-list li {
+      .mini-list li,
+      .pill-list li {
         display:flex;
         justify-content:space-between;
         align-items:center;
@@ -261,7 +267,8 @@
 
       .metric-list .meta,
       .task-list .meta,
-      .patient-list .meta {
+      .patient-list .meta,
+      .pill-list .meta {
         display:flex;
         align-items:center;
         gap:10px;
@@ -319,9 +326,115 @@
       .progress.alt span { background:linear-gradient(90deg, var(--a), #ebbf6f); }
       .progress.blue span { background:linear-gradient(90deg, var(--b), #77a9de); }
       .progress.red span { background:linear-gradient(90deg, var(--r), #e08c99); }
+      .progress.purple span { background:linear-gradient(90deg, var(--p), #b694d8); }
 
       .two-col {
         grid-template-columns:1.2fr 1fr;
+      }
+
+      .chart-legend {
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin-top:12px;
+      }
+
+      .legend-item {
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        font-size:12px;
+        color:var(--mut);
+        padding:6px 8px;
+        border:1px solid var(--line);
+        border-radius:999px;
+        background:#fafcfa;
+      }
+
+      .legend-swatch {
+        width:10px;
+        height:10px;
+        border-radius:50%;
+        display:inline-block;
+      }
+
+      .legend-swatch.github { background:var(--g); }
+      .legend-swatch.amber { background:var(--a); }
+      .legend-swatch.blue { background:var(--b); }
+      .legend-swatch.rose { background:var(--r); }
+      .legend-swatch.purple { background:var(--p); }
+
+      .funnel-grid {
+        display:grid;
+        grid-template-columns:repeat(3, minmax(130px, 1fr));
+        gap:12px;
+        margin-top:12px;
+      }
+
+      .funnel-card {
+        border:1px solid var(--line);
+        border-radius:14px;
+        padding:16px 12px;
+        background:linear-gradient(180deg, #ffffff, #f8faf8);
+        text-align:center;
+      }
+
+      .funnel-card .label {
+        display:block;
+        font-size:12px;
+        color:var(--mut);
+        margin-bottom:10px;
+      }
+
+      .funnel-card strong {
+        display:block;
+        font-size:30px;
+        letter-spacing:-.04em;
+      }
+
+      .funnel-card small {
+        display:block;
+        margin-top:8px;
+        color:var(--mut);
+      }
+
+      .stage-rates {
+        display:grid;
+        gap:14px;
+      }
+
+      .stacked {
+        display:grid;
+        grid-template-columns:repeat(3, minmax(0, 1fr));
+        gap:10px;
+        margin-top:10px;
+      }
+
+      .stacked .segment {
+        height:22px;
+        border-radius:999px;
+        border:1px solid rgba(0,0,0,0.02);
+      }
+
+      .segment.g { background:linear-gradient(90deg, var(--g), #67c0b0); }
+      .segment.a { background:linear-gradient(90deg, var(--a), #f4cf7a); }
+      .segment.b { background:linear-gradient(90deg, var(--b), #8fc0ef); }
+      .segment.r { background:linear-gradient(90deg, var(--r), #ea9aa7); }
+      .segment.p { background:linear-gradient(90deg, var(--p), #caa9e8); }
+
+      .source-box {
+        display:grid;
+        gap:10px;
+        margin-top:8px;
+      }
+
+      .source-item {
+        display:grid;
+        grid-template-columns:130px 1fr 68px;
+        gap:10px;
+        align-items:center;
+        font-size:13px;
+        color:var(--mut);
       }
 
       table {
@@ -433,14 +546,17 @@
         gap:8px;
       }
 
-      .setting label {
+      .setting label,
+      .inline-label {
         font-size:12px;
         color:var(--mut);
         font-weight:600;
       }
 
       .setting input,
-      .setting select {
+      .setting select,
+      .setting textarea,
+      .quick-input {
         width:100%;
         border:1px solid var(--line);
         border-radius:10px;
@@ -449,9 +565,93 @@
         color:var(--ink);
       }
 
+      .setting textarea,
+      .quick-input {
+        min-height:110px;
+        resize:vertical;
+      }
+
+      .import-tools {
+        display:flex;
+        flex-wrap:wrap;
+        gap:10px;
+        margin-top:12px;
+      }
+
+      .file-input-wrap {
+        position:relative;
+        overflow:hidden;
+        display:inline-flex;
+        background:#fff;
+        border:1px solid var(--line);
+        border-radius:10px;
+        padding:10px 12px;
+        cursor:pointer;
+      }
+
+      .file-input-wrap input {
+        position:absolute;
+        inset:0;
+        opacity:0;
+        cursor:pointer;
+      }
+
+      .mini-kpis {
+        display:grid;
+        grid-template-columns:repeat(4, minmax(120px,1fr));
+        gap:12px;
+        margin-top:12px;
+      }
+
+      .mini-kpi {
+        border:1px solid var(--line);
+        border-radius:12px;
+        padding:12px 10px;
+        background:#fbfcfb;
+      }
+
+      .mini-kpi small {
+        color:var(--mut);
+        display:block;
+        margin-bottom:8px;
+      }
+
+      .mini-kpi strong {
+        font-size:24px;
+        letter-spacing:-.04em;
+      }
+
+      .pill-list li {
+        background:#fbfcfb;
+      }
+
+      .check-grid {
+        display:grid;
+        grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+        gap:10px;
+      }
+
+      .check-item {
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:12px;
+        border:1px solid var(--line);
+        border-radius:12px;
+        padding:10px 12px;
+        background:#fbfcfb;
+      }
+
       @media (max-width: 860px) {
         .stats-grid,
-        .two-col {
+        .two-col,
+        .funnel-grid,
+        .mini-kpis {
+          grid-template-columns:1fr;
+        }
+
+        .source-item,
+        .bar-row {
           grid-template-columns:1fr;
         }
       }
@@ -466,7 +666,9 @@
         </div>
 
         <nav aria-label="Abas do painel">
-          <button type="button" class="active" data-tab="overview" aria-selected="true">Visão geral</button>
+          <button type="button" class="active" data-tab="overview" aria-selected="true">Painel</button>
+          <button type="button" data-tab="semana" aria-selected="false">Lançar semana</button>
+          <button type="button" data-tab="consultas" aria-selected="false">Consultas</button>
           <button type="button" data-tab="agenda" aria-selected="false">Agenda</button>
           <button type="button" data-tab="followup" aria-selected="false">Follow-up</button>
           <button type="button" data-tab="relatorios" aria-selected="false">Relatórios</button>
@@ -476,7 +678,7 @@
     </header>
 
     <main>
-      <section id="overview" class="section active" aria-label="Visão geral">
+      <section id="overview" class="section active" aria-label="Painel principal">
         <div class="grid kpis">
           <article class="card kpi">
             <span class="label">Leads gerais</span>
@@ -506,42 +708,48 @@
         <div class="grid stats-grid two-col">
           <article class="card">
             <div class="panel-header">
-              <h2>Desempenho por etapa</h2>
-              <span class="chip">Hoje</span>
+              <h2>Funil de conversão</h2>
+              <span class="chip">Leads → agendamento</span>
             </div>
 
-            <ul class="metric-list">
-              <li>
-                <div class="meta">
-                  <span class="dot"></span>
-                  <span>Primeiro contato</span>
-                </div>
-                <span class="value">72%</span>
-              </li>
-              <li>
-                <div class="meta">
-                  <span class="dot a"></span>
-                  <span>Qualificação</span>
-                </div>
-                <span class="value">61%</span>
-              </li>
-              <li>
-                <div class="meta">
-                  <span class="dot b"></span>
-                  <span>Consulta agendada</span>
-                </div>
-                <span class="value">44%</span>
-              </li>
-              <li>
-                <div class="meta">
-                  <span class="dot p"></span>
-                  <span>Fechamento</span>
-                </div>
-                <span class="value">18%</span>
-              </li>
-            </ul>
+            <div class="chart-legend" aria-label="Legenda das etapas do funil">
+              <span class="legend-item"><span class="legend-swatch github"></span>Leads</span>
+              <span class="legend-item"><span class="legend-swatch amber"></span>Respostas</span>
+              <span class="legend-item"><span class="legend-swatch blue"></span>Agendamentos</span>
+            </div>
 
-            <div class="bar-wrap">
+            <div class="funnel-grid">
+              <div class="funnel-card">
+                <span class="label">Leads</span>
+                <strong>342</strong>
+                <small>+12,4%</small>
+              </div>
+              <div class="funnel-card">
+                <span class="label">Respostas</span>
+                <strong>186</strong>
+                <small>54,4%</small>
+              </div>
+              <div class="funnel-card">
+                <span class="label">Agendamentos</span>
+                <strong>83</strong>
+                <small>24,3%</small>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="panel-header">
+              <h2>Taxa de agendamento por etapa · geral</h2>
+              <span class="chip">Últimos 30 dias</span>
+            </div>
+
+            <div class="chart-legend" aria-label="Legenda das series gerais">
+              <span class="legend-item"><span class="legend-swatch github"></span>1º contato</span>
+              <span class="legend-item"><span class="legend-swatch amber"></span>Qualificação</span>
+              <span class="legend-item"><span class="legend-swatch blue"></span>Agendamento</span>
+            </div>
+
+            <div class="stage-rates">
               <div class="bar-row">
                 <span>Contato</span>
                 <div class="progress"><span style="width:72%"></span></div>
@@ -553,41 +761,271 @@
                 <strong>61%</strong>
               </div>
               <div class="bar-row">
-                <span>Consulta</span>
+                <span>Agendar</span>
                 <div class="progress blue"><span style="width:44%"></span></div>
                 <strong>44%</strong>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="grid stats-grid two-col" style="margin-top:14px;">
+          <article class="card">
+            <div class="panel-header">
+              <h2>Taxa de agendamento por etapa · da semana</h2>
+              <span class="chip">Semana atual</span>
+            </div>
+
+            <div class="chart-legend" aria-label="Legenda da semana">
+              <span class="legend-item"><span class="legend-swatch github"></span>Semanal</span>
+              <span class="legend-item"><span class="legend-swatch blue"></span>Meta</span>
+            </div>
+
+            <div class="bar-wrap">
+              <div class="bar-row">
+                <span>Lead</span>
+                <div class="progress"><span style="width:80%"></span></div>
+                <strong>80%</strong>
+              </div>
+              <div class="bar-row">
+                <span>Resposta</span>
+                <div class="progress blue"><span style="width:67%"></span></div>
+                <strong>67%</strong>
+              </div>
+              <div class="bar-row">
+                <span>Agend.</span>
+                <div class="progress alt"><span style="width:52%"></span></div>
+                <strong>52%</strong>
               </div>
             </div>
           </article>
 
           <article class="card">
             <div class="panel-header">
-              <h2>Origem dos leads</h2>
+              <h2>De onde vêm as consultas</h2>
               <span class="chip">Mês</span>
             </div>
 
-            <div class="bar-wrap">
-              <div class="bar-row">
+            <div class="chart-legend" aria-label="Legenda de origem das consultas">
+              <span class="legend-item"><span class="legend-swatch github"></span>Instagram</span>
+              <span class="legend-item"><span class="legend-swatch amber"></span>WhatsApp</span>
+              <span class="legend-item"><span class="legend-swatch blue"></span>Google</span>
+              <span class="legend-item"><span class="legend-swatch rose"></span>Indicação</span>
+            </div>
+
+            <div class="source-box">
+              <div class="source-item">
                 <span>Instagram</span>
                 <div class="progress"><span style="width:76%"></span></div>
                 <strong>76%</strong>
               </div>
-              <div class="bar-row">
+              <div class="source-item">
                 <span>WhatsApp</span>
                 <div class="progress blue"><span style="width:52%"></span></div>
                 <strong>52%</strong>
               </div>
-              <div class="bar-row">
+              <div class="source-item">
                 <span>Google</span>
                 <div class="progress alt"><span style="width:39%"></span></div>
                 <strong>39%</strong>
               </div>
-              <div class="bar-row">
+              <div class="source-item">
                 <span>Indicação</span>
                 <div class="progress red"><span style="width:28%"></span></div>
                 <strong>28%</strong>
               </div>
             </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="semana" class="section" aria-label="Lançar semana">
+        <div class="grid two-col">
+          <article class="card">
+            <div class="panel-header">
+              <h2>Importar planilha da semana</h2>
+              <span class="chip">CSV / XLSX</span>
+            </div>
+
+            <div class="import-tools">
+              <label class="file-input-wrap">
+                <span>Selecionar arquivo</span>
+                <input type="file" accept=".csv,.xlsx,.xls" />
+              </label>
+              <button type="button" class="btn primary">Importar dados</button>
+              <button type="button" class="btn">Baixar modelo</button>
+            </div>
+
+            <div class="mini-kpis" style="margin-top:16px;">
+              <div class="mini-kpi">
+                <small>Leads</small>
+                <strong>124</strong>
+              </div>
+              <div class="mini-kpi">
+                <small>Respostas</small>
+                <strong>71</strong>
+              </div>
+              <div class="mini-kpi">
+                <small>Agend.</small>
+                <strong>34</strong>
+              </div>
+              <div class="mini-kpi">
+                <small>Meta</small>
+                <strong>38</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="panel-header">
+              <h2>Resumo da semana</h2>
+              <span class="chip">Atual</span>
+            </div>
+
+            <ul class="pill-list">
+              <li>
+                <div class="meta">
+                  <span class="dot"></span>
+                  <span>Taxa de resposta</span>
+                </div>
+                <span class="value">58%</span>
+              </li>
+              <li>
+                <div class="meta">
+                  <span class="dot a"></span>
+                  <span>Taxa de agendamento</span>
+                </div>
+                <span class="value">27%</span>
+              </li>
+              <li>
+                <div class="meta">
+                  <span class="dot b"></span>
+                  <span>Consultas confirmadas</span>
+                </div>
+                <span class="value">19</span>
+              </li>
+              <li>
+                <div class="meta">
+                  <span class="dot r"></span>
+                  <span>Faltas/Cancelamentos</span>
+                </div>
+                <span class="value">5</span>
+              </li>
+            </ul>
+          </article>
+        </div>
+
+        <article class="card" style="margin-top:14px;">
+          <div class="panel-header">
+            <h2>Dados completos da semana</h2>
+            <span class="chip">Tabela de acompanhamento</span>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Origem</th>
+                <th>Etapa</th>
+                <th>Status</th>
+                <th>Responsável</th>
+                <th>Agendamento</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Marina C.</td>
+                <td>Instagram</td>
+                <td>Resposta</td>
+                <td><span class="status ok">Em dia</span></td>
+                <td>Equipe 1</td>
+                <td>15/10 - 09:30</td>
+              </tr>
+              <tr>
+                <td>Lucas P.</td>
+                <td>WhatsApp</td>
+                <td>Qualificação</td>
+                <td><span class="status warn">Pendente</span></td>
+                <td>Equipe 2</td>
+                <td>16/10 - 14:00</td>
+              </tr>
+              <tr>
+                <td>Rafaela M.</td>
+                <td>Google</td>
+                <td>Agendamento</td>
+                <td><span class="status ok">Confirmado</span></td>
+                <td>Equipe 3</td>
+                <td>17/10 - 10:15</td>
+              </tr>
+              <tr>
+                <td>Bruno L.</td>
+                <td>Indicação</td>
+                <td>Follow-up</td>
+                <td><span class="status danger">Atenção</span></td>
+                <td>Equipe 1</td>
+                <td>18/10 - 13:45</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section id="consultas" class="section" aria-label="Consultas">
+        <div class="grid two-col">
+          <article class="card">
+            <div class="panel-header">
+              <h2>Entrada rápida por colagem</h2>
+              <span class="chip">Paste</span>
+            </div>
+
+            <label class="inline-label" for="quick-paste">Cole os dados da consulta</label>
+            <textarea id="quick-paste" class="quick-input" placeholder="Nome | WhatsApp | data | plano | status
+Maria Silva | 88999887766 | 14/10 | Consulta inicial | Confirmado">Maria Silva | 88999887766 | 14/10 | Consulta inicial | Confirmado
+Pedro Rocha | 88999445566 | 15/10 | Retorno | Pendente
+Aline Souza | 88999223344 | 16/10 | Consulta inicial | Confirmado</textarea>
+
+            <div class="btn-row">
+              <button type="button" class="btn primary">Processar colagem</button>
+              <button type="button" class="btn">Limpar</button>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="panel-header">
+              <h2>Consultas do dia</h2>
+              <span class="chip">Hoje</span>
+            </div>
+
+            <ul class="task-list">
+              <li>
+                <div class="meta">
+                  <span class="dot"></span>
+                  <span>Maria Silva</span>
+                </div>
+                <span class="tag">09:00</span>
+              </li>
+              <li>
+                <div class="meta">
+                  <span class="dot a"></span>
+                  <span>Pedro Rocha</span>
+                </div>
+                <span class="tag">11:30</span>
+              </li>
+              <li>
+                <div class="meta">
+                  <span class="dot b"></span>
+                  <span>Aline Souza</span>
+                </div>
+                <span class="tag">14:00</span>
+              </li>
+              <li>
+                <div class="meta">
+                  <span class="dot p"></span>
+                  <span>Júlia P.</span>
+                </div>
+                <span class="tag">16:15</span>
+              </li>
+            </ul>
           </article>
         </div>
       </section>
@@ -816,6 +1254,40 @@
                 <option>GMT-04:00</option>
               </select>
             </label>
+
+            <label>
+              Meta mensal de consultas
+              <input type="text" value="45 consultas" />
+            </label>
+          </article>
+
+          <article class="card setting">
+            <div class="panel-header">
+              <h3>Metas e visibilidade</h3>
+            </div>
+
+            <label>
+              Nome do profissional
+              <input type="text" value="Dr. Lucas Mendes" />
+            </label>
+
+            <label>
+              Visibilidade do painel
+              <select>
+                <option selected>Somente equipe</option>
+                <option>Equipe + responsável</option>
+                <option>Público</option>
+              </select>
+            </label>
+
+            <label>
+              Risco por etapa
+              <select>
+                <option selected>Moderado</option>
+                <option>Baixo</option>
+                <option>Alta revisão</option>
+              </select>
+            </label>
           </article>
 
           <article class="card setting">
@@ -836,11 +1308,20 @@
               Lembrete antes da consulta
               <input type="text" value="2 horas" />
             </label>
+
+            <label>
+              Auto-rotina de follow-up
+              <select>
+                <option selected>Ativa</option>
+                <option>Manual</option>
+                <option>Desativada</option>
+              </select>
+            </label>
           </article>
 
           <article class="card setting">
             <div class="panel-header">
-              <h3>Integrações</h3>
+              <h3>Integrações e backup</h3>
             </div>
 
             <label>
@@ -856,12 +1337,22 @@
               Status de sincronização
               <input type="text" value="Conectado" />
             </label>
+
+            <label>
+              Backup automático
+              <select>
+                <option selected>Diário às 02:00</option>
+                <option>Semanal</option>
+                <option>Manual</option>
+              </select>
+            </label>
           </article>
         </div>
 
         <div class="btn-row">
           <button type="button" class="btn primary">Salvar alterações</button>
           <button type="button" class="btn">Exportar relatório</button>
+          <button type="button" class="btn">Backup agora</button>
         </div>
       </section>
     </main>
