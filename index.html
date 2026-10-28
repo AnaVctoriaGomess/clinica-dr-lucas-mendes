@@ -121,7 +121,7 @@ body.locked>header,body.locked>main{display:none}
   <div class="card" style="margin-top:14px">
     <h2>Importar da planilha</h2>
     <p class="note">Copie as linhas de dados da planilha (sem cabeçalho) e cole aqui.</p>
-    <textarea id="paste" rows="4" style="width:100%" placeholder="23/09/2026&#9;321&#9;64&#9;380 …"></textarea>
+    <textarea id="paste" rows="4" style="width:100%" placeholder="23/09/2026	321	64	380 …"></textarea>
     <div class="row"><button class="b" id="imp">Importar</button><button class="b s" id="seed">Carregar as 4 semanas atuais da planilha</button></div>
   </div>
   <div class="card wrap" style="margin-top:14px"><h2>Semanas lançadas</h2><div id="wl"></div></div>
@@ -142,12 +142,15 @@ body.locked>header,body.locked>main{display:none}
   <!-- Importação com prévia e sem salvamento automático -->
   <div class="card" style="margin-top:14px">
     <h2>Colar dados do paciente</h2>
-    <p class="note">Cole ou digite os dados dos pacientes. O sistema identifica os dados e gera uma <b>pré-visualização para revisão</b>. Nenhum dado é gravado no Firebase automaticamente. Revise, altere ou remova itens antes de confirmar o salvamento.</p>
-    <textarea id="ps_t" rows="3" style="width:100%" placeholder="Exemplos:&#10;Maria S. ; 3º contato ; 28/10&#10;João Silva ; Novo lead ; 05/11/2026&#10;Ou cole trecho de conversa..."></textarea>
+    <p class="note">Cole ou digite os dados dos pacientes. O sistema irá <b>apenas interpretar o texto e montar uma prévia</b> em tela para sua revisão. <b>Nenhum dado é salvo no Firebase automaticamente</b>. Você pode revisar, editar campos ou remover itens. O salvamento só acontece quando você clicar no botão <b>“Salvar consultas”</b>.</p>
+    <textarea id="ps_t" rows="3" style="width:100%" placeholder="Exemplos:
+Maria S. ; 3º contato ; 28/10
+João Silva ; Novo lead ; 05/11/2026 ; Realizada
+Ou cole um trecho de conversa..."></textarea>
     <div class="row" style="margin-top:8px">
-      <button class="b s" id="ps_btn_parse">Interpretar texto</button>
-      <button class="b s" id="ps_btn_clear">Limpar</button>
-      <button class="b" id="ps_save_btn" disabled>Salvar consultas (0)</button>
+      <button class="b s" type="button" id="ps_btn_parse">Interpretar texto</button>
+      <button class="b s" type="button" id="ps_btn_clear">Limpar</button>
+      <button class="b" type="button" id="ps_save_btn" disabled>Salvar consultas (0)</button>
     </div>
     <div id="ps_preview_box" style="margin-top:14px"></div>
   </div>
@@ -176,7 +179,7 @@ var db=null,sync={},editRow=null,wFilt={from:'',to:''},weeks={},appts={},cur='da
 window.setWeeks=w=>{weeks=w};window.setAppts=a=>{appts=a};window.setCfg=c=>{cfg=c};
 const BASEF=FIELDS.slice(),BASE=FIELDS.map(f=>f[1]),ORIG0={...ORIG};
 const $=s=>document.querySelector(s);
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));
 const fd=iso=>iso?iso.split('-').reverse().slice(0,2).join('/'):'—';
 const fdf=iso=>iso?iso.split('-').reverse().join('/'):'—';
 const pct=(a,b)=>b?(a/b*100):0;
@@ -198,7 +201,6 @@ let syncing=false;
 const SDB={semanas:'https://sheetdb.io/api/v1/sk39abnekybca',consultas:'https://sheetdb.io/api/v1/fhrcm4cao9i6e'};
 const SHN={semanas:'Lançar Semanas',consultas:'Consultas'};
 
-// Cabeçalhos oficiais imutáveis exigidos nas planilhas
 const WCOLS=['semana','novos','antigas','ativas','fu2','fu3','fu4','fu5','resp','agend','semresp','pensando','aguard','nao','cagend','ccanc','creag','creal'];
 const ACOLS=['id','paciente','origem','agendada_em','consulta','status','reagendou','nova_data'];
 
@@ -227,7 +229,6 @@ function initSyncState(){
   };
 }
 
-// Fuso horário oficial America/Sao_Paulo
 function getSaoPauloParts(d=new Date()){
   const f=new Intl.DateTimeFormat('en-US',{
     timeZone:'America/Sao_Paulo',
@@ -245,28 +246,23 @@ function getSaoPauloParts(d=new Date()){
   };
 }
 
-// Retorna ID e horário do último slot programado no fuso de SP
 function getLastSlotInfo(now=new Date()){
   for(let i=0;i<=7;i++){
     const d=new Date(now.getTime()-i*86400000);
     const sp=getSaoPauloParts(d);
     if(sp.weekday>=1&&sp.weekday<=5){
       const h=sp.weekday===5?16:17,m=sp.weekday===5?50:53;
-      const slotTime=new Date(now.getTime()-i*86400000);
-      // Ajusta horário aproximado
       const spNow=getSaoPauloParts(now);
       const diffMins=(spNow.hour*60+spNow.minute)-(h*60+m)+(i*1440);
       if(diffMins>=0){
         const slotDateStr=`${sp.year}-${String(sp.month).padStart(2,'0')}-${String(sp.day).padStart(2,'0')}`;
-        const slotId=`${slotDateStr}_${h}h${m}`;
-        return {id:slotId,dateStr:slotDateStr,hour:h,minute:m,timestamp:now.getTime()-diffMins*60000};
+        return {id:`${slotDateStr}_${h}h${m}`,dateStr:slotDateStr,hour:h,minute:m,timestamp:now.getTime()-diffMins*60000};
       }
     }
   }
   return null;
 }
 
-// Próximo envio programado
 function getNextSlotString(now=new Date()){
   const sp=getSaoPauloParts(now);
   for(let i=0;i<=7;i++){
@@ -299,7 +295,6 @@ async function httpErr(r,what){
   return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''));
 }
 
-// Validação dos cabeçalhos oficiais com tolerância a maiúsculas e espaços
 async function checkKeys(sh,cols){
   const r=await sdb(SDB[sh]+'/keys');
   if(!r.ok)return;
@@ -318,7 +313,6 @@ function addSyncHistory(sh,ok,msg){
   sync.hist=[item,...(sync.hist||[])].slice(0,12);
 }
 
-// Sincronização independente por planilha
 async function syncSingleSheet(sh){
   const isSem=sh==='semanas';
   const cols=isSem?WCOLS:ACOLS;
@@ -345,13 +339,11 @@ async function syncSingleSheet(sh){
     const toUpdate=rows.filter(x=>have.has(String(x[kc]).trim()));
     const toAdd=rows.filter(x=>!have.has(String(x[kc]).trim()));
 
-    // Atualiza existentes sem apagar
     for(const x of toUpdate){
       const patchRes=await sdb(url+'/'+kc+'/'+encodeURIComponent(x[kc]),{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});
       if(!patchRes.ok)throw await httpErr(patchRes,'Atualizar linha na aba "'+SHN[sh]+'"');
     }
 
-    // Acrescenta novos
     if(toAdd.length){
       const postRes=await sdb(url,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
       if(!postRes.ok)throw await httpErr(postRes,'Acrescentar linhas na aba "'+SHN[sh]+'"');
@@ -387,7 +379,6 @@ async function sheetSync(trigger='manual'){
   const lastSlot=getLastSlotInfo();
   if(lastSlot)sync.general.lastAttemptSlot=lastSlot.id;
 
-  // Execução independente: a falha de uma não impede a outra
   const resSem=await syncSingleSheet('semanas');
   const resApp=await syncSingleSheet('consultas');
 
@@ -401,7 +392,7 @@ async function sheetSync(trigger='manual'){
   }else if(resSem||resApp){
     sync.general.status='partial_error';
     sync.general.retryCount=(sync.general.retryCount||0)+1;
-    sync.general.retryAt=Date.now()+600000; // 10 minutos
+    sync.general.retryAt=Date.now()+600000;
     toast('SheetDB: sincronização parcial (uma das planilhas falhou)');
   }else{
     sync.general.status='error';
@@ -436,13 +427,11 @@ async function sheetTest(){
 
 function tickSync(){
   if(syncing||!(window.DATA&&DATA.ready))return;
-  // 1. Retentativa de erro (10 minutos)
   if(sync.general.retryAt&&Date.now()>=sync.general.retryAt){
     sync.general.retryAt=0;
     sheetSync('retry');
     return;
   }
-  // 2. Horário programado ou pendente após abertura
   const lastSlot=getLastSlotInfo();
   if(lastSlot&&sync.general.lastSuccessSlot!==lastSlot.id&&sync.general.lastAttemptSlot!==lastSlot.id){
     sheetSync('slot_pending');
@@ -487,7 +476,6 @@ function syncInner(){
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:12px 0">
-      <!-- Card Semanas -->
       <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--card)">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <b>Planilha: Lançar Semanas</b>
@@ -499,7 +487,6 @@ function syncInner(){
         ${sem.error?`<p class="note" style="color:var(--r);margin-top:6px;word-break:break-word">${esc(sem.error)}</p>`:''}
       </div>
 
-      <!-- Card Consultas -->
       <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--card)">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <b>Planilha: Consultas</b>
@@ -544,6 +531,9 @@ function paintSync(){
 
 function stLine(){
   const fbOk=window.DATA&&DATA.ready;
+  const lastReadStr=window.DATA&&window.DATA.lastRead
+    ? new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}).format(new Date(window.DATA.lastRead))
+    : '';
   const sText=sync.general.status==='success'
     ?'SheetDB: sincronizado'
     :sync.general.status==='partial_error'
@@ -551,7 +541,7 @@ function stLine(){
     :sync.general.status==='error'
     ?'SheetDB: erro'
     :'SheetDB: aguardando';
-  $('#st').textContent=`Firebase: ${fbOk?'conexão confirmada':'sem conexão'} · ${sText}${sync.general.lastSuccess?' ('+fdt(sync.general.lastSuccess)+')':''}`;
+  $('#st').textContent=`Firebase: ${fbOk?'conectado'+(lastReadStr?' (às '+lastReadStr+')':''):'sem conexão'} · ${sText}${sync.general.lastSuccess?' ('+fdt(sync.general.lastSuccess)+')':''}`;
 }
 
 function init(){
@@ -648,13 +638,13 @@ async function addM(){
   await saveCfg({metrics:[...(cfg.metrics||[]),m]});renderCfg();toast('Adicionado ao painel');
 }
 
-/* ---------- Importação Manual de Consultas com Prévia ---------- */
+/* ---------- IMPORTAÇÃO MANUAL DE CONSULTAS (SEM SALVAMENTO AUTOMÁTICO) ---------- */
 let pastePreview=[];
 let isSavingPaste=false;
 
 function parsePatientLine(l,defaultYear){
   const low=l.toLowerCase();
-  const dm=l.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+  const dm=l.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\\/\\-](\d{2,4}))?/);
   let consult='';
   if(dm){
     const yy=dm[3]?(dm[3].length===2?'20'+dm[3]:dm[3]):defaultYear;
@@ -674,13 +664,13 @@ function parsePatientLine(l,defaultYear){
   let name='';
   if(l.includes(';')||l.includes('\t')||l.includes('|')||l.includes(' - ')){
     const parts=l.split(/[\t;|]|\s-\s/).map(p=>p.trim()).filter(Boolean);
-    if(parts.length)name=parts[0].replace(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/g,'').trim();
+    if(parts.length)name=parts[0].replace(/(\d{1,2})[\/\-](\d{1,2})(?:[\\/\\-](\d{2,4}))?/g,'').trim();
   }else{
     const mName=l.match(/(?:paciente|agendad[oa]\s+(?:a\s+)?|consulta\s+(?:da\s+|do\s+)?)([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)+)/i);
     if(mName&&mName[1]){
       name=mName[1].trim();
     }else{
-      name=l.replace(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/g,'')
+      name=l.replace(/(\d{1,2})[\/\-](\d{1,2})(?:[\\/\\-](\d{2,4}))?/g,'')
             .replace(/\b(?:novo lead|2º contato|3º contato|4º contato|5º contato|sem retorno|realizada|agendada|cancelada|reagendada|confirmada|paciente|consulta)\b/gi,'')
             .replace(/[;,\-–—|:]/g,' ')
             .replace(/\s+/g,' ')
@@ -692,7 +682,6 @@ function parsePatientLine(l,defaultYear){
   if(!name||name.length<2)return null;
 
   return {
-    id:'prev_'+Math.random().toString(36).slice(2,8),
     patient:name.slice(0,200),
     origin,
     schedOn:today(),
@@ -709,24 +698,24 @@ function updatePastePreviewUI(){
   const btnSave=$('#ps_save_btn');
   if(!box||!btnSave)return;
 
-  const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
+  const validItems=pastePreview.filter(p=>p&&typeof p.patient==='string'&&p.patient.trim().length>=2);
   btnSave.textContent=`Salvar consultas (${validItems.length})`;
   btnSave.disabled=validItems.length===0||isSavingPaste;
 
   if(!txt&&!pastePreview.length){
-    box.innerHTML='<p class="note">Nenhum texto inserido. A prévia aparecerá aqui após digitar ou colar.</p>';
+    box.innerHTML='<p class="note">Nenhum texto inserido. A prévia dos pacientes aparecerá aqui para conferência antes de salvar.</p>';
     return;
   }
 
   if(txt&&!pastePreview.length){
-    box.innerHTML='<p class="note" style="color:var(--r)">Nenhum paciente válido identificado no texto. Verifique se informou ao menos o nome do paciente (ex.: <i>Maria S. ; 3º contato ; 28/10</i>).</p>';
+    box.innerHTML='<p class="note" style="color:var(--r)">Nenhum paciente válido identificado no texto. Formatos aceitos: <code>Nome ; Origem ; Data</code> (ex.: <i>Maria S. ; 3º contato ; 28/10</i>) ou conversa contendo nome de paciente e data.</p>';
     return;
   }
 
   box.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <b>Pré-visualização para revisão (${pastePreview.length} registro${pastePreview.length>1?'s':''})</b>
-      <span class="note">Edite os campos ou clique no × para remover</span>
+      <span class="note">Revise ou edite os dados antes de gravar no Firebase</span>
     </div>
     <div class="wrap">
       <table>
@@ -745,7 +734,7 @@ function updatePastePreviewUI(){
             <td><input type="date" data-pidx="${idx}" data-pk="schedOn" value="${item.schedOn||today()}"></td>
             <td><input type="date" data-pidx="${idx}" data-pk="consult" value="${item.consult||''}"></td>
             <td><select data-pidx="${idx}" data-pk="status">${opts(STAT,item.status)}</select></td>
-            <td><button class="x" data-pdel="${idx}" title="Remover da prévia" aria-label="Remover">×</button></td>
+            <td><button class="x" type="button" data-pdel="${idx}" title="Remover da prévia" aria-label="Remover">×</button></td>
           </tr>
         `).join('')}
       </table>
@@ -753,6 +742,7 @@ function updatePastePreviewUI(){
   `;
 }
 
+// Interpretação em memória (NUNCA chama o Firebase)
 function parseInputText(){
   const txt=$('#ps_t')?$('#ps_t').value:'';
   if(!txt.trim()){
@@ -771,10 +761,22 @@ function parseInputText(){
   updatePastePreviewUI();
 }
 
-async function savePreviewAppts(){
+// Persistência EXCLUSIVA do botão de salvar
+async function savePreviewAppts(isExplicitUserClick){
+  // BARREIRA 1: Confirmação explícita obrigatória
+  if(isExplicitUserClick!==true){
+    console.warn("Tentativa de gravação sem clique explícito bloqueada.");
+    return;
+  }
+  // BARREIRA 2: Trava de concorrência / duplo clique
   if(isSavingPaste)return;
-  const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
-  if(!validItems.length)return;
+
+  // BARREIRA 3: Validação dos itens
+  const validItems=pastePreview.filter(p=>p&&typeof p.patient==='string'&&p.patient.trim().length>=2);
+  if(!validItems.length){
+    alert("Nenhum paciente válido na prévia para salvar.");
+    return;
+  }
 
   isSavingPaste=true;
   const btnSave=$('#ps_save_btn');
@@ -785,7 +787,6 @@ async function savePreviewAppts(){
     for(const item of validItems){
       const p=item.patient.trim();
       const c=/^\d{4}-\d{2}-\d{2}$/.test(item.consult||'')?item.consult:'';
-      // Evita duplicação caso já exista idêntico na memória local
       if(Object.values(appts).some(a=>a.patient===p&&(a.consult||'')===c))continue;
 
       const newId='a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -806,7 +807,7 @@ async function savePreviewAppts(){
     updatePastePreviewUI();
   }catch(err){
     console.error("Erro ao salvar consultas:",err);
-    alert("Erro ao gravar consultas no Firebase: "+(err.message||err)+"\n\nO texto e a prévia foram preservados para você tentar novamente.");
+    alert("Erro ao gravar consultas no Firebase: "+(err.message||err)+"\n\nO texto e a prévia foram preservados intactos.");
     toast("Falha ao salvar. Prévia preservada.");
   }finally{
     isSavingPaste=false;
@@ -896,7 +897,6 @@ function dash(){
   const stgT=(list,d,at,ca,lb)=>{const row=`<tr style="font-weight:700;border-top:2px solid var(--line)"><td>${lb||'Total (agendadas ÷ ativas)'}</td><td>${at.toLocaleString('pt-BR')}</td><td>${ca}</td><td><b>${p2(pct(ca,at))}</b></td><td></td></tr>`;const h=stg(list,d);return h.includes('</table>')?h.replace('</table>',row+'</table>'):h+`<div class="wrap"><table>${row}</table></div>`};
   const selW=`<label class="note">Semana <select id="selw">${ws.map(w=>`<option value="${w.id}"${w.id===sw?' selected':''}>${fdf(w.id)}</option>`).join('')}</select></label>`;
   const GER={novos:tl,fu2:sum(ws,'fu2'),fu3:sum(ws,'fu3'),fu4:sum(ws,'fu4'),fu5:sum(ws,'fu5')};
-  const cvW=pct(last.agend||0,last.resp||0);
   const po=[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada'],...WA.slice().reverse().map(w=>[w.id,'Semana de '+fdf(w.id)])].map(([v,l])=>`<option value="${v}"${v===pSel?' selected':''}>${l}</option>`).join('');
 
   const cm=cfg.metrics||[],cs=m=>{try{return ev(m.expr,ws)}catch(e){return null}};
@@ -1015,19 +1015,24 @@ $('#al').onclick=async e=>{
 
 /* Eventos da Área de Colar Consultas (Sem Salvamento Automático) */
 $('#ps_btn_parse').onclick=parseInputText;
-$('#ps_t').oninput=()=>{setTimeout(parseInputText,150)};
+$('#ps_t').oninput=()=>{parseInputText()};
 $('#ps_btn_clear').onclick=()=>{
   $('#ps_t').value='';
   pastePreview=[];
   updatePastePreviewUI();
 };
-$('#ps_save_btn').onclick=savePreviewAppts;
+
+// Somente o evento real de clique no botão de salvar inicia a gravação
+$('#ps_save_btn').addEventListener('click',e=>{
+  e.preventDefault();
+  savePreviewAppts(true);
+});
 
 $('#ps_preview_box').addEventListener('input',e=>{
   const t=e.target,idx=t.dataset.pidx,k=t.dataset.pk;
   if(idx!=null&&k&&pastePreview[idx]){
     pastePreview[idx][k]=t.value;
-    const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
+    const validItems=pastePreview.filter(p=>p&&typeof p.patient==='string'&&p.patient.trim().length>=2);
     const btnSave=$('#ps_save_btn');
     if(btnSave){
       btnSave.textContent=`Salvar consultas (${validItems.length})`;
