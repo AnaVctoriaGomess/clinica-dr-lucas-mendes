@@ -28,7 +28,7 @@ main{max-width:1180px;margin:auto;padding:12px 22px 40px}
 .kpi small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
 .lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut);margin-bottom:6px}
 .lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
-svg{width:100%;height:auto;display:block}
+svg{width:100%;height:auto;display:block;overflow:visible}
 svg text{fill:var(--mut);font-size:10px;font-family:inherit}
 .ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:14px;line-height:1.55}
 .ins p{margin:6px 0}
@@ -58,7 +58,6 @@ h1{font-size:19px;font-weight:700;letter-spacing:-.01em}
 #st::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--g);margin-right:6px;vertical-align:1px}
 nav{background:var(--bg);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
 nav button{font-size:13.5px;padding:7px 13px;border-radius:8px;transition:background .15s,color .15s}
-nav button:hover:not(.on){background:var(--line);color:var(--ink)}
 nav button.on{box-shadow:0 1px 3px rgba(0,0,0,.2)}
 main{padding-top:20px}
 h2{font-size:15px;font-weight:600;letter-spacing:-.005em;margin-bottom:12px}
@@ -72,7 +71,6 @@ h2{font-size:15px;font-weight:600;letter-spacing:-.005em;margin-bottom:12px}
 .ins{border-radius:12px;background:color-mix(in srgb,var(--a) 9%,var(--card));border-color:color-mix(in srgb,var(--a) 30%,var(--line))}
 .lg{font-size:12px;margin-bottom:8px}
 svg text{font-size:10.5px}
-svg rect{transition:opacity .15s}svg rect:hover{opacity:.82}
 th{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;background:var(--bg);position:sticky;top:0}
 th:first-child{border-radius:8px 0 0 8px}th:last-child{border-radius:0 8px 8px 0}
 td{padding:9px 8px}
@@ -100,6 +98,18 @@ body.locked>header,body.locked>main{display:none}
 #ov .box{max-width:480px}#ov .box h2{margin:0;font-size:18px}#ov .box p{margin:0}
 #lf label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 #sv{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--g);color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;pointer-events:none}#sv.on{opacity:1;transform:none}
+
+/* Tooltip profissional para gráficos */
+#chart_tip{position:fixed;z-index:999;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12px;line-height:1.45;box-shadow:0 6px 22px rgba(0,0,0,.2);opacity:0;transform:translate(-50%,-100%) translateY(-10px);transition:opacity .15s ease,transform .15s ease;min-width:140px;max-width:260px;font-feature-settings:"tnum"}
+#chart_tip.on{opacity:1;transform:translate(-50%,-100%) translateY(-12px)}
+#chart_tip .tip-title{font-weight:700;font-size:13px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
+#chart_tip .tip-title i{display:inline-block;width:9px;height:9px;border-radius:2px;flex-shrink:0}
+#chart_tip .tip-cat{color:var(--mut);font-size:11px;margin-bottom:5px}
+#chart_tip .tip-val{font-size:12.5px;color:var(--ink)}
+#chart_tip .tip-total{margin-top:5px;padding-top:4px;border-top:1px dashed var(--line);font-size:11px;color:var(--mut)}
+svg [data-tip-series]{cursor:pointer;transition:transform .1s ease,filter .15s ease,opacity .15s ease}
+svg rect[data-tip-series]:hover{filter:brightness(1.18);opacity:.96}
+svg circle[data-tip-series]:hover{filter:brightness(1.25);stroke-width:2.5px}
 </style>
 </head>
 <body class="locked">
@@ -162,6 +172,7 @@ body.locked>header,body.locked>main{display:none}
 </main>
 
 <div id="msg"></div><div id="sv" role="status" aria-live="polite"></div><div id="ov"></div>
+<div id="chart_tip" role="tooltip" aria-hidden="true"></div>
 <div id="lg"><form id="lf" autocomplete="on"><h1>Painel KOMMO</h1><p class="note" style="margin:0">Acesso restrito.</p><label>Nome de usuário<input id="lu" autocomplete="username" required></label><label>Senha<input id="lp" type="password" autocomplete="current-password" required></label><p id="le" class="note" style="color:var(--r);margin:0;min-height:1.2em"></p><button class="b" id="lb" type="submit">Entrar</button></form></div>
 
 <script>
@@ -170,7 +181,7 @@ const SEED={"2026-09-23":[321,64,380,0,0,0,0,0,0,326,25,8,5,40,0,0,1],"2026-09-2
 const ORIG={novo:'Novo lead',c2:'2º contato (FU 2)',c3:'3º contato (FU 3)',c4:'4º contato (FU 4)',c5:'5º contato (FU 5)',sem:'Sem retorno no follow-up'};
 const STAT={agendada:'Agendada',realizada:'Realizada',cancelada:'Cancelada',reagendada:'Reagendada'};
 const REG={'':'—',sim:'Sim, reagendado',contato:'Em contato',nao:'Não conseguiu'};
-var db=null,sync={},editRow=null,wFilt={from:'',to:''},weeks={},appts={},cur='dash',cfg={},selWeek='',pFrom='',pTo='',pAuto=true,pSel='all',aFilt={week:'',from:'',to:'',origin:'',status:''};
+var db=null,sync={},editRow=null,wFilt={from:'',to:''},weeks={},appts={},cur='dash',cfg={},selWeek='',pFrom='',pTo='',pAuto=true,pSel='all',aFilt={week:'',from:'',to:'',origin:'',status:'',search:''};
 
 window.setWeeks=w=>{weeks=w};window.setAppts=a=>{appts=a};window.setCfg=c=>{cfg=c};
 const BASEF=FIELDS.slice(),BASE=FIELDS.map(f=>f[1]),ORIG0={...ORIG};
@@ -192,12 +203,113 @@ function toast(t){
 async function saveDoc(path,data){const [col,id]=path.split('/');await DATA.write(col,id,data)}
 async function delDoc(path){const [col,id]=path.split('/');await DATA.write(col,id,null)}
 
-/* ---------- SheetDB ---------- */
+/* ---------- SheetDB Oficial com Validação Inteligente ---------- */
 let syncing=false;
 const SDB={semanas:'https://sheetdb.io/api/v1/sk39abnekybca',consultas:'https://sheetdb.io/api/v1/fhrcm4cao9i6e'};
 const SHN={semanas:'Lançar Semanas',consultas:'Consultas'};
 const WCOLS=['semana','novos','antigas','ativas','fu2','fu3','fu4','fu5','resp','agend','semresp','pensando','aguard','nao','cagend','ccanc','creag','creal'];
 const ACOLS=['id','paciente','origem','agendada_em','consulta','status','reagendou','nova_data'];
+
+function cleanKey(str){
+  return String(str||'')
+    .replace(/^\uFEFF/,'')
+    .replace(/[\u200B-\u200D\uFEFF]/g,'')
+    .replace(/\u00A0/g,' ')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'');
+}
+
+function extractKeysFromResponse(data){
+  if(!data)return [];
+  if(Array.isArray(data)){
+    if(!data.length)return [];
+    if(typeof data[0]==='string')return data.map(s=>String(s).trim());
+    if(typeof data[0]==='object'&&data[0]!==null){
+      if('name' in data[0]&&typeof data[0].name==='string')return data.map(item=>String(item.name||'').trim());
+      if('key' in data[0]&&typeof data[0].key==='string')return data.map(item=>String(item.key||'').trim());
+      const s=new Set();
+      data.forEach(r=>{if(r&&typeof r==='object')Object.keys(r).forEach(k=>s.add(k.trim()))});
+      return Array.from(s);
+    }
+  }
+  if(typeof data==='object'&&data!==null){
+    if(Array.isArray(data.keys))return data.keys.map(s=>String(s).trim());
+    if(Array.isArray(data.columns))return data.columns.map(s=>String(s).trim());
+    return Object.keys(data).map(s=>s.trim());
+  }
+  return [];
+}
+
+function buildSheetDbUrl(baseUrl,path='',query=''){
+  const [base,existingQuery]=baseUrl.split('?');
+  const fullPath=base.replace(/\/+$/,'')+(path?'/'+path.replace(/^\/+/,''):'');
+  const params=new URLSearchParams(existingQuery||'');
+  if(query){
+    const extra=new URLSearchParams(query);
+    for(const [k,v] of extra.entries())params.set(k,v);
+  }
+  const qStr=params.toString();
+  return fullPath+(qStr?'?'+qStr:'');
+}
+
+async function sdb(url,opt){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),25000);
+  try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'})}
+  catch(e){throw new Error(e&&e.name==='AbortError'?'Tempo esgotado (25s) sem resposta do SheetDB':(navigator.onLine===false?'Sem conexão com a internet':'Bloqueio de rede ou CORS ao conectar no SheetDB'))}
+  finally{clearTimeout(t)}
+}
+
+async function httpErr(r,what){
+  let b='';try{b=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch(e){}
+  const dica=r.status===402||r.status===429?' (limite de requisições do plano SheetDB atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (autenticação exigida ou negada)':'';
+  return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''));
+}
+
+async function resolveSheetEndpoint(sh,cols){
+  const baseUrl=SDB[sh];
+  const sheetName=SHN[sh];
+  const candidateUrls=[
+    baseUrl,
+    buildSheetDbUrl(baseUrl,'','sheet='+encodeURIComponent(sheetName)),
+    buildSheetDbUrl(baseUrl,'','sheet='+encodeURIComponent(sh))
+  ];
+
+  let lastKeys=[];
+  let lastError=null;
+
+  for(const testUrl of candidateUrls){
+    try{
+      const keysUrl=buildSheetDbUrl(testUrl,'keys');
+      let r=await sdb(keysUrl);
+      let data=null;
+      if(r.ok){
+        data=await r.json();
+      }else{
+        const rootUrl=buildSheetDbUrl(testUrl,'','limit=1');
+        r=await sdb(rootUrl);
+        if(r.ok)data=await r.json();
+      }
+
+      if(data){
+        const extracted=extractKeysFromResponse(data);
+        if(extracted.length>0){
+          lastKeys=extracted;
+          const normExtracted=extracted.map(cleanKey);
+          const miss=cols.filter(c=>!normExtracted.includes(cleanKey(c)));
+          if(miss.length===0){
+            return {url:testUrl,keys:extracted,ok:true};
+          }
+        }
+      }
+    }catch(e){
+      lastError=e.message||String(e);
+    }
+  }
+
+  return {url:baseUrl,keys:lastKeys,ok:false,error:lastError};
+}
 
 function persistSync(){
   try{localStorage.setItem('kommo_sync_v3',JSON.stringify(sync));return true}catch(e){return false}
@@ -277,32 +389,6 @@ function getNextSlotString(now=new Date()){
   return 'Segunda-feira às 17:53 (horário de Brasília)';
 }
 
-async function sdb(url,opt){
-  const c=new AbortController(),t=setTimeout(()=>c.abort(),25000);
-  try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'})}
-  catch(e){throw new Error(e&&e.name==='AbortError'?'Tempo esgotado (25s) sem resposta do SheetDB':(navigator.onLine===false?'Sem conexão com a internet':'Bloqueio de rede ou CORS ao conectar no SheetDB'))}
-  finally{clearTimeout(t)}
-}
-
-async function httpErr(r,what){
-  let b='';try{b=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch(e){}
-  const dica=r.status===402||r.status===429?' (limite de requisições do plano SheetDB atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (autenticação exigida ou negada)':'';
-  return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''));
-}
-
-async function checkKeys(sh,cols){
-  const r=await sdb(SDB[sh]+'/keys');
-  if(!r.ok)return;
-  let k;try{k=await r.json()}catch(e){return}
-  if(!Array.isArray(k))return;
-  const norm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  const sheetKeysNorm=k.map(norm);
-  const miss=cols.filter(c=>!sheetKeysNorm.includes(norm(c)));
-  if(miss.length){
-    throw new Error(`A aba "${SHN[sh]}" no Google Sheets precisa destes cabeçalhos na Linha 1: ${cols.join(', ')}. Cabeçalhos ausentes identificados: ${miss.join(', ')}`);
-  }
-}
-
 function addSyncHistory(sh,ok,msg){
   const item={t:Date.now(),sh,ok,m:String(msg).slice(0,180)};
   sync.hist=[item,...(sync.hist||[])].slice(0,12);
@@ -312,35 +398,62 @@ async function syncSingleSheet(sh){
   const isSem=sh==='semanas';
   const cols=isSem?WCOLS:ACOLS;
   const kc=isSem?'semana':'id';
-  const url=SDB[sh];
   const hd={'Content-Type':'application/json',Accept:'application/json'};
-
-  const rows=isSem
-    ? W().map(w=>({semana:String(w.id||''),novos:Number(w.novos||0),antigas:Number(w.antigas||0),ativas:Number(w.ativas||0),fu2:Number(w.fu2||0),fu3:Number(w.fu3||0),fu4:Number(w.fu4||0),fu5:Number(w.fu5||0),resp:Number(w.resp||0),agend:Number(w.agend||0),semresp:Number(w.semresp||0),pensando:Number(w.pensando||0),aguard:Number(w.aguard||0),nao:Number(w.nao||0),cagend:Number(w.cagend||0),ccanc:Number(w.ccanc||0),creag:Number(w.creag||0),creal:Number(w.creal||0)}))
-    : Object.entries(appts).map(([id,a])=>({id:String(id||''),paciente:String(a.patient||''),origem:String(ORIG[a.origin]||a.origin||''),agendada_em:String(a.schedOn||''),consulta:String(a.consult||''),status:String(STAT[a.status]||a.status||''),reagendou:String(REG[a.regained||'']||a.regained||''),nova_data:String(a.newDate||'')}));
 
   sync[sh].status='syncing';
   sync[sh].lastAttempt=Date.now();
   paintSync();
 
   try{
-    await checkKeys(sh,cols);
-    const r=await sdb(url);
+    const check=await resolveSheetEndpoint(sh,cols);
+    if(!check.ok){
+      const foundNorm=(check.keys||[]).map(cleanKey);
+      const miss=cols.filter(c=>!foundNorm.includes(cleanKey(c)));
+      let detail=`Aba "${SHN[sh]}": cabeçalhos ausentes: ${miss.join(', ')}.`;
+      if(check.keys&&check.keys.length){
+        detail+=` Encontrados na planilha: ${check.keys.join(', ')}.`;
+        if(!isSem&&check.keys.some(k=>cleanKey(k)==='semana')){
+          detail+=` (Aviso: detectados cabeçalhos de 'Lançar Semanas'. Confirme se a aba no Google Sheets chama-se 'Consultas').`;
+        }
+      }
+      if(check.error)detail+=` Erro: ${check.error}`;
+      throw new Error(detail);
+    }
+
+    const resolvedUrl=check.url;
+    const rows=isSem
+      ? W().map(w=>({semana:String(w.id||''),novos:Number(w.novos||0),antigas:Number(w.antigas||0),ativas:Number(w.ativas||0),fu2:Number(w.fu2||0),fu3:Number(w.fu3||0),fu4:Number(w.fu4||0),fu5:Number(w.fu5||0),resp:Number(w.resp||0),agend:Number(w.agend||0),semresp:Number(w.semresp||0),pensando:Number(w.pensando||0),aguard:Number(w.aguard||0),nao:Number(w.nao||0),cagend:Number(w.cagend||0),ccanc:Number(w.ccanc||0),creag:Number(w.creag||0),creal:Number(w.creal||0)}))
+      : Object.entries(appts).map(([id,a])=>({id:String(id||''),paciente:String(a.patient||''),origem:String(ORIG[a.origin]||a.origin||''),agendada_em:String(a.schedOn||''),consulta:String(a.consult||''),status:String(STAT[a.status]||a.status||''),reagendou:String(REG[a.regained||'']||a.regained||''),nova_data:String(a.newDate||'')}));
+
+    const r=await sdb(resolvedUrl);
     if(!r.ok)throw await httpErr(r,'Ler aba "'+SHN[sh]+'"');
     const ex=await r.json();
     if(!Array.isArray(ex))throw new Error('Resposta inválida do SheetDB ao consultar "'+SHN[sh]+'"');
 
-    const have=new Set(ex.map(x=>String(x[kc]||'').trim()));
-    const toUpdate=rows.filter(x=>have.has(String(x[kc]).trim()));
-    const toAdd=rows.filter(x=>!have.has(String(x[kc]).trim()));
+    const have=new Map();
+    ex.forEach(x=>{
+      const val=String(x[kc]||'').trim();
+      if(val)have.set(val.toLowerCase(),val);
+    });
+
+    const toUpdate=[];
+    const toAdd=[];
+    rows.forEach(x=>{
+      const keyVal=String(x[kc]||'').trim();
+      if(have.has(keyVal.toLowerCase()))toUpdate.push(x);
+      else toAdd.push(x);
+    });
 
     for(const x of toUpdate){
-      const patchRes=await sdb(url+'/'+kc+'/'+encodeURIComponent(x[kc]),{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});
+      const keyVal=String(x[kc]||'').trim();
+      const patchUrl=buildSheetDbUrl(resolvedUrl,`${kc}/${encodeURIComponent(keyVal)}`);
+      const patchRes=await sdb(patchUrl,{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});
       if(!patchRes.ok)throw await httpErr(patchRes,'Atualizar linha na aba "'+SHN[sh]+'"');
     }
 
     if(toAdd.length){
-      const postRes=await sdb(url,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
+      const postUrl=buildSheetDbUrl(resolvedUrl);
+      const postRes=await sdb(postUrl,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
       if(!postRes.ok)throw await httpErr(postRes,'Acrescentar linhas na aba "'+SHN[sh]+'"');
     }
 
@@ -408,9 +521,18 @@ async function sheetTest(){
   for(const sh of ['semanas','consultas']){
     try{
       const cols=sh==='semanas'?WCOLS:ACOLS;
-      await checkKeys(sh,cols);
+      const check=await resolveSheetEndpoint(sh,cols);
+      if(!check.ok){
+        const foundNorm=(check.keys||[]).map(cleanKey);
+        const miss=cols.filter(c=>!foundNorm.includes(cleanKey(c)));
+        let detail=`Aba "${SHN[sh]}": `;
+        if(miss.length)detail+=`cabeçalhos ausentes: ${miss.join(', ')}. `;
+        if(check.keys&&check.keys.length)detail+=`Encontrados na planilha: ${check.keys.join(', ')}. `;
+        if(check.error)detail+=`Erro: ${check.error}`;
+        throw new Error(detail);
+      }
       sync[sh].error='';
-      toast(`Planilha "${SHN[sh]}": cabeçalhos e conexão OK!`);
+      toast(`Planilha "${SHN[sh]}": conexão e cabeçalhos OK!`);
     }catch(err){
       sync[sh].error=err.message;
       alert(`Teste na planilha "${SHN[sh]}":\n`+err.message);
@@ -544,6 +666,7 @@ function init(){
   applyCfg();
   stLine();
   render();
+  setupChartTooltips();
   tickSync();
   setInterval(tickSync,30000);
 }
@@ -633,7 +756,7 @@ async function addM(){
   await saveCfg({metrics:[...(cfg.metrics||[]),m]});renderCfg();toast('Adicionado ao painel');
 }
 
-/* ---------- IMPORTAÇÃO MANUAL DE CONSULTAS ---------- */
+/* ---------- Importação Manual de Consultas (Sem Salvamento Automático) ---------- */
 let pastePreview=[];
 let isSavingPaste=false;
 
@@ -802,11 +925,10 @@ async function savePreviewAppts(isExplicitUserClick){
   }
 }
 
-/* ---------- CÁLCULO E GERAÇÃO DO RESUMO DINÂMICO ---------- */
+/* ---------- Motor de Resumo Dinâmico ---------- */
 const msgs=w=>(w.fu2||0)+(w.fu3||0)+(w.fu4||0)+(w.fu5||0);
 function sum(arr,f){return arr.reduce((a,w)=>a+(typeof f==='function'?f(w):(w[f]||0)),0)}
 
-// 1. Motor de cálculo desacoplado (puramente em memória)
 function calculatePeriodMetrics(ws,ap,allWeeks){
   if(!ws||!ws.length)return null;
 
@@ -898,49 +1020,19 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
   }
 
   return {
-    numWeeks,
-    isMulti,
-    startDate,
-    endDate,
-    totalNovos,
-    totalAntigas,
-    totalAtivasSum,
-    totalFu2,
-    totalFu3,
-    totalFu4,
-    totalFu5,
-    totalMsgs,
-    totalResp,
-    totalAgend,
-    totalCagend,
-    totalReal,
-    totalCanc,
-    totalReag,
-    totalAgenda,
-    ativasFinal,
-    semrespFinal,
-    pensandoFinal,
-    aguardFinal,
-    naoFinal,
-    respRate,
-    convRate,
-    realRate,
-    cancRate,
-    reagRate,
-    perdCount:perd.length,
-    recCount:rec,
-    recRate,
-    andamCount:andam,
-    multiData,
-    singleData
+    numWeeks,isMulti,startDate,endDate,
+    totalNovos,totalAntigas,totalAtivasSum,totalFu2,totalFu3,totalFu4,totalFu5,
+    totalMsgs,totalResp,totalAgend,totalCagend,totalReal,totalCanc,totalReag,totalAgenda,
+    ativasFinal,semrespFinal,pensandoFinal,aguardFinal,naoFinal,
+    respRate,convRate,realRate,cancRate,reagRate,
+    perdCount:perd.length,recCount:rec,recRate,andamCount:andam,
+    multiData,singleData
   };
 }
 
-// 2. Redação dinâmica do resumo analítico (A, B, C, D)
 function generateDynamicSummary(m){
   if(!m)return '<p class="note">Nenhum dado disponível para o período selecionado.</p>';
 
-  // SEÇÃO A: Visão Geral
   let secA='';
   if(m.isMulti){
     secA=`
@@ -955,7 +1047,6 @@ function generateDynamicSummary(m){
     `;
   }
 
-  // SEÇÃO B: Indicadores Consolidados
   const secB=`
     <p style="margin:10px 0 4px"><b>B. Indicadores Consolidados</b></p>
     <div style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 14px;font-size:13px">
@@ -968,7 +1059,6 @@ function generateDynamicSummary(m){
     </div>
   `;
 
-  // SEÇÃO C: Análise de Desempenho e Comparação
   let secC='';
   if(m.isMulti){
     const d=m.multiData;
@@ -994,7 +1084,6 @@ function generateDynamicSummary(m){
     `;
   }
 
-  // SEÇÃO D: Conclusão e Prioridades Práticas
   const prioridades=[];
   if(m.cancRate>15||(m.totalCanc>0&&m.recRate<30)){
     prioridades.push(`<b>1. Protocolo ativo de confirmação e recuperação de cancelamentos:</b> ${m.totalCanc} consultas foram canceladas no período (taxa de cancelamento de ${pf(m.cancRate)}). Cada consulta resgatada impacta diretamente a taxa de comparecimento.`);
@@ -1020,24 +1109,169 @@ function generateDynamicSummary(m){
   return secA+secB+secC+secD;
 }
 
-/* ---------- SHELL & RENDER DO DASHBOARD ---------- */
+/* ---------- Gráficos SVG com Tooltip Completo ---------- */
 const NICE=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=5?5:10)*p};
 
-function chart(labels,series,mode,isPct){
+function chart(labels,series,mode,isPct,categories){
   const Wd=480,H=200,L=34,R=8,T=10,B=24,iw=Wd-L-R,ih=H-T-B,n=labels.length;
   let mx=mode==='stack'?Math.max(1,...labels.map((_,i)=>series.reduce((a,s)=>a+s.v[i],0))):Math.max(1,...series.flatMap(s=>s.v));
   mx=NICE(mx);const y=v=>T+ih-v/mx*ih,bw=iw/n;let o='';
-  for(let i=0;i<=4;i++){const v=mx*i/4,yy=y(v);o+=`<line x1="${L}" x2="${Wd-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L-5}" y="${yy+3}" text-anchor="end">${isPct?Math.round(v)+'%':Math.round(v)}</text>`}
+
+  for(let i=0;i<=4;i++){
+    const v=mx*i/4,yy=y(v);
+    o+=`<line x1="${L}" x2="${Wd-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L-5}" y="${yy+3}" text-anchor="end">${isPct?Math.round(v)+'%':Math.round(v)}</text>`;
+  }
   labels.forEach((l,i)=>{o+=`<text x="${L+bw*i+bw/2}" y="${H-7}" text-anchor="middle">${l}</text>`});
-  if(mode==='stack'){labels.forEach((l,i)=>{let acc=0;series.forEach(s=>{const v=s.v[i];if(!v)return;const h=v/mx*ih;o+=`<rect x="${L+bw*i+bw*.2}" y="${y(acc+v)}" width="${bw*.6}" height="${h}" fill="${s.c}" rx="2"><title>${s.n}: ${v}</title></rect>`;acc+=v})})}
-  else if(mode==='group'){const k=series.length,w=bw*.76/k;labels.forEach((l,i)=>series.forEach((s,j)=>{const v=s.v[i],h=v/mx*ih;o+=`<rect x="${L+bw*i+bw*.12+w*j}" y="${y(v)}" width="${w-2}" height="${h}" fill="${s.c}" rx="2"><title>${s.n}: ${v}</title></rect>`;if(v)o+=`<text x="${L+bw*i+bw*.12+w*j+(w-2)/2}" y="${y(v)-3}" text-anchor="middle">${v}</text>`}))}
-  else{series.forEach(s=>{const pts=s.v.map((v,i)=>[L+bw*i+bw/2,y(v)]);o+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" points="${pts.map(p=>p.join(',')).join(' ')}"/>`;pts.forEach((p,i)=>{o+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${s.c}"><title>${s.n}: ${isPct?s.v[i].toFixed(1)+'%':s.v[i]}</title></circle><text x="${p[0]}" y="${p[1]-8}" text-anchor="middle">${isPct?s.v[i].toFixed(1).replace('.',',')+'%':s.v[i]}</text>`})})}
+
+  if(mode==='stack'){
+    labels.forEach((l,i)=>{
+      let acc=0;
+      const stackTotal=series.reduce((a,s)=>a+(s.v[i]||0),0);
+      const cat=categories&&categories[i]?categories[i]:('Semana '+l);
+      series.forEach(s=>{
+        const v=s.v[i];
+        if(!v)return;
+        const h=v/mx*ih;
+        const valStr=isPct?pf(v):v.toLocaleString('pt-BR');
+        const totalStr=isPct?pf(stackTotal):stackTotal.toLocaleString('pt-BR');
+        o+=`<rect x="${L+bw*i+bw*.2}" y="${y(acc+v)}" width="${bw*.6}" height="${h}" fill="${s.c}" rx="2"
+              data-tip-series="${esc(s.n)}"
+              data-tip-color="${s.c}"
+              data-tip-cat="${esc(cat)}"
+              data-tip-val="${valStr}"
+              data-tip-total="${totalStr}"
+              role="graphics-symbol"
+              aria-label="${esc(s.n)}: ${valStr} (${esc(cat)})">
+            </rect>`;
+        acc+=v;
+      });
+    });
+  }else if(mode==='group'){
+    const k=series.length,w=bw*.76/k;
+    labels.forEach((l,i)=>{
+      const cat=categories&&categories[i]?categories[i]:('Semana '+l);
+      series.forEach((s,j)=>{
+        const v=s.v[i],h=v/mx*ih;
+        const valStr=isPct?pf(v):(v||0).toLocaleString('pt-BR');
+        o+=`<rect x="${L+bw*i+bw*.12+w*j}" y="${y(v)}" width="${w-2}" height="${h}" fill="${s.c}" rx="2"
+              data-tip-series="${esc(s.n)}"
+              data-tip-color="${s.c}"
+              data-tip-cat="${esc(cat)}"
+              data-tip-val="${valStr}"
+              role="graphics-symbol"
+              aria-label="${esc(s.n)}: ${valStr} (${esc(cat)})">
+            </rect>`;
+        if(v)o+=`<text x="${L+bw*i+bw*.12+w*j+(w-2)/2}" y="${y(v)-3}" text-anchor="middle">${v}</text>`;
+      });
+    });
+  }else{
+    series.forEach(s=>{
+      const pts=s.v.map((v,i)=>[L+bw*i+bw/2,y(v)]);
+      o+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" points="${pts.map(p=>p.join(',')).join(' ')}"/>`;
+      pts.forEach((p,i)=>{
+        const v=s.v[i];
+        const valStr=isPct?pf(v):(v||0).toLocaleString('pt-BR');
+        const cat=categories&&categories[i]?categories[i]:('Semana '+labels[i]);
+        o+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${s.c}" stroke="var(--card)" stroke-width="1.5"
+              data-tip-series="${esc(s.n)}"
+              data-tip-color="${s.c}"
+              data-tip-cat="${esc(cat)}"
+              data-tip-val="${valStr}"
+              role="graphics-symbol"
+              aria-label="${esc(s.n)}: ${valStr} (${esc(cat)})">
+            </circle>`;
+        o+=`<circle cx="${p[0]}" cy="${p[1]}" r="14" fill="transparent"
+              data-tip-series="${esc(s.n)}"
+              data-tip-color="${s.c}"
+              data-tip-cat="${esc(cat)}"
+              data-tip-val="${valStr}">
+            </circle>`;
+        o+=`<text x="${p[0]}" y="${p[1]-8}" text-anchor="middle">${isPct?s.v[i].toFixed(1).replace('.',',')+'%':s.v[i]}</text>`;
+      });
+    });
+  }
   return `<svg viewBox="0 0 ${Wd} ${H}" role="img">${o}</svg>`;
 }
+
 const leg=s=>`<div class="lg" role="list" aria-label="Legenda"><b style="color:var(--ink)">Legenda:</b>${s.map(x=>`<span role="listitem"><i style="background:${x.c}"></i>${x.n}</span>`).join('')}</div>`;
 const TT={'Mensagens de follow-up por tentativa':['Mensagens de follow-up enviadas por tentativa (FU 2 a FU 5)','Cada barra soma as mensagens da semana.'],'Resposta e conversão do follow-up':['Taxa de resposta e conversão do follow-up (%)','Resposta = respostas ÷ mensagens. Conversão = agendamentos ÷ respostas.'],'Status dos pacientes (total acumulado em cada semana)':['Situação dos pacientes ao fim de cada semana','Total de pacientes em cada fase naquele momento.'],'Agenda: realizadas, canceladas e reagendadas':['Agenda da semana: realizadas, canceladas e reagendadas','Consultas por desfecho, semana a semana.'],'Funil: leads, respostas e agendamentos':['Funil: leads, respostas e agendamentos','Novos leads, respostas e agendamentos pelo follow-up.']};
 const card=(t,s,svg)=>(cfg.hide&&cfg.hide['c:'+t])?'':`<div class="card"><h2>${(TT[t]||[t])[0]}</h2>${TT[t]?`<p class="note" style="margin:-6px 0 8px">${TT[t][1]}</p>`:''}${leg(s)}${svg}</div>`;
 const css=n=>`var(--${n})`;
+
+function setupChartTooltips(){
+  const tip=$('#chart_tip');
+  if(!tip)return;
+
+  function showTip(el,clientX,clientY){
+    const series=el.dataset.tipSeries;
+    const color=el.dataset.tipColor||'var(--g)';
+    const cat=el.dataset.tipCat||'';
+    const val=el.dataset.tipVal||'';
+    const total=el.dataset.tipTotal||'';
+    if(!series&&!val)return;
+
+    tip.innerHTML=`
+      <div class="tip-title"><i style="background:${color}"></i>${esc(series)}</div>
+      ${cat?`<div class="tip-cat">${esc(cat)}</div>`:''}
+      <div class="tip-val">Valor: <b>${esc(val)}</b></div>
+      ${total?`<div class="tip-total">Total da semana: <b>${esc(total)}</b></div>`:''}
+    `;
+
+    const tipW=tip.offsetWidth||150;
+    const tipH=tip.offsetHeight||70;
+    let x=clientX;
+    let y=clientY;
+
+    const pad=12;
+    if(x-tipW/2<pad)x=pad+tipW/2;
+    if(x+tipW/2>window.innerWidth-pad)x=window.innerWidth-pad-tipW/2;
+    if(y-tipH<pad)y=clientY+tipH+26;
+
+    tip.style.left=x+'px';
+    tip.style.top=y+'px';
+    tip.classList.add('on');
+    tip.setAttribute('aria-hidden','false');
+  }
+
+  function hideTip(){
+    tip.classList.remove('on');
+    tip.setAttribute('aria-hidden','true');
+  }
+
+  document.addEventListener('mouseover',e=>{
+    const el=e.target.closest('[data-tip-series]');
+    if(el)showTip(el,e.clientX,e.clientY);
+  });
+
+  document.addEventListener('mousemove',e=>{
+    const el=e.target.closest('[data-tip-series]');
+    if(el&&tip.classList.contains('on')){
+      const tipW=tip.offsetWidth||150;
+      const tipH=tip.offsetHeight||70;
+      let x=e.clientX;
+      let y=e.clientY;
+      const pad=12;
+      if(x-tipW/2<pad)x=pad+tipW/2;
+      if(x+tipW/2>window.innerWidth-pad)x=window.innerWidth-pad-tipW/2;
+      if(y-tipH<pad)y=e.clientY+tipH+26;
+      tip.style.left=x+'px';
+      tip.style.top=y+'px';
+    }
+  });
+
+  document.addEventListener('mouseout',e=>{
+    if(e.target.closest('[data-tip-series]'))hideTip();
+  });
+
+  document.addEventListener('touchstart',e=>{
+    const el=e.target.closest('[data-tip-series]');
+    if(el&&e.touches.length>0){
+      showTip(el,e.touches[0].clientX,e.touches[0].clientY);
+    }else if(!e.target.closest('#chart_tip')){
+      hideTip();
+    }
+  },{passive:true});
+}
 
 function dash(){
   const WA=W();
@@ -1062,6 +1296,7 @@ function dash(){
   }
 
   const L=ws.map(w=>fd(w.id));
+  const fullCats=ws.map(w=>'Semana de '+fdf(w.id));
   const last=ws[ws.length-1];
 
   const tm=sum(ws,msgs),tr=sum(ws,'resp'),ta=sum(ws,'agend'),tl=sum(ws,'novos');
@@ -1086,7 +1321,6 @@ function dash(){
 
   const rt=w=>pct(w.resp||0,msgs(w));
 
-  // GERAÇÃO REATIVA E PERSONALIZADA DO RESUMO DINÂMICO
   const metrics=calculatePeriodMetrics(ws,ap,WA);
   const dynamicSummaryHtml=generateDynamicSummary(metrics);
 
@@ -1112,7 +1346,7 @@ function dash(){
 
   const cm=cfg.metrics||[],cs=m=>{try{return ev(m.expr,ws)}catch(e){return null}};
   const cKpi=cm.filter(m=>m.where==='kpi').map(m=>{const v=cs(m);return kp(esc(m.title),v==null?'—':fmtM(v,m.fmt),'card personalizado')}).join('');
-  const cCh=cm.filter(m=>m.where!=='kpi').map(m=>{const v=ws.map(w=>{try{return Math.round(ev(m.expr,[w])*100)/100}catch(e){return 0}}),ser=[{n:m.title,c:css('p'),v}];return card(esc(m.title),ser,chart(L,ser,m.where==='bar'?'group':'line',m.fmt==='pct'))}).join('');
+  const cCh=cm.filter(m=>m.where!=='kpi').map(m=>{const v=ws.map(w=>{try{return Math.round(ev(m.expr,[w])*100)/100}catch(e){return 0}}),ser=[{n:m.title,c:css('p'),v}];return card(esc(m.title),ser,chart(L,ser,m.where==='bar'?'group':'line',m.fmt==='pct',fullCats))}).join('');
   const fbar=`<div class="card" style="margin-bottom:14px"><div class="row" style="margin:0"><label class="note">Período Selecionado<br><select id="pp">${po}</select></label></div><p class="note" style="margin:8px 0 0">Mostrando ${ws.length} semana(s): de ${fdf(pFrom)} a ${fdf(pTo)}.</p></div>`;
 
   return fbar+`<div class="grid kpis">
@@ -1130,11 +1364,11 @@ function dash(){
   </div>
   <div class="ins" id="dynamic_summary">${dynamicSummaryHtml}</div>
   <div class="grid charts">
-    ${card('Mensagens de follow-up por tentativa',fu,chart(L,fu,'stack'))}
-    ${card('Resposta e conversão do follow-up',rs,chart(L,rs,'line',true))}
-    ${card('Status dos pacientes (total acumulado em cada semana)',st,chart(L,st,'stack'))}
-    ${card('Agenda: realizadas, canceladas e reagendadas',ag,chart(L,ag,'group'))}
-    ${card('Funil: leads, respostas e agendamentos',fl,chart(L,fl,'group'))}
+    ${card('Mensagens de follow-up por tentativa',fu,chart(L,fu,'stack',false,fullCats))}
+    ${card('Resposta e conversão do follow-up',rs,chart(L,rs,'line',true,fullCats))}
+    ${card('Status dos pacientes (total acumulado em cada semana)',st,chart(L,st,'stack',false,fullCats))}
+    ${card('Agenda: realizadas, canceladas e reagendadas',ag,chart(L,ag,'group',false,fullCats))}
+    ${card('Funil: leads, respostas e agendamentos',fl,chart(L,fl,'group',false,fullCats))}
     <div class="card"><h2>Taxa de agendamento por etapa · da semana</h2><div class="row" style="margin:0 0 8px">${selW}</div>${stgT(apw,wk,wk.ativas||0,wk.cagend||0)}</div>
     <div class="card"><h2>Taxa de agendamento por etapa · geral</h2>${stgT(ap,GER,last.ativas||0,last.cagend||0,'Total última semana')}</div>
     ${cCh}
@@ -1165,12 +1399,35 @@ async function importRows(rows){
 
 const opts=(o,sel)=>Object.entries(o).map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v}</option>`).join('');
 
-function fbarA(ids){const f=aFilt,tot=Object.keys(appts).length,WS=W().slice().reverse();
-  return `<div class="f" style="margin-bottom:10px"><label>Semana em que foi criada<select data-af="week"><option value="">Todas</option>${WS.map(w=>`<option value="${w.id}"${f.week===w.id?' selected':''}>Semana de ${fdf(w.id)}</option>`).join('')}</select></label><label>Consulta a partir de<input type="date" data-af="from" value="${f.from}"></label><label>Consulta até<input type="date" data-af="to" value="${f.to}"></label><label>Veio de<select data-af="origin"><option value="">Todas</option>${opts(ORIG,f.origin)}</select></label><label>Status<select data-af="status"><option value="">Todos</option>${opts(STAT,f.status)}</select></label></div><div class="row" style="margin:0 0 10px"><button class="b s" data-afc="1">Limpar filtros</button><span class="note">Mostrando ${ids.length} de ${tot} consultas</span></div>`}
+// Barra de filtros com busca textual por paciente integrada (Fase 5)
+function fbarA(ids){
+  const f=aFilt,tot=Object.keys(appts).length,WS=W().slice().reverse();
+  return `
+    <div class="f" style="margin-bottom:10px">
+      <label>Buscar por paciente<input type="search" id="c_search" placeholder="Digite o nome..." value="${esc(f.search||'')}"></label>
+      <label>Semana em que foi criada<select data-af="week"><option value="">Todas</option>${WS.map(w=>`<option value="${w.id}"${f.week===w.id?' selected':''}>Semana de ${fdf(w.id)}</option>`).join('')}</select></label>
+      <label>Consulta a partir de<input type="date" data-af="from" value="${f.from}"></label>
+      <label>Consulta até<input type="date" data-af="to" value="${f.to}"></label>
+      <label>Veio de<select data-af="origin"><option value="">Todas</option>${opts(ORIG,f.origin)}</select></label>
+      <label>Status<select data-af="status"><option value="">Todos</option>${opts(STAT,f.status)}</select></label>
+    </div>
+    <div class="row" style="margin:0 0 10px">
+      <button class="b s" data-afc="1">Limpar filtros</button>
+      <span class="note">Mostrando <b>${ids.length}</b> de ${tot} consultas</span>
+    </div>
+  `;
+}
 
 function apptList(){
   const f=aFilt,WS=W(),wr=f.week?(()=>{const i=WS.findIndex(w=>w.id===f.week);return i<0?null:[f.week,WS[i+1]?WS[i+1].id:'9999-12-31']})():null;
-  const ids=Object.keys(appts).filter(k=>{const a=appts[k],s=a.schedOn||'',c=a.consult||'';return (!wr||(s>=wr[0]&&s<wr[1]))&&(!f.from||c>=f.from)&&(!f.to||(c&&c<=f.to))&&(!f.origin||a.origin===f.origin)&&(!f.status||a.status===f.status)}).sort((a,b)=>(appts[b].consult||'').localeCompare(appts[a].consult||''));
+  const sTerm=cleanKey(f.search||'');
+
+  const ids=Object.keys(appts).filter(k=>{
+    const a=appts[k],s=a.schedOn||'',c=a.consult||'';
+    const matchSearch=!sTerm||cleanKey(a.patient||'').includes(sTerm);
+    return matchSearch&&(!wr||(s>=wr[0]&&s<wr[1]))&&(!f.from||c>=f.from)&&(!f.to||(c&&c<=f.to))&&(!f.origin||a.origin===f.origin)&&(!f.status||a.status===f.status);
+  }).sort((a,b)=>(appts[b].consult||'').localeCompare(appts[a].consult||''));
+
   if(!ids.length)return fbarA(ids)+'<p class="note">'+(Object.keys(appts).length?'Nenhuma consulta encontrada com estes filtros.':'Nenhuma consulta registrada ainda.')+'</p>';
   return fbarA(ids)+`<div class="wrap"><table><tr><th>Paciente</th><th>Veio de</th><th>Agendada em</th><th>Consulta</th><th>Status</th><th>Conseguiu reagendar?</th><th>Nova data</th><th></th></tr>${ids.map(id=>{const a=appts[id];
     return `<tr><td>${esc(a.patient)}</td><td><select data-id="${id}" data-k="origin">${opts(ORIG,a.origin)}</select></td><td><input type="date" data-id="${id}" data-k="schedOn" value="${a.schedOn||''}"></td><td><input type="date" data-id="${id}" data-k="consult" value="${a.consult||''}"></td><td><select data-id="${id}" data-k="status">${opts(STAT,a.status)}</select></td><td><select data-id="${id}" data-k="regained">${opts(REG,a.regained||'')}</select></td><td><input type="date" data-id="${id}" data-k="newDate" value="${a.newDate||''}"></td><td><button class="x" data-del="${id}" title="Excluir" aria-label="Excluir">×</button></td></tr>`}).join('')}</table></div>`;
@@ -1218,8 +1475,18 @@ $('#al').onchange=async e=>{
   render();
 };
 
+// Eventos de busca textual e limpeza na aba consultas
+$('#al').addEventListener('input',e=>{
+  if(e.target&&e.target.id==='c_search'){
+    aFilt.search=e.target.value;
+    $('#al').innerHTML=apptList();
+    const inp=$('#c_search');
+    if(inp){inp.focus();inp.selectionStart=inp.selectionEnd=inp.value.length}
+  }
+});
+
 $('#al').onclick=async e=>{
-  if(e.target.dataset.afc){aFilt={week:'',from:'',to:'',origin:'',status:''};$('#al').innerHTML=apptList();return}
+  if(e.target.dataset.afc){aFilt={week:'',from:'',to:'',origin:'',status:'',search:''};$('#al').innerHTML=apptList();return}
   const id=e.target.dataset.del;
   if(id&&confirm('Excluir esta consulta?'))await delDoc('appts/'+id);
 };
@@ -1285,6 +1552,7 @@ $('#cfg').onclick=async e=>{
 
 $('#cfg').onchange=e=>{
   const t=e.target;
+  
   if(t.dataset.tk){saveCfg({theme:{...(cfg.theme||{}),[t.dataset.tk]:t.value}});return}
   if(t.dataset.hk){const h={...(cfg.hide||{})};if(t.checked)delete h[t.dataset.hk];else h[t.dataset.hk]=1;saveCfg({hide:h});return}
   if(t.dataset.gk){const g={...(cfg.goals||{})},v=parseFloat(t.value);if(isNaN(v))delete g[t.dataset.gk];else g[t.dataset.gk]=v;saveCfg({goals:g});return}
@@ -1294,7 +1562,6 @@ $('#cfg').onchange=e=>{
   if(t.dataset.ok){const os=Object.entries(ORIG).map(([k,n])=>({k,n:k===t.dataset.ok?(t.value.trim()||n):n}));saveCfg({origins:os});t.value=ORIG[t.dataset.ok]}
 };
 
-// Reação instantânea à mudança de período para recomputar todo o resumo e gráficos
 $('#dash').onchange=e=>{
   const t=e.target;
   if(t.id==='selw'){selWeek=t.value;render()}
@@ -1315,3 +1582,4 @@ init();
 <script type="module" src="app-firebase.js"></script>
 </body>
 </html>
+
