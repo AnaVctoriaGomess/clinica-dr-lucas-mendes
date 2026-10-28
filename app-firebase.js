@@ -28,13 +28,46 @@ let unsubWeeks = null;
 let unsubAppts = null;
 let unsubConfig = null;
 
-// Diagnóstico e rastreamento de operações
-let lastReadTime = null;
-let lastWriteTime = null;
-let lastCheckTime = null;
-let lastCheckStatus = "sem_confirmacao"; // 'conectado' | 'verificando' | 'erro' | 'sem_confirmacao'
-let lastCheckError = null;
-let isWriting = false;
+// Diagnóstico com persistência local para manter histórico real
+const fbDiag = {
+  lastReadTime: null,
+  lastWriteTime: null,
+  lastUiUpdateTime: null,
+  lastCheckTime: null,
+  lastCheckStatus: 'sem_confirmacao', // 'conectado' | 'verificando' | 'erro' | 'sem_confirmacao'
+  lastCheckError: null,
+  isWriting: false
+};
+
+function loadFbDiag() {
+  try {
+    const raw = localStorage.getItem('kommo_fb_diag_v1');
+    if (raw) {
+      const p = JSON.parse(raw);
+      fbDiag.lastReadTime = p.lastReadTime || null;
+      fbDiag.lastWriteTime = p.lastWriteTime || null;
+      fbDiag.lastUiUpdateTime = p.lastUiUpdateTime || null;
+      fbDiag.lastCheckTime = p.lastCheckTime || null;
+      fbDiag.lastCheckStatus = p.lastCheckStatus || 'sem_confirmacao';
+      fbDiag.lastCheckError = p.lastCheckError || null;
+    }
+  } catch (e) {}
+}
+
+function persistFbDiag() {
+  try {
+    localStorage.setItem('kommo_fb_diag_v1', JSON.stringify({
+      lastReadTime: fbDiag.lastReadTime,
+      lastWriteTime: fbDiag.lastWriteTime,
+      lastUiUpdateTime: fbDiag.lastUiUpdateTime,
+      lastCheckTime: fbDiag.lastCheckTime,
+      lastCheckStatus: fbDiag.lastCheckStatus,
+      lastCheckError: fbDiag.lastCheckError
+    }));
+  } catch (e) {}
+}
+
+loadFbDiag();
 
 // Estado independente por escuta
 const syncState = {
@@ -75,9 +108,13 @@ function showSaveToast(texto) {
 function atualizarStatusUI() {
   if (typeof window.stLine === "function") window.stLine();
   const fbCard = document.getElementById("fb_card");
-  if (fbCard && window.DATA) fbCard.innerHTML = window.DATA.cardHtml();
+  if (fbCard && window.DATA && !fbCard.contains(document.activeElement)) {
+    fbCard.innerHTML = window.DATA.cardHtml();
+  }
   const mgCard = document.getElementById("mg_card");
-  if (mgCard && window.DATA) mgCard.innerHTML = window.DATA.migHtml();
+  if (mgCard && window.DATA && !mgCard.contains(document.activeElement)) {
+    mgCard.innerHTML = window.DATA.migHtml();
+  }
 }
 
 function checarProntidaoERenderizar() {
@@ -112,14 +149,18 @@ function iniciarEscutas() {
     if (typeof window.setWeeks === "function") window.setWeeks(dados);
     syncState.weeks.loaded = true;
     syncState.weeks.error = null;
-    lastReadTime = Date.now();
-    lastCheckStatus = "conectado";
+    fbDiag.lastReadTime = Date.now();
+    fbDiag.lastUiUpdateTime = Date.now();
+    fbDiag.lastCheckStatus = "conectado";
+    fbDiag.lastCheckError = null;
+    persistFbDiag();
     checarProntidaoERenderizar();
   }, (err) => {
     console.error("Erro na escuta /weeks:", err);
     syncState.weeks.error = err.code === "permission-denied" ? "Permissão negada em semanas" : (err.message || "Falha em semanas");
-    lastCheckStatus = "erro";
-    lastCheckError = syncState.weeks.error;
+    fbDiag.lastCheckStatus = "erro";
+    fbDiag.lastCheckError = syncState.weeks.error;
+    persistFbDiag();
     checarProntidaoERenderizar();
   });
 
@@ -131,14 +172,18 @@ function iniciarEscutas() {
     if (typeof window.setAppts === "function") window.setAppts(dados);
     syncState.appts.loaded = true;
     syncState.appts.error = null;
-    lastReadTime = Date.now();
-    lastCheckStatus = "conectado";
+    fbDiag.lastReadTime = Date.now();
+    fbDiag.lastUiUpdateTime = Date.now();
+    fbDiag.lastCheckStatus = "conectado";
+    fbDiag.lastCheckError = null;
+    persistFbDiag();
     checarProntidaoERenderizar();
   }, (err) => {
     console.error("Erro na escuta /appts:", err);
     syncState.appts.error = err.code === "permission-denied" ? "Permissão negada em consultas" : (err.message || "Falha em consultas");
-    lastCheckStatus = "erro";
-    lastCheckError = syncState.appts.error;
+    fbDiag.lastCheckStatus = "erro";
+    fbDiag.lastCheckError = syncState.appts.error;
+    persistFbDiag();
     checarProntidaoERenderizar();
   });
 
@@ -150,19 +195,23 @@ function iniciarEscutas() {
     if (typeof window.applyCfg === "function") window.applyCfg();
     syncState.config.loaded = true;
     syncState.config.error = null;
-    lastReadTime = Date.now();
-    lastCheckStatus = "conectado";
+    fbDiag.lastReadTime = Date.now();
+    fbDiag.lastUiUpdateTime = Date.now();
+    fbDiag.lastCheckStatus = "conectado";
+    fbDiag.lastCheckError = null;
+    persistFbDiag();
     checarProntidaoERenderizar();
   }, (err) => {
     console.error("Erro na escuta /config/main:", err);
     syncState.config.error = err.code === "permission-denied" ? "Permissão negada em configurações" : (err.message || "Falha em configurações");
-    lastCheckStatus = "erro";
-    lastCheckError = syncState.config.error;
+    fbDiag.lastCheckStatus = "erro";
+    fbDiag.lastCheckError = syncState.config.error;
+    persistFbDiag();
     checarProntidaoERenderizar();
   });
 }
 
-// Monitoramento de login
+// Monitoramento de autenticação
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   if (user) {
@@ -221,7 +270,19 @@ function calcularProximaVersao(docSnapshot) {
   throw new Error("Versão (_v) inválida no banco. Atualização cancelada por segurança.");
 }
 
-const fdt = t => t ? new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+// Formatação oficial no fuso America/Sao_Paulo
+function formatDateTimeSP(t) {
+  if (!t) return '—';
+  try {
+    return new Intl.DateTimeFormat('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    }).format(new Date(t)) + ' (horário de Brasília)';
+  } catch (e) {
+    return new Date(t).toLocaleString('pt-BR');
+  }
+}
 
 window.DATA = {
   get ready() {
@@ -232,15 +293,15 @@ window.DATA = {
   },
 
   get isWriting() {
-    return isWriting;
+    return fbDiag.isWriting;
   },
 
   get lastRead() {
-    return lastReadTime;
+    return fbDiag.lastReadTime;
   },
 
   get lastWrite() {
-    return lastWriteTime;
+    return fbDiag.lastWriteTime;
   },
 
   get loadingMessage() {
@@ -256,22 +317,27 @@ window.DATA = {
     return "Conexão confirmada";
   },
 
-  // Verificação ativa, autorizada e não destrutiva do Firestore
+  // Verificação real, autorizada e não destrutiva do Firestore
   async checkConnection() {
-    if (!currentUser) throw new Error("Usuário não autenticado");
-    lastCheckStatus = "verificando";
+    if (!currentUser) throw new Error("Usuário não autenticado.");
+    fbDiag.lastCheckTime = Date.now();
+    fbDiag.lastCheckStatus = "verificando";
     atualizarStatusUI();
+
     try {
+      // Leitura permitida pelas regras: coleção /config documento main
       const snap = await getDoc(doc(db, "config", "main"));
-      lastCheckTime = Date.now();
-      lastReadTime = Date.now();
-      lastCheckStatus = "conectado";
-      lastCheckError = null;
+      fbDiag.lastCheckTime = Date.now();
+      fbDiag.lastReadTime = Date.now();
+      fbDiag.lastCheckStatus = "conectado";
+      fbDiag.lastCheckError = null;
+      persistFbDiag();
       return true;
     } catch (err) {
-      lastCheckTime = Date.now();
-      lastCheckStatus = "erro";
-      lastCheckError = err.message || err.code;
+      fbDiag.lastCheckTime = Date.now();
+      fbDiag.lastCheckStatus = "erro";
+      fbDiag.lastCheckError = err.message || err.code;
+      persistFbDiag();
       throw err;
     } finally {
       atualizarStatusUI();
@@ -283,8 +349,9 @@ window.DATA = {
       alert("Sem conexão com a internet. A gravação foi cancelada.");
       throw new Error("offline");
     }
-    isWriting = true;
+    fbDiag.isWriting = true;
     atualizarStatusUI();
+
     const ref = doc(db, col, id);
     try {
       await runTransaction(db, async (txn) => {
@@ -296,14 +363,15 @@ window.DATA = {
         const novaVersao = calcularProximaVersao(snap);
         txn.set(ref, { ...data, _v: novaVersao });
       });
-      lastWriteTime = Date.now();
+      fbDiag.lastWriteTime = Date.now();
+      persistFbDiag();
       showSaveToast("Dados salvos!");
     } catch (err) {
       console.error("Erro gravação:", err);
       alert("Erro ao gravar: " + (err.code === "permission-denied" ? "Permissão negada (UID não autorizado)" : (err.message || err.code)));
       throw err;
     } finally {
-      isWriting = false;
+      fbDiag.isWriting = false;
       atualizarStatusUI();
     }
   },
@@ -313,8 +381,9 @@ window.DATA = {
       alert("Sem conexão com a internet.");
       return;
     }
-    isWriting = true;
+    fbDiag.isWriting = true;
     atualizarStatusUI();
+
     const ref = doc(db, "config", "main");
     try {
       await runTransaction(db, async (txn) => {
@@ -323,7 +392,8 @@ window.DATA = {
         const cfgAtual = snap.exists() ? (snap.data().cfg || {}) : {};
         txn.set(ref, { cfg: { ...cfgAtual, ...patch }, _v: novaVersao });
       });
-      lastWriteTime = Date.now();
+      fbDiag.lastWriteTime = Date.now();
+      persistFbDiag();
       const updated = { ...(window.cfg || {}), ...patch };
       window.cfg = updated;
       if (typeof window.setCfg === "function") window.setCfg(updated);
@@ -333,7 +403,7 @@ window.DATA = {
       console.error("Erro config:", err);
       alert("Erro ao salvar config: " + (err.message || err.code));
     } finally {
-      isWriting = false;
+      fbDiag.isWriting = false;
       atualizarStatusUI();
     }
   },
@@ -342,54 +412,67 @@ window.DATA = {
   async delDoc(col, id) { return this.write(col, id, null); },
 
   cardHtml() {
-    const email = currentUser ? currentUser.email : "Não conectado";
+    const email = currentUser ? currentUser.email : "Desconectado";
     const uid = currentUser ? currentUser.uid : "—";
-    const authTag = currentUser 
-      ? '<span class="tag" style="background:var(--g);color:#fff">Autenticado</span>' 
+    const isOnline = navigator.onLine;
+
+    const authTag = currentUser
+      ? '<span class="tag" style="background:var(--g);color:#fff">Autenticado</span>'
       : '<span class="tag" style="background:var(--r);color:#fff">Desconectado</span>';
 
-    const onlineTag = navigator.onLine 
-      ? '' 
-      : ' <span class="tag" style="background:var(--r);color:#fff">Offline (status desatualizado)</span>';
+    let fsStateTag = '';
+    if (!isOnline) {
+      fsStateTag = '<span class="tag" style="background:var(--r);color:#fff">Offline</span>';
+    } else if (fbDiag.lastCheckStatus === 'verificando') {
+      fsStateTag = '<span class="tag" style="background:var(--b);color:#fff">Verificando…</span>';
+    } else if (fbDiag.lastCheckStatus === 'conectado') {
+      fsStateTag = '<span class="tag" style="background:var(--g);color:#fff">Conectado</span>';
+    } else if (fbDiag.lastCheckStatus === 'erro') {
+      fsStateTag = '<span class="tag" style="background:var(--r);color:#fff">Erro</span>';
+    } else {
+      fsStateTag = '<span class="tag">Sem confirmação recente</span>';
+    }
 
-    const fsStateTag = lastCheckStatus === 'conectado'
-      ? '<span class="tag" style="background:var(--g);color:#fff">Conectado</span>'
-      : lastCheckStatus === 'verificando'
-      ? '<span class="tag" style="background:var(--b);color:#fff">Verificando...</span>'
-      : lastCheckStatus === 'erro'
-      ? '<span class="tag" style="background:var(--r);color:#fff">Erro de leitura</span>'
-      : '<span class="tag">Sem confirmação recente</span>';
-
-    const writeTag = isWriting 
-      ? '<span class="tag" style="background:var(--a);color:#fff">Gravação pendente...</span>' 
+    const writeTag = fbDiag.isWriting
+      ? '<span class="tag" style="background:var(--a);color:#fff">Gravação pendente…</span>'
       : '<span class="tag">Nenhuma gravação pendente</span>';
 
     return `
-      <h2>Status da Conexão Firebase</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:12px">
-        <div style="background:var(--bg);padding:12px;border-radius:10px">
-          <h3 style="font-size:13px;text-transform:uppercase;margin:0 0 8px;color:var(--mut)">Autenticação</h3>
-          <p style="margin:3px 0">Estado: ${authTag}</p>
-          <p style="margin:3px 0">E-mail: <b>${email}</b></p>
-          <p class="note" style="margin:3px 0;word-break:break-all">UID: <code>${uid}</code></p>
+      <h2>Status da Conexão e Atualização do Firebase</h2>
+      <p class="note" style="margin-top:-6px;margin-bottom:12px">Diagnóstico em tempo real da conexão com o Cloud Firestore.</p>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+        <!-- A. Autenticação -->
+        <div style="background:var(--bg);padding:14px;border-radius:10px;border:1px solid var(--line)">
+          <h3 style="font-size:12px;text-transform:uppercase;margin:0 0 8px;color:var(--mut);letter-spacing:0.04em">A. Autenticação</h3>
+          <p style="margin:4px 0">Estado: ${authTag}</p>
+          <p style="margin:4px 0">E-mail: <b>${esc(email)}</b></p>
+          <p class="note" style="margin:4px 0;word-break:break-all">UID: <code>${esc(uid)}</code></p>
+          <p class="note" style="margin:4px 0 0">Projeto: <b>clinica-dr-lucas-mendes</b></p>
         </div>
 
-        <div style="background:var(--bg);padding:12px;border-radius:10px">
-          <h3 style="font-size:13px;text-transform:uppercase;margin:0 0 8px;color:var(--mut)">Conexão com Firestore</h3>
-          <p style="margin:3px 0">Estado: ${fsStateTag}${onlineTag}</p>
-          <p style="margin:3px 0">Projeto: <b>clinica-dr-lucas-mendes</b></p>
-          <p class="note" style="margin:3px 0">Último teste: <b>${fdt(lastCheckTime || lastReadTime)}</b></p>
-          ${lastCheckError ? `<p class="note" style="color:var(--r);margin:3px 0">${lastCheckError}</p>` : ''}
-          <div class="row" style="margin-top:8px">
-            <button class="b s" id="btn_fb_verificar" style="padding:4px 10px;font-size:12px">Verificar conexão agora</button>
+        <!-- B. Conexão com Firestore -->
+        <div style="background:var(--bg);padding:14px;border-radius:10px;border:1px solid var(--line)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <h3 style="font-size:12px;text-transform:uppercase;margin:0;color:var(--mut);letter-spacing:0.04em">B. Conexão com Firestore</h3>
+            ${fsStateTag}
+          </div>
+          <p style="margin:4px 0">Última verificação: <b>${formatDateTimeSP(fbDiag.lastCheckTime || fbDiag.lastReadTime)}</b></p>
+          <p style="margin:4px 0">Resultado: <b>${fbDiag.lastCheckStatus === 'conectado' ? '<span style="color:var(--g)">Leitura autorizada confirmada</span>' : (fbDiag.lastCheckStatus === 'erro' ? '<span style="color:var(--r)">Falha na leitura</span>' : 'Aguardando verificação')}</b></p>
+          ${!isOnline ? '<p class="note" style="color:var(--r);margin:4px 0">⚠️ Navegador offline — o status exibido pode estar desatualizado.</p>' : ''}
+          ${fbDiag.lastCheckError ? `<p class="note" style="color:var(--r);margin:4px 0;word-break:break-word">Erro: ${esc(fbDiag.lastCheckError)}</p>` : ''}
+          <div class="row" style="margin-top:10px">
+            <button class="b s" type="button" id="btn_fb_verificar" style="padding:6px 12px;font-size:12.5px">Verificar conexão agora</button>
           </div>
         </div>
 
-        <div style="background:var(--bg);padding:12px;border-radius:10px">
-          <h3 style="font-size:13px;text-transform:uppercase;margin:0 0 8px;color:var(--mut)">Atualização dos Dados</h3>
-          <p style="margin:3px 0">Última leitura dos dados: <b>${fdt(lastReadTime)}</b></p>
-          <p style="margin:3px 0">Última gravação realizada: <b>${fdt(lastWriteTime)}</b></p>
-          <p style="margin:3px 0">Fila local: ${writeTag}</p>
+        <!-- C. Atualização dos Dados -->
+        <div style="background:var(--bg);padding:14px;border-radius:10px;border:1px solid var(--line)">
+          <h3 style="font-size:12px;text-transform:uppercase;margin:0 0 8px;color:var(--mut);letter-spacing:0.04em">C. Atualização dos Dados</h3>
+          <p style="margin:4px 0">Última leitura confirmada:<br><b>${fbDiag.lastReadTime ? formatDateTimeSP(fbDiag.lastReadTime) : '<span class="note">Nenhuma leitura confirmada</span>'}</b></p>
+          <p style="margin:6px 0 4px">Última gravação confirmada:<br><b>${fbDiag.lastWriteTime ? formatDateTimeSP(fbDiag.lastWriteTime) : '<span class="note">Nenhuma gravação nesta sessão</span>'}</b></p>
+          <p style="margin:6px 0 4px">Última atualização da interface:<br><b>${fbDiag.lastUiUpdateTime ? formatDateTimeSP(fbDiag.lastUiUpdateTime) : '<span class="note">Nenhuma atualização recebida</span>'}</b></p>
+          <p style="margin:6px 0 0">Status de envio: ${writeTag}</p>
         </div>
       </div>
     `;
@@ -402,15 +485,15 @@ window.DATA = {
 
 // Evento do botão de verificação ativa do Firebase
 document.addEventListener("click", async (e) => {
-  if (e.target && e.target.id === "btn_fb_verificar") {
-    const btn = e.target;
+  const btn = e.target && (e.target.id === "btn_fb_verificar" ? e.target : e.target.closest("#btn_fb_verificar"));
+  if (btn) {
     btn.disabled = true;
-    btn.textContent = "Verificando...";
+    btn.textContent = "Verificando conexão...";
     try {
       await window.DATA.checkConnection();
-      showSaveToast("Conexão Firestore confirmada!");
+      showSaveToast("Conexão com Firestore confirmada!");
     } catch (err) {
-      console.error("Falha ao testar conexão:", err);
+      console.error("Falha ao verificar conexão:", err);
       showSaveToast("Erro na verificação do Firestore");
     } finally {
       btn.disabled = false;
