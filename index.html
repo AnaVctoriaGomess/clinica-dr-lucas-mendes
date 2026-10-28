@@ -45,12 +45,11 @@ button.x{border:0;background:none;color:var(--r);cursor:pointer;font-size:16px}
 .f{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
 .f label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:12px}
-.tag{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--line)}
+.tag{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--line);display:inline-block}
 .note{color:var(--mut);font-size:13px}
 .hide{display:none}
-#msg{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s}
+#msg{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}
 #msg.on{opacity:1}
-/* ---- acabamento visual ---- */
 body{font-feature-settings:"tnum";-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;max-width:none;margin:0;padding:12px max(22px,calc((100% - 1180px)/2));background:var(--card);border-bottom:1px solid var(--line);box-shadow:0 1px 0 rgba(0,0,0,.02),0 6px 18px -12px rgba(0,0,0,.25)}
@@ -85,7 +84,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--g);box-s
 button.b{padding:8px 15px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
 button.b:hover{filter:brightness(1.07)}
 button.b.s{box-shadow:none}button.b.s:hover{background:var(--bg);filter:none;border-color:var(--k)}
-button.b:disabled{opacity:.55;cursor:wait}
+button.b:disabled{opacity:.55;cursor:not-allowed}
 button.x{border-radius:6px;padding:2px 7px;transition:background .15s}button.x:hover{background:color-mix(in srgb,var(--r) 12%,transparent)}
 .f label{font-weight:500}
 .tag{font-weight:500}
@@ -114,14 +113,14 @@ body.locked>header,body.locked>main{display:none}
 <section id="sem" class="hide">
   <div class="card">
     <h2>Lançamento semanal</h2>
-    <p class="note">Escolha a data da semana (use a mesma data de início que você usava na planilha). Se a semana já existe, os valores são carregados para edição. Os campos marcados com “total atual” (sem resposta, pensando, aguardando cadastro e não vão seguir) são o total de pacientes nessa fase naquele momento, não o que entrou na semana. As consultas agendadas na semana não são mais digitadas aqui: são contadas automaticamente pelas consultas registradas na aba Consultas (pela data “Agendada em”).</p>
+    <p class="note">Escolha a data da semana. Se já existe, os valores são carregados para edição. Campos com “total atual” guardam o momento presente. Consultas agendadas na semana são contadas automaticamente pela data “Agendada em”.</p>
     <div class="row" style="margin:0 0 12px"><label class="note">Data da semana<br><input type="date" id="wd"></label><button class="b s" id="cp">Copiar valores da semana anterior</button></div>
     <div class="f" id="wf"></div>
     <div class="row"><button class="b" id="ws">Salvar semana</button><button class="b s" id="wdel">Excluir esta semana</button></div>
   </div>
   <div class="card" style="margin-top:14px">
     <h2>Importar da planilha</h2>
-    <p class="note">Copie as linhas de dados da planilha (sem o cabeçalho, da coluna Data até Consultas realizadas) e cole aqui.</p>
+    <p class="note">Copie as linhas de dados da planilha (sem cabeçalho) e cole aqui.</p>
     <textarea id="paste" rows="4" style="width:100%" placeholder="23/09/2026&#9;321&#9;64&#9;380 …"></textarea>
     <div class="row"><button class="b" id="imp">Importar</button><button class="b s" id="seed">Carregar as 4 semanas atuais da planilha</button></div>
   </div>
@@ -139,15 +138,30 @@ body.locked>header,body.locked>main{display:none}
     </div>
     <div class="row"><button class="b" id="cp_add">Adicionar consulta</button></div>
   </div>
-  <div class="card" style="margin-top:14px"><h2>Colar dados do paciente</h2><p class="note">Alternativa rápida: cole os dados e eles são preenchidos e salvos sozinhos como consultas. Pode colar vários pacientes, um por linha. Exemplo: <i>Maria S. ; 3º contato ; 28/10</i> (nome, origem, data da consulta). Aceita também texto livre, como uma conversa (o sistema identifica nome, data e etapa).</p><textarea id="ps_t" rows="3" style="width:100%" placeholder="Cole aqui"></textarea><div class="row"><button class="b s" id="ps_b">Preencher e salvar</button></div></div>
+
+  <!-- Importação com prévia e sem salvamento automático -->
+  <div class="card" style="margin-top:14px">
+    <h2>Colar dados do paciente</h2>
+    <p class="note">Cole ou digite os dados dos pacientes. O sistema identifica os dados e gera uma <b>pré-visualização para revisão</b>. Nenhum dado é gravado no Firebase automaticamente. Revise, altere ou remova itens antes de confirmar o salvamento.</p>
+    <textarea id="ps_t" rows="3" style="width:100%" placeholder="Exemplos:&#10;Maria S. ; 3º contato ; 28/10&#10;João Silva ; Novo lead ; 05/11/2026&#10;Ou cole trecho de conversa..."></textarea>
+    <div class="row" style="margin-top:8px">
+      <button class="b s" id="ps_btn_parse">Interpretar texto</button>
+      <button class="b s" id="ps_btn_clear">Limpar</button>
+      <button class="b" id="ps_save_btn" disabled>Salvar consultas (0)</button>
+    </div>
+    <div id="ps_preview_box" style="margin-top:14px"></div>
+  </div>
+
   <div class="card wrap" style="margin-top:14px">
     <h2>Consultas registradas</h2>
-    <p class="note">Mude o status quando a consulta acontecer (check-in), for cancelada ou reagendada: Comparecimento, Cancelamento e Reagendamento do painel são recalculados automaticamente pela data da consulta. Em cancelamentos e reagendamentos, escolha em “Conseguiu reagendar?” Sim, Não ou Em contato e, se houver, informe a nova data.</p>
+    <p class="note">Mude o status quando a consulta acontecer (check-in), for cancelada ou reagendada. Comparecimento, cancelamento e reagendamento são recalculados automaticamente pela data da consulta.</p>
     <div id="al"></div>
   </div>
 </section>
+
 <section id="cfg" class="hide"></section>
 </main>
+
 <div id="msg"></div><div id="sv" role="status" aria-live="polite"></div><div id="ov"></div>
 <div id="lg"><form id="lf" autocomplete="on"><h1>Painel KOMMO</h1><p class="note" style="margin:0">Acesso restrito.</p><label>Nome de usuário<input id="lu" autocomplete="username" required></label><label>Senha<input id="lp" type="password" autocomplete="current-password" required></label><p id="le" class="note" style="color:var(--r);margin:0;min-height:1.2em"></p><button class="b" id="lb" type="submit">Entrar</button></form></div>
 
@@ -158,6 +172,7 @@ const ORIG={novo:'Novo lead',c2:'2º contato (FU 2)',c3:'3º contato (FU 3)',c4:
 const STAT={agendada:'Agendada',realizada:'Realizada',cancelada:'Cancelada',reagendada:'Reagendada'};
 const REG={'':'—',sim:'Sim, reagendado',contato:'Em contato',nao:'Não conseguiu'};
 var db=null,sync={},editRow=null,wFilt={from:'',to:''},weeks={},appts={},cur='dash',cfg={},selWeek='',pFrom='',pTo='',pAuto=true,pSel='all',aFilt={week:'',from:'',to:'',origin:'',status:''};
+
 window.setWeeks=w=>{weeks=w};window.setAppts=a=>{appts=a};window.setCfg=c=>{cfg=c};
 const BASEF=FIELDS.slice(),BASE=FIELDS.map(f=>f[1]),ORIG0={...ORIG};
 const $=s=>document.querySelector(s);
@@ -167,116 +182,440 @@ const fdf=iso=>iso?iso.split('-').reverse().join('/'):'—';
 const pct=(a,b)=>b?(a/b*100):0;
 const pf=v=>v.toFixed(1).replace('.',',')+'%';
 const today=()=>new Date().toISOString().slice(0,10);
-function toast(t){if(/^(Semana (salva|excluída)|Consulta adicionada|Campo (adicionado|excluído)|Salvo|Nome salvo|Adicionado ao painel|Dados apagados|Semanas carregadas|Origens restauradas|Nomes e campos originais restaurados)$/.test(t)||/(importada|salva)\(s\)/.test(t))return;const m=$('#msg');m.textContent=t;m.classList.add('on');setTimeout(()=>m.classList.remove('on'),1800)}
+const fdt=t=>t?new Date(t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';
 
-const LS='kommo_painel_v1',fdt=t=>new Date(t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
-function persist(){try{localStorage.setItem('kommo_sync_v2',JSON.stringify({sync}));return true}catch(e){toast('Não foi possível gravar neste navegador (armazenamento bloqueado ou cheio)');return false}}
-async function saveDoc(path,data){const [col,id]=path.split('/');await DATA.write(col,id,data)}
-async function delDoc(path){const [col,id]=path.split('/');await DATA.write(col,id,null)}
-/* ---------- SheetDB ---------- */
-let syncing=false;const SDB={semanas:'https://sheetdb.io/api/v1/sk39abnekybca',consultas:'https://sheetdb.io/api/v1/fhrcm4cao9i6e'};
-const ACOLS=['id','paciente','origem','agendada_em','consulta','status','reagendou','nova_data'];
-const SHN={semanas:'Lançar Semanas',consultas:'Consultas'};
-const wCols=()=>['semana'].concat(FIELDS.map(f=>f[0]));
-function slotAt(d){const g=d.getDay();d.setHours(g===5?16:17,g===5?50:53,0,0);return d}
-function lastSlot(){const n=new Date();for(let i=0;i<8;i++){const d=new Date(n);d.setDate(n.getDate()-i);const g=d.getDay();if(g>=1&&g<=5){slotAt(d);if(d<=n)return d}}}
-function nextSlot(){const n=new Date();for(let i=0;i<9;i++){const d=new Date(n);d.setDate(n.getDate()+i);const g=d.getDay();if(g>=1&&g<=5){slotAt(d);if(d>n)return d}}}
-async function sdb(url,opt){const c=new AbortController(),t=setTimeout(()=>c.abort(),20000);
-  try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'})}
-  catch(e){throw new Error(e&&e.name==='AbortError'?'tempo esgotado (20 s) sem resposta do SheetDB':(navigator.onLine===false?'sem conexão com a internet':'bloqueio do navegador (CORS) ou sem conexão com sheetdb.io'))}
-  finally{clearTimeout(t)}}
-async function httpErr(r,what){let b='';try{b=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch(e){}
-  const dica=r.status===402||r.status===429?' (limite do plano do SheetDB atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (acesso negado: confira se a API exige autenticação)':'';
-  return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''))}
-async function checkKeys(sh,cols){
-  const r=await sdb(SDB[sh]+'/keys');if(!r.ok)return;
-  let k;try{k=await r.json()}catch(e){return}
-  if(!Array.isArray(k))return;
-  const miss=cols.filter(c=>!k.includes(c));
-  if(miss.length)throw new Error('A planilha "'+SHN[sh]+'" precisa destes cabeçalhos na linha 1 (colunas A, B, C…): '+cols.join(', ')+'. Faltando: '+miss.join(', '))}
-const H=(ok,m)=>[{t:Date.now(),ok,m:String(m).slice(0,160)}].concat(sync.hist||[]).slice(0,8);
-async function sheetSync(src){
-  if(syncing)return;
-  syncing=true;const bt=$('#sy_now');if(bt){bt.disabled=true;bt.textContent='Enviando…'}
-  try{
-    const wr=W().map(w=>({semana:w.id,...Object.fromEntries(FIELDS.map(f=>[f[0],w[f[0]]||0]))}));
-    const ar=Object.entries(appts).map(([id,a])=>({id,paciente:a.patient||'',origem:ORIG[a.origin]||a.origin||'',agendada_em:a.schedOn||'',consulta:a.consult||'',status:a.status||'',reagendou:a.regained||'',nova_data:a.newDate||''}));
-    const jobs=[['semanas',wr,wCols()],['consultas',ar,ACOLS]];
-    for(const [sh,,cols] of jobs)await checkKeys(sh,cols);
-    const KEY={semanas:'semana',consultas:'id'},dest={},hd={'Content-Type':'application/json',Accept:'application/json'};
-    for(const [sh,rows] of jobs){const url=SDB[sh],kc=KEY[sh];
-      let r=await sdb(url);if(!r.ok)throw await httpErr(r,'Ler aba "'+SHN[sh]+'"');
-      const ex=await r.json();if(!Array.isArray(ex))throw new Error('Resposta inesperada do SheetDB ao ler "'+SHN[sh]+'"');
-      const have=new Set(ex.map(x=>String(x[kc]))),add=rows.filter(x=>!have.has(String(x[kc])));
-      for(const x of rows.filter(x=>have.has(String(x[kc])))){r=await sdb(url+'/'+kc+'/'+encodeURIComponent(x[kc]),{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});if(!r.ok)throw await httpErr(r,'Atualizar linha na aba "'+SHN[sh]+'"')}
-      if(add.length){r=await sdb(url,{method:'POST',headers:hd,body:JSON.stringify({data:add})});if(!r.ok)throw await httpErr(r,'Enviar aba "'+SHN[sh]+'"')}
-      dest[sh]=ex.length+add.length}
-    sync={...sync,at:Date.now(),ok:true,err:'',retryAt:0,lastOk:Date.now(),dest,n:{semanas:wr.length,consultas:ar.length},hist:H(true,'Enviado: '+wr.length+' semanas, '+ar.length+' consultas')};
-  }catch(e){const m=String(e.message||e);sync={...sync,at:Date.now(),ok:false,err:m,retryAt:Date.now()+600000,hist:H(false,m)}}
-  syncing=false;persist();paintSync();toast(sync.ok?'Enviado ao SheetDB':'Erro no envio ao SheetDB')}
-async function sheetTest(){
-  const out=[];
-  for(const sh of ['semanas','consultas']){
-    try{const r=await sdb(SDB[sh]+'/keys');
-      if(!r.ok){out.push(SHN[sh]+': HTTP '+r.status);continue}
-      const k=await r.json(),cols=sh==='semanas'?wCols():ACOLS,miss=Array.isArray(k)?cols.filter(c=>!k.includes(c)):[];
-      out.push(SHN[sh]+': conectada'+(miss.length?' · faltam cabeçalhos: '+miss.join(', '):' · cabeçalhos OK'))}
-    catch(e){out.push(SHN[sh]+': '+e.message)}}
-  sync={...sync,test:out.join('\n')};persist();paintSync()}
-function tick(){if(syncing||!(window.DATA&&DATA.ready))return;
-  if(sync.ok===false&&sync.retryAt&&Date.now()>=sync.retryAt)return sheetSync('retry');
-  const d=lastSlot();if(d&&(sync.lastSlot||0)<d.getTime()){sync.lastSlot=d.getTime();return sheetSync('auto')}}
-window.addEventListener('online',()=>{if(sync.ok===false&&!syncing)sheetSync('online')});
-function syncInner(){const s=sync,tg=!s.at?'<span class="tag">Nunca sincronizado</span>':s.ok?'<span class="tag" style="background:var(--g);color:#fff">Sucesso</span>':'<span class="tag" style="background:var(--r);color:#fff">Erro</span>';
-  return `<h2>Sincronização com o SheetDB</h2><p class="note">Envio automático de segunda a quinta às 17:53 e na sexta às 16:50 (a página precisa estar aberta; se o horário passar, o envio acontece ao abrir). Se der erro, tenta de novo 10 minutos depois, até funcionar. Conectado automaticamente: <b>Lançar Semanas</b> e <b>Consultas</b> são enviadas cada uma para a sua planilha no SheetDB. Cada envio atualiza as linhas existentes (pela coluna-chave) e acrescenta as novas, sem apagar nada na planilha; linhas excluídas no painel permanecem lá. O Firebase é a fonte oficial; este envio é independente.</p><p style="margin:12px 0 4px">Última sincronização: <b>${s.at?fdt(s.at):'—'}</b> ${tg}${s.ok&&s.n?` <span class="note">(${s.n.semanas} semanas · ${s.n.consultas} consultas)</span>`:''}</p>${s.err?`<p class="note" style="color:var(--r)">${esc(s.err)}</p>`:''}${s.ok===false&&s.retryAt?`<p class="note">Nova tentativa automática às ${new Date(s.retryAt).toLocaleTimeString('pt-BR',{timeStyle:'short'})}.</p>`:''}${s.test?`<p class="note" style="white-space:pre-line">${esc(s.test)}</p>`:''}${s.lastOk?'<p class="note">Último sucesso confirmado: '+fdt(s.lastOk)+'</p>':''}${s.dest?'<p class="note">Linhas no destino após o envio: '+s.dest.semanas+' (semanas), '+s.dest.consultas+' (consultas)</p>':''}${(s.hist||[]).length?'<details><summary class="note" style="cursor:pointer">Histórico de tentativas</summary>'+s.hist.map(x=>'<p class="note">'+fdt(x.t)+' · '+(x.ok?'sucesso':'erro')+' · '+esc(x.m)+'</p>').join('')+'</details>':''}<p class="note">Próximo envio programado: ${fdt(nextSlot())}</p><details style="margin:6px 0"><summary class="note" style="cursor:pointer">Cabeçalhos esperados na linha 1 de cada aba</summary><p class="note"><b>Lançar Semanas:</b> ${esc(wCols().join(', '))}</p><p class="note"><b>Consultas:</b> ${esc(ACOLS.join(', '))}</p></details><div class="row"><button class="b" id="sy_now">Sincronizar agora</button><button class="b s" id="sy_test">Testar conexão</button></div>`}
-function paintSync(){const c=$('#sy_card');if(c&&!c.contains(document.activeElement))c.innerHTML=syncInner();stLine()}
-function stLine(){$('#st').textContent='Firebase: '+(window.DATA&&DATA.ready?'conexão confirmada':'sem conexão confirmada')+(sync.at?' · SheetDB: '+(sync.ok?'sincronizado':'erro')+' em '+fdt(sync.at):'')}
-function init(){
-  try{const x=JSON.parse(localStorage.getItem('kommo_sync_v2')||'null');if(x)sync=x.sync||{}}catch(e){}
-  applyCfg();stLine();render();tick();setInterval(tick,30000);
+function toast(t){
+  const m=$('#msg');if(!m)return;
+  m.textContent=t;m.classList.add('on');
+  setTimeout(()=>m.classList.remove('on'),2400);
 }
 
-/* ---------- configuração ---------- */
+async function saveDoc(path,data){const [col,id]=path.split('/');await DATA.write(col,id,data)}
+async function delDoc(path){const [col,id]=path.split('/');await DATA.write(col,id,null)}
+
+/* ---------- SheetDB Oficial e Independente ---------- */
+let syncing=false;
+const SDB={semanas:'https://sheetdb.io/api/v1/sk39abnekybca',consultas:'https://sheetdb.io/api/v1/fhrcm4cao9i6e'};
+const SHN={semanas:'Lançar Semanas',consultas:'Consultas'};
+
+// Cabeçalhos oficiais imutáveis exigidos nas planilhas
+const WCOLS=['semana','novos','antigas','ativas','fu2','fu3','fu4','fu5','resp','agend','semresp','pensando','aguard','nao','cagend','ccanc','creag','creal'];
+const ACOLS=['id','paciente','origem','agendada_em','consulta','status','reagendou','nova_data'];
+
+function persistSync(){
+  try{localStorage.setItem('kommo_sync_v3',JSON.stringify(sync));return true}catch(e){return false}
+}
+
+function initSyncState(){
+  try{
+    const x=JSON.parse(localStorage.getItem('kommo_sync_v3')||localStorage.getItem('kommo_sync_v2')||'null');
+    if(x){
+      sync={
+        general:{lastAttempt:0,lastSuccess:0,lastSuccessSlot:'',lastAttemptSlot:'',status:'idle',retryAt:0,retryCount:0,...(x.general||{})},
+        semanas:{lastAttempt:0,lastSuccess:0,status:'idle',error:'',rowsTotal:0,rowsUpdated:0,rowsAdded:0,...(x.semanas||{})},
+        consultas:{lastAttempt:0,lastSuccess:0,status:'idle',error:'',rowsTotal:0,rowsUpdated:0,rowsAdded:0,...(x.consultas||{})},
+        hist:Array.isArray(x.hist)?x.hist:[]
+      };
+      return;
+    }
+  }catch(e){}
+  sync={
+    general:{lastAttempt:0,lastSuccess:0,lastSuccessSlot:'',lastAttemptSlot:'',status:'idle',retryAt:0,retryCount:0},
+    semanas:{lastAttempt:0,lastSuccess:0,status:'idle',error:'',rowsTotal:0,rowsUpdated:0,rowsAdded:0},
+    consultas:{lastAttempt:0,lastSuccess:0,status:'idle',error:'',rowsTotal:0,rowsUpdated:0,rowsAdded:0},
+    hist:[]
+  };
+}
+
+// Fuso horário oficial America/Sao_Paulo
+function getSaoPauloParts(d=new Date()){
+  const f=new Intl.DateTimeFormat('en-US',{
+    timeZone:'America/Sao_Paulo',
+    year:'numeric',month:'numeric',day:'numeric',
+    hour:'numeric',minute:'numeric',second:'numeric',
+    weekday:'short',hour12:false
+  });
+  const parts=f.formatToParts(d),p={};
+  for(const {type,value} of parts)p[type]=value;
+  const wMap={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6};
+  return {
+    year:parseInt(p.year),month:parseInt(p.month),day:parseInt(p.day),
+    hour:parseInt(p.hour==='24'?'0':p.hour),minute:parseInt(p.minute),second:parseInt(p.second),
+    weekday:wMap[p.weekday]??0
+  };
+}
+
+// Retorna ID e horário do último slot programado no fuso de SP
+function getLastSlotInfo(now=new Date()){
+  for(let i=0;i<=7;i++){
+    const d=new Date(now.getTime()-i*86400000);
+    const sp=getSaoPauloParts(d);
+    if(sp.weekday>=1&&sp.weekday<=5){
+      const h=sp.weekday===5?16:17,m=sp.weekday===5?50:53;
+      const slotTime=new Date(now.getTime()-i*86400000);
+      // Ajusta horário aproximado
+      const spNow=getSaoPauloParts(now);
+      const diffMins=(spNow.hour*60+spNow.minute)-(h*60+m)+(i*1440);
+      if(diffMins>=0){
+        const slotDateStr=`${sp.year}-${String(sp.month).padStart(2,'0')}-${String(sp.day).padStart(2,'0')}`;
+        const slotId=`${slotDateStr}_${h}h${m}`;
+        return {id:slotId,dateStr:slotDateStr,hour:h,minute:m,timestamp:now.getTime()-diffMins*60000};
+      }
+    }
+  }
+  return null;
+}
+
+// Próximo envio programado
+function getNextSlotString(now=new Date()){
+  const sp=getSaoPauloParts(now);
+  for(let i=0;i<=7;i++){
+    const dayOffset=(sp.weekday+i)%7;
+    if(dayOffset>=1&&dayOffset<=5){
+      const h=dayOffset===5?16:17,m=dayOffset===5?50:53;
+      if(i===0){
+        if(sp.hour<h||(sp.hour===h&&sp.minute<m)){
+          return `Hoje às ${h}:${String(m).padStart(2,'0')} (horário de Brasília)`;
+        }
+      }else{
+        const nomeDia=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][dayOffset];
+        return `${nomeDia} às ${h}:${String(m).padStart(2,'0')} (horário de Brasília)`;
+      }
+    }
+  }
+  return 'Segunda-feira às 17:53 (horário de Brasília)';
+}
+
+async function sdb(url,opt){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),25000);
+  try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'})}
+  catch(e){throw new Error(e&&e.name==='AbortError'?'Tempo esgotado (25s) sem resposta do SheetDB':(navigator.onLine===false?'Sem conexão com a internet':'Bloqueio de rede ou CORS ao conectar no SheetDB'))}
+  finally{clearTimeout(t)}
+}
+
+async function httpErr(r,what){
+  let b='';try{b=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch(e){}
+  const dica=r.status===402||r.status===429?' (limite de requisições do plano SheetDB atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (autenticação exigida ou negada)':'';
+  return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''));
+}
+
+// Validação dos cabeçalhos oficiais com tolerância a maiúsculas e espaços
+async function checkKeys(sh,cols){
+  const r=await sdb(SDB[sh]+'/keys');
+  if(!r.ok)return;
+  let k;try{k=await r.json()}catch(e){return}
+  if(!Array.isArray(k))return;
+  const norm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const sheetKeysNorm=k.map(norm);
+  const miss=cols.filter(c=>!sheetKeysNorm.includes(norm(c)));
+  if(miss.length){
+    throw new Error(`A aba "${SHN[sh]}" no Google Sheets precisa destes cabeçalhos na Linha 1: ${cols.join(', ')}. Cabeçalhos ausentes identificados: ${miss.join(', ')}`);
+  }
+}
+
+function addSyncHistory(sh,ok,msg){
+  const item={t:Date.now(),sh,ok,m:String(msg).slice(0,180)};
+  sync.hist=[item,...(sync.hist||[])].slice(0,12);
+}
+
+// Sincronização independente por planilha
+async function syncSingleSheet(sh){
+  const isSem=sh==='semanas';
+  const cols=isSem?WCOLS:ACOLS;
+  const kc=isSem?'semana':'id';
+  const url=SDB[sh];
+  const hd={'Content-Type':'application/json',Accept:'application/json'};
+
+  const rows=isSem
+    ? W().map(w=>({semana:String(w.id||''),novos:Number(w.novos||0),antigas:Number(w.antigas||0),ativas:Number(w.ativas||0),fu2:Number(w.fu2||0),fu3:Number(w.fu3||0),fu4:Number(w.fu4||0),fu5:Number(w.fu5||0),resp:Number(w.resp||0),agend:Number(w.agend||0),semresp:Number(w.semresp||0),pensando:Number(w.pensando||0),aguard:Number(w.aguard||0),nao:Number(w.nao||0),cagend:Number(w.cagend||0),ccanc:Number(w.ccanc||0),creag:Number(w.creag||0),creal:Number(w.creal||0)}))
+    : Object.entries(appts).map(([id,a])=>({id:String(id||''),paciente:String(a.patient||''),origem:String(ORIG[a.origin]||a.origin||''),agendada_em:String(a.schedOn||''),consulta:String(a.consult||''),status:String(STAT[a.status]||a.status||''),reagendou:String(REG[a.regained||'']||a.regained||''),nova_data:String(a.newDate||'')}));
+
+  sync[sh].status='syncing';
+  sync[sh].lastAttempt=Date.now();
+  paintSync();
+
+  try{
+    await checkKeys(sh,cols);
+    const r=await sdb(url);
+    if(!r.ok)throw await httpErr(r,'Ler aba "'+SHN[sh]+'"');
+    const ex=await r.json();
+    if(!Array.isArray(ex))throw new Error('Resposta inválida do SheetDB ao consultar "'+SHN[sh]+'"');
+
+    const have=new Set(ex.map(x=>String(x[kc]||'').trim()));
+    const toUpdate=rows.filter(x=>have.has(String(x[kc]).trim()));
+    const toAdd=rows.filter(x=>!have.has(String(x[kc]).trim()));
+
+    // Atualiza existentes sem apagar
+    for(const x of toUpdate){
+      const patchRes=await sdb(url+'/'+kc+'/'+encodeURIComponent(x[kc]),{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});
+      if(!patchRes.ok)throw await httpErr(patchRes,'Atualizar linha na aba "'+SHN[sh]+'"');
+    }
+
+    // Acrescenta novos
+    if(toAdd.length){
+      const postRes=await sdb(url,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
+      if(!postRes.ok)throw await httpErr(postRes,'Acrescentar linhas na aba "'+SHN[sh]+'"');
+    }
+
+    sync[sh]={
+      ...sync[sh],
+      status:'success',
+      lastSuccess:Date.now(),
+      error:'',
+      rowsTotal:rows.length,
+      rowsUpdated:toUpdate.length,
+      rowsAdded:toAdd.length
+    };
+    addSyncHistory(sh,true,`Enviado com sucesso: ${rows.length} total (${toUpdate.length} atualizados, ${toAdd.length} novos)`);
+    return true;
+  }catch(err){
+    const msg=String(err.message||err);
+    sync[sh]={...sync[sh],status:'error',error:msg};
+    addSyncHistory(sh,false,msg);
+    return false;
+  }
+}
+
+async function sheetSync(trigger='manual'){
+  if(syncing)return;
+  syncing=true;
+  const bt=$('#sy_now');if(bt){bt.disabled=true;bt.textContent='Sincronizando…'}
+  sync.general.status='syncing';
+  sync.general.lastAttempt=Date.now();
+  paintSync();
+
+  const lastSlot=getLastSlotInfo();
+  if(lastSlot)sync.general.lastAttemptSlot=lastSlot.id;
+
+  // Execução independente: a falha de uma não impede a outra
+  const resSem=await syncSingleSheet('semanas');
+  const resApp=await syncSingleSheet('consultas');
+
+  if(resSem&&resApp){
+    sync.general.status='success';
+    sync.general.lastSuccess=Date.now();
+    sync.general.retryCount=0;
+    sync.general.retryAt=0;
+    if(lastSlot)sync.general.lastSuccessSlot=lastSlot.id;
+    toast('SheetDB: sincronização completa com sucesso!');
+  }else if(resSem||resApp){
+    sync.general.status='partial_error';
+    sync.general.retryCount=(sync.general.retryCount||0)+1;
+    sync.general.retryAt=Date.now()+600000; // 10 minutos
+    toast('SheetDB: sincronização parcial (uma das planilhas falhou)');
+  }else{
+    sync.general.status='error';
+    sync.general.retryCount=(sync.general.retryCount||0)+1;
+    sync.general.retryAt=Date.now()+600000;
+    toast('SheetDB: erro na sincronização');
+  }
+
+  syncing=false;
+  persistSync();
+  paintSync();
+  stLine();
+  if(bt){bt.disabled=false;bt.textContent='Sincronizar agora'}
+}
+
+async function sheetTest(){
+  const bt=$('#sy_test');if(bt){bt.disabled=true;bt.textContent='Testando…'}
+  for(const sh of ['semanas','consultas']){
+    try{
+      const cols=sh==='semanas'?WCOLS:ACOLS;
+      await checkKeys(sh,cols);
+      sync[sh].error='';
+      toast(`Planilha "${SHN[sh]}": cabeçalhos e conexão OK!`);
+    }catch(err){
+      sync[sh].error=err.message;
+      alert(`Teste na planilha "${SHN[sh]}":\n`+err.message);
+    }
+  }
+  if(bt){bt.disabled=false;bt.textContent='Testar conexão'}
+  paintSync();
+}
+
+function tickSync(){
+  if(syncing||!(window.DATA&&DATA.ready))return;
+  // 1. Retentativa de erro (10 minutos)
+  if(sync.general.retryAt&&Date.now()>=sync.general.retryAt){
+    sync.general.retryAt=0;
+    sheetSync('retry');
+    return;
+  }
+  // 2. Horário programado ou pendente após abertura
+  const lastSlot=getLastSlotInfo();
+  if(lastSlot&&sync.general.lastSuccessSlot!==lastSlot.id&&sync.general.lastAttemptSlot!==lastSlot.id){
+    sheetSync('slot_pending');
+  }
+}
+
+function syncInner(){
+  const g=sync.general;
+  const sem=sync.semanas;
+  const app=sync.consultas;
+
+  const tagG=g.status==='success'
+    ?'<span class="tag" style="background:var(--g);color:#fff">Sucesso total</span>'
+    :g.status==='partial_error'
+    ?'<span class="tag" style="background:var(--a);color:#fff">Falha parcial</span>'
+    :g.status==='error'
+    ?'<span class="tag" style="background:var(--r);color:#fff">Erro</span>'
+    :g.status==='syncing'
+    ?'<span class="tag" style="background:var(--b);color:#fff">Sincronizando…</span>'
+    :'<span class="tag">Aguardando</span>';
+
+  const tagSh=st=>st==='success'
+    ?'<span class="tag" style="background:var(--g);color:#fff">Sucesso</span>'
+    :st==='error'
+    ?'<span class="tag" style="background:var(--r);color:#fff">Erro</span>'
+    :st==='syncing'
+    ?'<span class="tag" style="background:var(--b);color:#fff">Enviando…</span>'
+    :'<span class="tag">Aguardando</span>';
+
+  return `
+    <h2>Sincronização com o SheetDB</h2>
+    <p class="note">O Firebase é a fonte oficial dos dados. O envio ao SheetDB é independente e atualiza linhas existentes sem apagar nada. A sincronização automática ocorre de <b>segunda a quinta às 17h53</b> e na <b>sexta às 16h50</b> (horário de Brasília). <i>Atenção: o navegador precisa estar aberto no horário para executar o envio; caso a página esteja fechada, o envio pendente é executado assim que o painel for aberto.</i></p>
+
+    <div style="background:var(--bg);padding:12px;border-radius:10px;margin:12px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <b>Status Geral: ${tagG}</b>
+        <span class="note">Próximo envio: <b>${getNextSlotString()}</b></span>
+      </div>
+      <p style="margin:4px 0" class="note">Última sincronização completa bem-sucedida: <b>${fdt(g.lastSuccess)}</b></p>
+      <p style="margin:4px 0" class="note">Última tentativa geral: <b>${fdt(g.lastAttempt)}</b></p>
+      ${g.retryAt?`<p class="note" style="color:var(--a);margin:4px 0">Nova tentativa automática agendada para <b>${new Date(g.retryAt).toLocaleTimeString('pt-BR',{timeStyle:'short'})}</b> (tentativa #${g.retryCount})</p>`:''}
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:12px 0">
+      <!-- Card Semanas -->
+      <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--card)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <b>Planilha: Lançar Semanas</b>
+          ${tagSh(sem.status)}
+        </div>
+        <p class="note" style="margin:6px 0 2px">Último sucesso: <b>${fdt(sem.lastSuccess)}</b></p>
+        <p class="note" style="margin:2px 0 2px">Última tentativa: <b>${fdt(sem.lastAttempt)}</b></p>
+        <p class="note" style="margin:2px 0">Linhas: ${sem.rowsTotal||0} total · <b>${sem.rowsUpdated||0} atualizadas</b> · <b>${sem.rowsAdded||0} novas</b></p>
+        ${sem.error?`<p class="note" style="color:var(--r);margin-top:6px;word-break:break-word">${esc(sem.error)}</p>`:''}
+      </div>
+
+      <!-- Card Consultas -->
+      <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--card)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <b>Planilha: Consultas</b>
+          ${tagSh(app.status)}
+        </div>
+        <p class="note" style="margin:6px 0 2px">Último sucesso: <b>${fdt(app.lastSuccess)}</b></p>
+        <p class="note" style="margin:2px 0 2px">Última tentativa: <b>${fdt(app.lastAttempt)}</b></p>
+        <p class="note" style="margin:2px 0">Linhas: ${app.rowsTotal||0} total · <b>${app.rowsUpdated||0} atualizadas</b> · <b>${app.rowsAdded||0} novas</b></p>
+        ${app.error?`<p class="note" style="color:var(--r);margin-top:6px;word-break:break-word">${esc(app.error)}</p>`:''}
+      </div>
+    </div>
+
+    <details style="margin:8px 0">
+      <summary class="note" style="cursor:pointer">Cabeçalhos oficiais exigidos na Linha 1 de cada planilha</summary>
+      <div style="background:var(--bg);padding:10px;border-radius:8px;margin-top:6px;font-size:12px">
+        <p style="margin:0 0 4px"><b>Lançar Semanas:</b> <code>${WCOLS.join(', ')}</code></p>
+        <p style="margin:0"><b>Consultas:</b> <code>${ACOLS.join(', ')}</code></p>
+      </div>
+    </details>
+
+    ${(sync.hist||[]).length?`
+      <details style="margin:8px 0">
+        <summary class="note" style="cursor:pointer">Histórico de tentativas recentes</summary>
+        <div style="max-height:160px;overflow-y:auto;margin-top:6px">
+          ${sync.hist.map(x=>`<p class="note" style="margin:3px 0">${fdt(x.t)} · <b>${SHN[x.sh]||x.sh}</b>: ${x.ok?'<span style="color:var(--g)">sucesso</span>':'<span style="color:var(--r)">erro</span>'} – ${esc(x.m)}</p>`).join('')}
+        </div>
+      </details>
+    `:''}
+
+    <div class="row">
+      <button class="b" id="sy_now">Sincronizar agora</button>
+      <button class="b s" id="sy_test">Testar conexão</button>
+    </div>
+  `;
+}
+
+function paintSync(){
+  const c=$('#sy_card');
+  if(c&&!c.contains(document.activeElement))c.innerHTML=syncInner();
+  stLine();
+}
+
+function stLine(){
+  const fbOk=window.DATA&&DATA.ready;
+  const sText=sync.general.status==='success'
+    ?'SheetDB: sincronizado'
+    :sync.general.status==='partial_error'
+    ?'SheetDB: parcial'
+    :sync.general.status==='error'
+    ?'SheetDB: erro'
+    :'SheetDB: aguardando';
+  $('#st').textContent=`Firebase: ${fbOk?'conexão confirmada':'sem conexão'} · ${sText}${sync.general.lastSuccess?' ('+fdt(sync.general.lastSuccess)+')':''}`;
+}
+
+function init(){
+  initSyncState();
+  applyCfg();
+  stLine();
+  render();
+  tickSync();
+  setInterval(tickSync,30000);
+}
+
+/* ---------- Configuração ---------- */
 const SNAP=['semresp','pensando','aguard','nao'];
 function lab(k){return (cfg.labels&&cfg.labels[k])||((BASEF.find(f=>f[0]===k)||(cfg.extra||[]).map(e=>[e.k,e.n]).find(f=>f[0]===k)||[])[1])||k}
-const isSn=k=>SNAP.includes(k)||(cfg.extra||[]).some(e=>e.k===k&&e.snap);
-function applyCfg(){applyTheme();{const rm=cfg.removed||[],ex=cfg.extra||[];FIELDS=BASEF.filter(f=>!rm.includes(f[0])).concat(ex.map(e=>[e.k,e.n]));FK=FIELDS.map(f=>f[0]).concat(['msgs','tot'])}if(!applyCfg.d&&cfg.defP){pSel=cfg.defP;applyCfg.d=1}
+function isSn(k){return SNAP.includes(k)||(cfg.extra||[]).some(e=>e.k===k&&e.snap)}
+function applyCfg(){
+  applyTheme();
+  {const rm=cfg.removed||[],ex=cfg.extra||[];FIELDS=BASEF.filter(f=>!rm.includes(f[0])).concat(ex.map(e=>[e.k,e.n]));FK=FIELDS.map(f=>f[0]).concat(['msgs','tot'])}
+  if(!applyCfg.d&&cfg.defP){pSel=cfg.defP;applyCfg.d=1}
   const t=cfg.title||'Painel KOMMO';$('#ttl').textContent=t;document.title=t;
   Object.keys(ORIG).forEach(k=>delete ORIG[k]);
   const os=cfg.origins&&cfg.origins.length?cfg.origins:Object.entries(ORIG0).map(([k,n])=>({k,n}));
   os.forEach(o=>{ORIG[o.k]=o.n});
-  const sel=$('#cp_o').value;$('#cp_o').innerHTML=opts(ORIG,ORIG[sel]?sel:Object.keys(ORIG)[0]);
+  const sel=$('#cp_o')?$('#cp_o').value:'novo';
+  if($('#cp_o'))$('#cp_o').innerHTML=opts(ORIG,ORIG[sel]?sel:Object.keys(ORIG)[0]);
   buildForm();
 }
 async function saveCfg(p){await DATA.saveCfg(p)}
+
 function renderCfg(){
   const fr=FIELDS.map(([k])=>`<div class="row" style="margin-top:6px"><span class="tag" style="min-width:86px;text-align:center">${isSn(k)?'Total atual':'Da semana'}</span><input data-lk="${k}" value="${esc(lab(k))}" style="flex:1;min-width:220px"><button class="b s" data-ls="${k}">Salvar</button><button class="x" data-lx="${k}" aria-label="Excluir campo" title="Excluir campo">×</button></div>`).join('');
   const or=Object.entries(ORIG).map(([k,n])=>`<div class="row" style="margin-top:6px"><input data-ok="${k}" value="${esc(n)}" style="flex:1;min-width:200px"><button class="b s" data-os="${k}">Salvar</button><button class="x" data-od="${k}" aria-label="Excluir origem" title="Excluir">×</button></div>`).join('');
-  $('#cfg').innerHTML=`<div class="card"><h2>Nome do painel</h2><div class="row" style="margin:0"><input id="c_t" value="${esc(cfg.title||'Painel KOMMO')}" style="flex:1;max-width:420px"><button class="b s" id="c_ts">Salvar</button></div></div>
-  <div class="card" id="fb_card">${window.DATA?DATA.cardHtml():''}</div>
-  <div class="card" id="mg_card" style="margin-top:14px">${window.DATA?DATA.migHtml():''}</div>
-  <div class="card" id="sy_card" style="margin-top:14px">${syncInner()}</div>
-  <div class="card" style="margin-top:14px"><h2>Nomes dos campos semanais</h2><p class="note">Renomeie como preferir, adicione campos novos ou exclua os que não usa. Os números já lançados não mudam e continuam guardados mesmo se o campo for excluído. Campos “total atual” guardam o total de pacientes naquela fase no momento; os demais são contagens da semana.</p>${fr}<h2 style="font-size:14px;margin-top:16px">Adicionar novo campo</h2><div class="row" style="margin-top:6px"><input id="f_n" placeholder="Nome do novo campo" style="flex:1;min-width:220px"><select id="f_t"><option value="0">Da semana</option><option value="1">Total atual</option></select><button class="b" id="f_add">Adicionar campo</button></div><div class="row"><button class="b s" id="c_rl">Restaurar nomes originais</button></div></div>
-  <div class="card" style="margin-top:14px"><h2>Origem das consultas</h2><p class="note">Opções do campo “Veio de”. Uma origem só pode ser removida se nenhuma consulta a usar.</p>${or}<div class="row"><input id="c_on" placeholder="Nova origem" style="flex:1;min-width:200px"><button class="b" id="c_oa">Adicionar origem</button></div><div class="row"><button class="b s" id="c_or">Restaurar origens originais</button></div></div>
-  ${viewHtml()}${metricHtml()}<div class="card" style="margin-top:14px"><h2>Backup dos dados</h2><p class="note">Baixe em CSV para abrir no Excel ou no Google Sheets.</p><div class="row"><button class="b s" id="c_ew">Baixar semanas</button><button class="b s" id="c_ea">Baixar consultas</button></div></div>${themeHtml()}`;
+  $('#cfg').innerHTML=`
+    <div class="card"><h2>Nome do painel</h2><div class="row" style="margin:0"><input id="c_t" value="${esc(cfg.title||'Painel KOMMO')}" style="flex:1;max-width:420px"><button class="b s" id="c_ts">Salvar</button></div></div>
+    <div class="card" id="fb_card" style="margin-top:14px">${window.DATA?DATA.cardHtml():''}</div>
+    <div class="card" id="mg_card" style="margin-top:14px">${window.DATA?DATA.migHtml():''}</div>
+    <div class="card" id="sy_card" style="margin-top:14px">${syncInner()}</div>
+    <div class="card" style="margin-top:14px"><h2>Nomes dos campos semanais</h2><p class="note">Renomeie como preferir, adicione campos novos ou exclua os que não usa.</p>${fr}<h2 style="font-size:14px;margin-top:16px">Adicionar novo campo</h2><div class="row" style="margin-top:6px"><input id="f_n" placeholder="Nome do novo campo" style="flex:1;min-width:220px"><select id="f_t"><option value="0">Da semana</option><option value="1">Total atual</option></select><button class="b" id="f_add">Adicionar campo</button></div><div class="row"><button class="b s" id="c_rl">Restaurar nomes originais</button></div></div>
+    <div class="card" style="margin-top:14px"><h2>Origem das consultas</h2><p class="note">Opções do campo “Veio de”.</p>${or}<div class="row"><input id="c_on" placeholder="Nova origem" style="flex:1;min-width:200px"><button class="b" id="c_oa">Adicionar origem</button></div><div class="row"><button class="b s" id="c_or">Restaurar origens originais</button></div></div>
+    ${viewHtml()}${metricHtml()}
+    <div class="card" style="margin-top:14px"><h2>Backup dos dados</h2><p class="note">Baixe em CSV para abrir no Excel ou no Google Sheets.</p><div class="row"><button class="b s" id="c_ew">Baixar semanas</button><button class="b s" id="c_ea">Baixar consultas</button></div></div>
+    ${themeHtml()}
+  `;
 }
+
 async function exp(name,head,rows){
   const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
   const txt='\ufeff'+[head,...rows].map(r=>r.map(q).join(';')).join('\r\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
 }
 
-/* ---------- tema e métricas personalizadas ---------- */
 function applyTheme(){const t=cfg.theme||{},r=document.documentElement;['g','b','a','bg'].forEach(k=>t[k]?r.style.setProperty('--'+k,t[k]):r.style.removeProperty('--'+k));if(t.mode==='light'||t.mode==='dark')r.dataset.theme=t.mode;else r.removeAttribute('data-theme')}
 function themeHtml(){const t=cfg.theme||{},c=(k,l,d)=>`<label>${l}<input type="color" data-tk="${k}" value="${t[k]||d}"></label>`;
   return `<div class="card" style="margin-top:14px"><h2>Tema</h2><div class="f"><label>Modo<select data-tk="mode">${[['auto','Automático'],['light','Claro'],['dark','Escuro']].map(([v,l])=>`<option value="${v}"${(t.mode||'auto')===v?' selected':''}>${l}</option>`).join('')}</select></label>${c('g','Cor principal','#1f7a6d')}${c('b','Cor secundária','#3d6fa8')}${c('a','Cor de destaque','#d99a1c')}${c('bg','Cor de fundo','#f4f6f3')}</div><div class="row"><button class="b s" id="c_tr">Restaurar tema</button></div></div>`}
+
 function metricHtml(){const ms=cfg.metrics||[],ow={kpi:'card no quadro geral',line:'gráfico de linha',bar:'gráfico de barras'};
-  return `<div class="card" style="margin-top:14px"><h2>Métricas e cards personalizados</h2><p class="note">Descreva o que quer ver e onde. O sistema sugere a fórmula pelos campos citados e você confere o resultado antes de adicionar. Você também pode editar a fórmula à mão.</p><label class="note" style="display:block">O que você quer medir?<textarea id="m_q" rows="2" style="width:100%" placeholder="Ex.: % de pacientes que não vão seguir sobre o total de conversas ativas"></textarea></label><div class="row"><label class="note">Onde mostrar<br><select id="m_w"><option value="">Automático</option><option value="kpi">Card no quadro geral</option><option value="line">Gráfico de linha</option><option value="bar">Gráfico de barras</option></select></label><button class="b" id="m_go">Sugerir fórmula</button><button class="b s" id="m_man">Criar manualmente</button></div><div id="m_pv" class="hide" style="margin-top:12px"><div class="f"><label>Título<input id="m_t"></label><label>Fórmula<input id="m_e"></label><label>Formato<select id="m_f"><option value="num">Número</option><option value="pct">Porcentagem</option></select></label><label>Onde<select id="m_w2"><option value="kpi">Card no quadro geral</option><option value="line">Gráfico de linha</option><option value="bar">Gráfico de barras</option></select></label></div><p class="note" id="m_r"></p><p class="note">Funções: SUM, LAST, AVG, MAX, MIN e DIV(a,b). Campos: ${FK.join(', ')}. Ex.: DIV(SUM(resp),SUM(msgs))*100</p><div class="row"><button class="b s" id="m_pre">Pré-visualizar</button><button class="b" id="m_add">Adicionar ao painel</button></div></div><h2 style="margin-top:18px">Já adicionadas</h2>${ms.length?ms.map((m,i)=>`<div class="row" style="margin-top:6px"><span style="flex:1;min-width:200px"><b>${esc(m.title)}</b><br><span class="note">${esc(m.expr)} · ${ow[m.where]||''}</span></span><button class="x" data-md="${i}" aria-label="Remover" title="Remover">×</button></div>`).join(''):'<p class="note">Nenhuma ainda.</p>'}</div>`}
+  return `<div class="card" style="margin-top:14px"><h2>Métricas e cards personalizados</h2><label class="note" style="display:block">O que você quer medir?<textarea id="m_q" rows="2" style="width:100%" placeholder="Ex.: % de pacientes que não vão seguir sobre o total de conversas ativas"></textarea></label><div class="row"><label class="note">Onde mostrar<br><select id="m_w"><option value="">Automático</option><option value="kpi">Card no quadro geral</option><option value="line">Gráfico de linha</option><option value="bar">Gráfico de barras</option></select></label><button class="b" id="m_go">Sugerir fórmula</button><button class="b s" id="m_man">Criar manualmente</button></div><div id="m_pv" class="hide" style="margin-top:12px"><div class="f"><label>Título<input id="m_t"></label><label>Fórmula<input id="m_e"></label><label>Formato<select id="m_f"><option value="num">Número</option><option value="pct">Porcentagem</option></select></label><label>Onde<select id="m_w2"><option value="kpi">Card no quadro geral</option><option value="line">Gráfico de linha</option><option value="bar">Gráfico de barras</option></select></label></div><p class="note" id="m_r"></p><p class="note">Funções: SUM, LAST, AVG, MAX, MIN e DIV(a,b). Campos: ${FK.join(', ')}</p><div class="row"><button class="b s" id="m_pre">Pré-visualizar</button><button class="b" id="m_add">Adicionar ao painel</button></div></div><h2 style="margin-top:18px">Já adicionadas</h2>${ms.length?ms.map((m,i)=>`<div class="row" style="margin-top:6px"><span style="flex:1;min-width:200px"><b>${esc(m.title)}</b><br><span class="note">${esc(m.expr)} · ${ow[m.where]||''}</span></span><button class="x" data-md="${i}" aria-label="Remover" title="Remover">×</button></div>`).join(''):'<p class="note">Nenhuma ainda.</p>'}</div>`}
+
 const KL=['Total de conversas ativas','Taxa Geral de Agendamento (%)','Conversão do FU em Agendamento (%)','Novos leads','Consultas agendadas','Mensagens de follow-up','Taxa de resposta do FU','Comparecimento (check-in)','Cancelamento','Reagendamento','Cancelados recuperados','Reagendamentos em andamento'],CL=['Mensagens de follow-up por tentativa','Resposta e conversão do follow-up','Status dos pacientes (total acumulado em cada semana)','Agenda: realizadas, canceladas e reagendadas','Funil: leads, respostas e agendamentos'];
 function viewHtml(){const h=cfg.hide||{},go=cfg.goals||{},ck=(p,l)=>`<label style="flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:13px"><input type="checkbox" style="width:auto" data-hk="${p}:${esc(l)}"${h[p+':'+l]?'':' checked'}>${esc(l)}</label>`,gi=(k,l)=>`<label>${l}<input type="number" step="0.1" min="0" data-gk="${k}" value="${go[k]??''}" placeholder="sem meta"></label>`,sel=(k,v,o)=>`<select data-dk="${k}">${o.map(([x,l])=>`<option value="${x}"${String(v)===String(x)?' selected':''}>${l}</option>`).join('')}</select>`;
-  return `<div class="card" style="margin-top:14px"><h2>Exibição do painel</h2><p class="note">Marque o que aparece. Os cards e gráficos desmarcados ficam ocultos, sem apagar dados.</p><h2 style="font-size:14px">Cards do quadro geral</h2><div class="f">${KL.map(l=>ck('k',l)).join('')}</div><h2 style="font-size:14px;margin-top:14px">Gráficos</h2><div class="f">${CL.map(l=>ck('c',l)).join('')}</div><div class="f" style="margin-top:14px"><label>Período ao abrir${sel('defP',cfg.defP||'all',[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada']])}</label><label>Casas decimais das taxas principais${sel('dec',cfg.dec??2,[[0,'0'],[1,'1'],[2,'2']])}</label></div></div>
-  <div class="card" style="margin-top:14px"><h2>Metas</h2><p class="note">Em %. O card mostra se está dentro da meta. No cancelamento, o valor é o máximo aceito. Deixe vazio para não usar meta.</p><div class="f">${gi('tg','Taxa Geral de Agendamento')}${gi('conv','Conversão do FU em Agendamento')}${gi('resp','Taxa de resposta do FU')}${gi('comp','Comparecimento (check-in)')}${gi('canc','Cancelamento (máximo)')}</div></div>
-  <div class="card" style="margin-top:14px"><h2>Zona de risco</h2><p class="note">Apaga todas as semanas e consultas. Baixe o backup antes.</p><div class="row"><button class="b s" id="c_wipe" style="color:var(--r)">Apagar todos os dados</button></div></div>`}
+  return `<div class="card" style="margin-top:14px"><h2>Exibição do painel</h2><h2 style="font-size:14px">Cards do quadro geral</h2><div class="f">${KL.map(l=>ck('k',l)).join('')}</div><h2 style="font-size:14px;margin-top:14px">Gráficos</h2><div class="f">${CL.map(l=>ck('c',l)).join('')}</div><div class="f" style="margin-top:14px"><label>Período ao abrir${sel('defP',cfg.defP||'all',[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada']])}</label><label>Casas decimais das taxas principais${sel('dec',cfg.dec??2,[[0,'0'],[1,'1'],[2,'2']])}</label></div></div>
+  <div class="card" style="margin-top:14px"><h2>Metas</h2><div class="f">${gi('tg','Taxa Geral de Agendamento')}${gi('conv','Conversão do FU em Agendamento')}${gi('resp','Taxa de resposta do FU')}${gi('comp','Comparecimento (check-in)')}${gi('canc','Cancelamento (máximo)')}</div></div>
+  <div class="card" style="margin-top:14px"><h2>Zona de risco</h2><div class="row"><button class="b s" id="c_wipe" style="color:var(--r)">Apagar todos os dados</button></div></div>`}
+
 let FK=FIELDS.map(f=>f[0]).concat(['msgs','tot']);const FNS=['SUM','LAST','AVG','MAX','MIN','DIV'];
 function ev(expr,ws){
   if(!/^[\w\s+\-*/().,]*$/.test(expr))throw 0;
@@ -288,7 +627,7 @@ function ev(expr,ws){
 }
 const fmtM=(v,f)=>f==='pct'?v.toFixed(2).replace('.',',')+'%':(Math.round(v*100)/100).toLocaleString('pt-BR');
 function showM(m){$('#m_pv').classList.remove('hide');$('#m_t').value=m.title||'';$('#m_e').value=m.expr||'';$('#m_f').value=m.fmt==='pct'?'pct':'num';$('#m_w2').value=['kpi','line','bar'].includes(m.where)?m.where:'kpi';prevM()}
-function prevM(){try{$('#m_r').textContent='Resultado com todas as semanas: '+fmtM(ev($('#m_e').value,W()),$('#m_f').value)}catch(e){$('#m_r').textContent='Fórmula inválida. Use apenas os campos e as funções da lista.'}}
+function prevM(){try{$('#m_r').textContent='Resultado com todas as semanas: '+fmtM(ev($('#m_e').value,W()),$('#m_f').value)}catch(e){$('#m_r').textContent='Fórmula inválida.'}}
 function aiMetric(){
   const q=$('#m_q').value.trim();if(!q)return toast('Descreva a métrica');
   const nz=x=>String(x).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''),nq=nz(q);
@@ -309,38 +648,192 @@ async function addM(){
   await saveCfg({metrics:[...(cfg.metrics||[]),m]});renderCfg();toast('Adicionado ao painel');
 }
 
-/* ---------- colar dados ---------- */
-function localParse(txt){const y=new Date().getFullYear(),RX={c5:/5º|5o contato|fu ?5|quint/,c4:/4º|4o contato|fu ?4|quart/,c3:/3º|3o contato|fu ?3|terc/,c2:/2º|2o contato|fu ?2|segund/,sem:/sem retorno|sem resposta/,novo:/novo lead|\blead\b/};
-  return txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
-    const low=l.toLowerCase(),dm=l.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);let c='';
-    if(dm){const yy=dm[3]?(dm[3].length===2?'20'+dm[3]:dm[3]):y;c=`${yy}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`}
-    let o='novo';const kx=Object.keys(ORIG).find(k=>low.includes(String(ORIG[k]).toLowerCase()));
-    if(kx)o=kx;else{const k2=['c5','c4','c3','c2','sem','novo'].find(k=>RX[k].test(low)&&ORIG[k]);if(k2)o=k2}
-    const st=/cancel/.test(low)?'cancelada':/reagend/.test(low)?'reagendada':/realiz|compareceu|check/.test(low)?'realizada':'agendada';
-    const nm=l.split(/\t|;|\||\s-\s/)[0].replace(/(\d{1,2})\/(\d{1,2})(\/\d{2,4})?/,'').trim();
-    return {patient:nm,origin:o,consult:c,status:st}});
-}
-async function importPaste(){
-  const tx=$('#ps_t').value.trim();if(!tx)return;const b=$('#ps_b');b.disabled=true;let rows=null;
-  try{const pm=await window.claude.use('permissions');if(pm&&await pm.state('sample')==='granted'){const s=await window.claude.use('sample');
-    if(s)rows=await s.json('Extraia consultas de pacientes do texto. Origens (use a chave): '+Object.entries(ORIG).map(([k,n])=>k+'='+n).join('; ')+'. Hoje é '+today()+'; se a data não tiver ano, use o ano atual. Responda só um array JSON de {"patient":"nome","origin":"chave","consult":"AAAA-MM-DD ou vazio","status":"agendada|realizada|cancelada|reagendada"}. Texto:\n'+tx,{modelTier:'quick'})}}catch(e){rows=null}
-  if(!Array.isArray(rows))rows=localParse(tx);
-  let n=0;
-  for(const r of rows){const p=String(r.patient||'').trim();if(!p)continue;const o=ORIG[r.origin]?r.origin:'novo',c=/^\d{4}-\d{2}-\d{2}$/.test(r.consult||'')?r.consult:'',st=STAT[r.status]?r.status:'agendada';
-    if(Object.values(appts).some(a=>a.patient===p&&(a.consult||'')===c))continue;
-    await saveDoc('appts/a'+Date.now().toString(36)+n,{patient:p,origin:o,schedOn:today(),consult:c,status:st,regained:st==='reagendada'?'sim':'',newDate:''});n++}
-  $('#ps_t').value='';b.disabled=false;toast(n?n+' consulta(s) salva(s)':'Nada reconhecido. Confira o texto.');
+/* ---------- Importação Manual de Consultas com Prévia ---------- */
+let pastePreview=[];
+let isSavingPaste=false;
+
+function parsePatientLine(l,defaultYear){
+  const low=l.toLowerCase();
+  const dm=l.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+  let consult='';
+  if(dm){
+    const yy=dm[3]?(dm[3].length===2?'20'+dm[3]:dm[3]):defaultYear;
+    consult=`${yy}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`;
+  }
+
+  const RX={c5:/5º|5o contato|fu ?5|quint/,c4:/4º|4o contato|fu ?4|quart/,c3:/3º|3o contato|fu ?3|terc/,c2:/2º|2o contato|fu ?2|segund/,sem:/sem retorno|sem resposta/,novo:/novo lead|\blead\b/};
+  let origin='novo';
+  const kx=Object.keys(ORIG).find(k=>low.includes(String(ORIG[k]).toLowerCase()));
+  if(kx)origin=kx;else{const k2=['c5','c4','c3','c2','sem','novo'].find(k=>RX[k]&&RX[k].test(low)&&ORIG[k]);if(k2)origin=k2}
+
+  let status='agendada';
+  if(/cancel/.test(low))status='cancelada';
+  else if(/reagend/.test(low))status='reagendada';
+  else if(/realiz|compareceu|check/.test(low))status='realizada';
+
+  let name='';
+  if(l.includes(';')||l.includes('\t')||l.includes('|')||l.includes(' - ')){
+    const parts=l.split(/[\t;|]|\s-\s/).map(p=>p.trim()).filter(Boolean);
+    if(parts.length)name=parts[0].replace(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/g,'').trim();
+  }else{
+    const mName=l.match(/(?:paciente|agendad[oa]\s+(?:a\s+)?|consulta\s+(?:da\s+|do\s+)?)([A-ZÀ-ÿ][a-zà-ÿ]+(?:\s+[A-ZÀ-ÿ][a-zà-ÿ]+)+)/i);
+    if(mName&&mName[1]){
+      name=mName[1].trim();
+    }else{
+      name=l.replace(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/g,'')
+            .replace(/\b(?:novo lead|2º contato|3º contato|4º contato|5º contato|sem retorno|realizada|agendada|cancelada|reagendada|confirmada|paciente|consulta)\b/gi,'')
+            .replace(/[;,\-–—|:]/g,' ')
+            .replace(/\s+/g,' ')
+            .trim();
+    }
+  }
+
+  name=name.replace(/^[,\-–—:\s]+|[,\-–—:\s]+$/g,'').trim();
+  if(!name||name.length<2)return null;
+
+  return {
+    id:'prev_'+Math.random().toString(36).slice(2,8),
+    patient:name.slice(0,200),
+    origin,
+    schedOn:today(),
+    consult,
+    status,
+    regained:status==='reagendada'?'sim':'',
+    newDate:''
+  };
 }
 
-/* ---------- derived ---------- */
-const W=()=>{const ids=Object.keys(weeks).sort(),ap=Object.values(appts);return ids.map((id,i)=>{const end=ids[i+1]||'9999-12-31',n=ap.filter(a=>(a.schedOn||'')>=id&&(a.schedOn||'')<end).length,
-  dn=ap.filter(a=>(a.consult||'')>=id&&(a.consult||'')<end&&(a.status==='realizada'||a.status==='cancelada'||a.status==='reagendada')),o={id,...weeks[id],cagend:n||(weeks[id].cagend||0),auto:n>0};
-  if(dn.length){o.creal=dn.filter(a=>a.status==='realizada').length;o.ccanc=dn.filter(a=>a.status==='cancelada').length;o.creag=dn.filter(a=>a.status==='reagendada').length;o.autoS=true}
-  return o})};
+function updatePastePreviewUI(){
+  const txt=$('#ps_t')?$('#ps_t').value.trim():'';
+  const box=$('#ps_preview_box');
+  const btnSave=$('#ps_save_btn');
+  if(!box||!btnSave)return;
+
+  const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
+  btnSave.textContent=`Salvar consultas (${validItems.length})`;
+  btnSave.disabled=validItems.length===0||isSavingPaste;
+
+  if(!txt&&!pastePreview.length){
+    box.innerHTML='<p class="note">Nenhum texto inserido. A prévia aparecerá aqui após digitar ou colar.</p>';
+    return;
+  }
+
+  if(txt&&!pastePreview.length){
+    box.innerHTML='<p class="note" style="color:var(--r)">Nenhum paciente válido identificado no texto. Verifique se informou ao menos o nome do paciente (ex.: <i>Maria S. ; 3º contato ; 28/10</i>).</p>';
+    return;
+  }
+
+  box.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <b>Pré-visualização para revisão (${pastePreview.length} registro${pastePreview.length>1?'s':''})</b>
+      <span class="note">Edite os campos ou clique no × para remover</span>
+    </div>
+    <div class="wrap">
+      <table>
+        <tr>
+          <th>Paciente</th>
+          <th>Origem</th>
+          <th>Agendada em</th>
+          <th>Data da consulta</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+        ${pastePreview.map((item,idx)=>`
+          <tr>
+            <td><input type="text" data-pidx="${idx}" data-pk="patient" value="${esc(item.patient)}" style="min-width:140px"></td>
+            <td><select data-pidx="${idx}" data-pk="origin">${opts(ORIG,item.origin)}</select></td>
+            <td><input type="date" data-pidx="${idx}" data-pk="schedOn" value="${item.schedOn||today()}"></td>
+            <td><input type="date" data-pidx="${idx}" data-pk="consult" value="${item.consult||''}"></td>
+            <td><select data-pidx="${idx}" data-pk="status">${opts(STAT,item.status)}</select></td>
+            <td><button class="x" data-pdel="${idx}" title="Remover da prévia" aria-label="Remover">×</button></td>
+          </tr>
+        `).join('')}
+      </table>
+    </div>
+  `;
+}
+
+function parseInputText(){
+  const txt=$('#ps_t')?$('#ps_t').value:'';
+  if(!txt.trim()){
+    pastePreview=[];
+    updatePastePreviewUI();
+    return;
+  }
+  const curY=new Date().getFullYear();
+  const lines=txt.split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
+  const parsed=[];
+  for(const l of lines){
+    const res=parsePatientLine(l,curY);
+    if(res)parsed.push(res);
+  }
+  pastePreview=parsed;
+  updatePastePreviewUI();
+}
+
+async function savePreviewAppts(){
+  if(isSavingPaste)return;
+  const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
+  if(!validItems.length)return;
+
+  isSavingPaste=true;
+  const btnSave=$('#ps_save_btn');
+  if(btnSave){btnSave.disabled=true;btnSave.textContent=`Salvando ${validItems.length} consulta(s)…`}
+
+  let savedCount=0;
+  try{
+    for(const item of validItems){
+      const p=item.patient.trim();
+      const c=/^\d{4}-\d{2}-\d{2}$/.test(item.consult||'')?item.consult:'';
+      // Evita duplicação caso já exista idêntico na memória local
+      if(Object.values(appts).some(a=>a.patient===p&&(a.consult||'')===c))continue;
+
+      const newId='a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      await saveDoc('appts/'+newId,{
+        patient:p.slice(0,200),
+        origin:ORIG[item.origin]?item.origin:'novo',
+        schedOn:item.schedOn||today(),
+        consult:c,
+        status:STAT[item.status]?item.status:'agendada',
+        regained:item.regained||(item.status==='reagendada'?'sim':''),
+        newDate:item.newDate||''
+      });
+      savedCount++;
+    }
+    toast(`${savedCount} consulta(s) salva(s) com sucesso no Firebase!`);
+    $('#ps_t').value='';
+    pastePreview=[];
+    updatePastePreviewUI();
+  }catch(err){
+    console.error("Erro ao salvar consultas:",err);
+    alert("Erro ao gravar consultas no Firebase: "+(err.message||err)+"\n\nO texto e a prévia foram preservados para você tentar novamente.");
+    toast("Falha ao salvar. Prévia preservada.");
+  }finally{
+    isSavingPaste=false;
+    updatePastePreviewUI();
+  }
+}
+
+/* ---------- Derived & Dashboard ---------- */
+const W=()=>{
+  const ids=Object.keys(weeks).sort(),ap=Object.values(appts);
+  return ids.map((id,i)=>{
+    const end=ids[i+1]||'9999-12-31';
+    const n=ap.filter(a=>(a.schedOn||'')>=id&&(a.schedOn||'')<end).length;
+    const dn=ap.filter(a=>(a.consult||'')>=id&&(a.consult||'')<end&&(a.status==='realizada'||a.status==='cancelada'||a.status==='reagendada'));
+    const o={id,...weeks[id],cagend:n||(weeks[id].cagend||0),auto:n>0};
+    if(dn.length){
+      o.creal=dn.filter(a=>a.status==='realizada').length;
+      o.ccanc=dn.filter(a=>a.status==='cancelada').length;
+      o.creag=dn.filter(a=>a.status==='reagendada').length;
+      o.autoS=true;
+    }
+    return o;
+  });
+};
 const msgs=w=>(w.fu2||0)+(w.fu3||0)+(w.fu4||0)+(w.fu5||0);
 function sum(arr,f){return arr.reduce((a,w)=>a+(typeof f==='function'?f(w):(w[f]||0)),0)}
 
-/* ---------- charts ---------- */
 const nice=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=5?5:10)*p};
 function chart(labels,series,mode,isPct){
   const Wd=480,H=200,L=34,R=8,T=10,B=24,iw=Wd-L-R,ih=H-T-B,n=labels.length;
@@ -354,11 +847,10 @@ function chart(labels,series,mode,isPct){
   return `<svg viewBox="0 0 ${Wd} ${H}" role="img">${o}</svg>`;
 }
 const leg=s=>`<div class="lg" role="list" aria-label="Legenda"><b style="color:var(--ink)">Legenda:</b>${s.map(x=>`<span role="listitem"><i style="background:${x.c}"></i>${x.n}</span>`).join('')}</div>`;
-const TT={'Mensagens de follow-up por tentativa':['Mensagens de follow-up enviadas por tentativa (FU 2 a FU 5)','Cada barra soma as mensagens da semana; a cor indica de qual tentativa elas são.'],'Resposta e conversão do follow-up':['Taxa de resposta e conversão do follow-up (%)','Resposta = respostas ÷ mensagens enviadas. Conversão = agendamentos ÷ respostas recebidas.'],'Status dos pacientes (total acumulado em cada semana)':['Situação dos pacientes ao fim de cada semana','Total de pacientes em cada fase naquele momento (não é o que entrou na semana).'],'Agenda: realizadas, canceladas e reagendadas':['Agenda da semana: realizadas, canceladas e reagendadas','Consultas da agenda por desfecho, semana a semana.'],'Funil: leads, respostas e agendamentos':['Funil: leads, respostas e agendamentos','Novos leads, respostas no follow-up e agendamentos pelo follow-up, semana a semana.']};
+const TT={'Mensagens de follow-up por tentativa':['Mensagens de follow-up enviadas por tentativa (FU 2 a FU 5)','Cada barra soma as mensagens da semana.'],'Resposta e conversão do follow-up':['Taxa de resposta e conversão do follow-up (%)','Resposta = respostas ÷ mensagens. Conversão = agendamentos ÷ respostas.'],'Status dos pacientes (total acumulado em cada semana)':['Situação dos pacientes ao fim de cada semana','Total de pacientes em cada fase naquele momento.'],'Agenda: realizadas, canceladas e reagendadas':['Agenda da semana: realizadas, canceladas e reagendadas','Consultas por desfecho, semana a semana.'],'Funil: leads, respostas e agendamentos':['Funil: leads, respostas e agendamentos','Novos leads, respostas e agendamentos pelo follow-up.']};
 const card=(t,s,svg)=>(cfg.hide&&cfg.hide['c:'+t])?'':`<div class="card"><h2>${(TT[t]||[t])[0]}</h2>${TT[t]?`<p class="note" style="margin:-6px 0 8px">${TT[t][1]}</p>`:''}${leg(s)}${svg}</div>`;
 const css=n=>`var(--${n})`;
 
-/* ---------- dashboard ---------- */
 function dash(){
   const WA=W();
   const nW=WA.length;pFrom=nW?WA[0].id:'';pTo=nW?WA[nW-1].id:'';
@@ -366,7 +858,7 @@ function dash(){
   else if(pSel==='last'&&nW){pFrom=pTo=WA[nW-1].id}
   else if(pSel!=='all'&&weeks[pSel]){pFrom=pSel;pTo=pSel}
   const ws=WA.filter(w=>w.id>=pFrom&&w.id<=pTo),pEnd=(WA.find(w=>w.id>pTo)||{}).id||'9999-12-31';
-  if(!ws.length)return `<div class="card"><h2>Ainda não há dados</h2><p class="note">Vá em “Lançar semana” para registrar a primeira semana ou importar os dados da planilha.</p><button class="b" onclick="go('sem')">Lançar semana</button></div>`;
+  if(!ws.length)return `<div class="card"><h2>Ainda não há dados</h2><p class="note">Vá em “Lançar semana” para registrar a primeira semana ou importar dados.</p><button class="b" onclick="go('sem')">Lançar semana</button></div>`;
   const L=ws.map(w=>fd(w.id)),last=ws[ws.length-1],prev=WA[WA.findIndex(w=>w.id===ws[ws.length-1].id)-1];
   const tm=sum(ws,msgs),tr=sum(ws,'resp'),ta=sum(ws,'agend'),tl=sum(ws,'novos');
   const real=sum(ws,'creal'),cag=sum(ws,'cagend'),can=sum(ws,'ccanc'),rea=sum(ws,'creag'),tot=real+rea+can;
@@ -375,49 +867,56 @@ function dash(){
   const GL={'Taxa Geral de Agendamento (%)':['tg',1],'Conversão do FU em Agendamento (%)':['conv',1],'Taxa de resposta do FU':['resp',1],'Comparecimento (check-in)':['comp',1],'Cancelamento':['canc',-1]};
   const kp=(l,v,s)=>{if(cfg.hide&&cfg.hide['k:'+l])return '';const g=GL[l],mt=g&&cfg.goals&&cfg.goals[g[0]];let b='';if(mt!=null){const n=parseFloat(String(v).replace(/\./g,'').replace(',','.')),ok=g[1]>0?n>=mt:n<=mt;b=`<small style="color:${ok?'var(--g)':'var(--r)'};font-weight:500">Meta ${String(mt).replace('.',',')}% · ${ok?'dentro da meta':'fora da meta'}</small>`}return `<div class="card kpi"><span>${l}</span><b>${v}</b>${s?`<small>${s}</small>`:''}${b}</div>`};
   const rt=w=>pct(w.resp||0,msgs(w));
+
   let ins='';
   const lr=rt(last);
-  if(prev&&msgs(prev)&&msgs(last))ins+=`<p>Taxa de resposta do follow-up ${ws.length>1?'na última semana do período':'na semana de '+fd(last.id)}: <b>${pf(lr)}</b> (${lr>=rt(prev)?'acima':'abaixo'} dos ${pf(rt(prev))} da semana anterior, ${fd(prev.id)}).</p>`;
-  if(prev&&last.semresp!==prev.semresp)ins+=`<p>Pacientes sem resposta no follow-up ${last.semresp>prev.semresp?'subiram':'caíram'} de ${prev.semresp} para <b>${last.semresp}</b>.</p>`;
-  if(tot)ins+=`<p>Das ${tot} consultas que passaram pela agenda ${ws.length>1?'no período':'na semana'} (check-ins, reagendamentos e cancelamentos), ${real} foram realizadas (${pf(pct(real,tot))}), ${rea} reagendadas (${pf(pct(rea,tot))}) e ${can} canceladas (${pf(pct(can,tot))}).${(ws.length===1&&prev)?(()=>{const pt=(prev.creal||0)+(prev.creag||0)+(prev.ccanc||0);return pt?` Na semana anterior (${fd(prev.id)}), de ${pt}: ${pf(pct(prev.creal||0,pt))} realizadas, ${pf(pct(prev.creag||0,pt))} reagendadas e ${pf(pct(prev.ccanc||0,pt))} canceladas.`:''})():''}</p>`;
-  const SD={novo:tl,c2:sum(ws,'fu2'),c3:sum(ws,'fu3'),c4:sum(ws,'fu4'),c5:sum(ws,'fu5')},sr=Object.keys(SD).filter(k=>ORIG[k]&&SD[k]>0).map(k=>{const n=ap.filter(a=>a.origin===k).length;return {k,n,r:pct(n,SD[k])}}).filter(x=>x.n>0);
-  if(sr.length){const br=[...sr].sort((a,b)=>b.r-a.r),bn=[...sr].sort((a,b)=>b.n-a.n);ins+=`<p>Etapa com maior taxa de agendamento ${ws.length>1?'no período':'na semana'}: <b>${esc(ORIG[br[0].k])}</b> (${pf(br[0].r)}: ${br[0].n} de ${SD[br[0].k].toLocaleString('pt-BR')} contatados)${br[1]?`, seguida de ${esc(ORIG[br[1].k])} (${pf(br[1].r)})`:''}.${bn[0].k!==br[0].k?` Em número de consultas, a líder é ${esc(ORIG[bn[0].k])} (${bn[0].n}).`:''} <span class="note">Considera as consultas registradas na aba Consultas.</span></p>`}
-  if(perd.length)ins+=`<p>Cancelamentos e reagendamentos registrados: ${perd.length}. Recuperados: <b>${rec}</b> (${pf(pct(rec,perd.length))}).</p>`;
+  if(prev&&msgs(prev)&&msgs(last))ins+=`<p>Taxa de resposta do follow-up: <b>${pf(lr)}</b> (${lr>=rt(prev)?'acima':'abaixo'} dos ${pf(rt(prev))} da semana anterior).</p>`;
+  if(prev&&last.semresp!==prev.semresp)ins+=`<p>Pacientes sem resposta no follow-up: <b>${last.semresp}</b>.</p>`;
+  if(tot)ins+=`<p>Das ${tot} consultas da agenda, ${real} realizadas (${pf(pct(real,tot))}), ${rea} reagendadas (${pf(pct(rea,tot))}) e ${can} canceladas (${pf(pct(can,tot))}).</p>`;
   if(!ins)ins='<p>Lance mais semanas para ver as observações automáticas.</p>';
+
   const st=[{n:'Sem resposta',c:css('k'),v:ws.map(w=>w.semresp||0)},{n:'Pensando ou pesquisando',c:css('a'),v:ws.map(w=>w.pensando||0)},{n:'Aguardando cadastro',c:css('g'),v:ws.map(w=>w.aguard||0)},{n:'Não vão seguir',c:css('r'),v:ws.map(w=>w.nao||0)}];
   const fu=[2,3,4,5].map((k,i)=>({n:'FU '+k,c:css(['b','g','a','p'][i]),v:ws.map(w=>w['fu'+k]||0)}));
   const ag=[{n:'Realizadas',c:css('g'),v:ws.map(w=>w.creal||0)},{n:'Canceladas',c:css('r'),v:ws.map(w=>w.ccanc||0)},{n:'Reagendadas',c:css('a'),v:ws.map(w=>w.creag||0)}];
   const rs=[{n:'Taxa de resposta',c:css('b'),v:ws.map(rt)},{n:'Respostas que viraram agendamento',c:css('g'),v:ws.map(w=>pct(w.agend||0,w.resp||0))}];
   const fl=[{n:'Novos leads',c:css('g'),v:ws.map(w=>w.novos||0)},{n:'Respostas no follow-up',c:css('b'),v:ws.map(w=>w.resp||0)},{n:'Agendamentos pelo follow-up',c:css('a'),v:ws.map(w=>w.agend||0)}];
-  /* origem */
+
   const oc=Object.keys(ORIG).map(k=>{const l=ap.filter(a=>a.origin===k);return {k,t:l.length,r:l.filter(a=>a.status==='realizada').length,c:l.filter(a=>a.status==='cancelada').length}});
   const omax=Math.max(1,...oc.map(o=>o.t));
-  const orig=ap.length?oc.map(o=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${ORIG[o.k]}</span><span class="note">${o.t} agendadas · ${o.r} realizadas · ${o.c} canceladas</span></div><div style="height:9px;background:var(--line);border-radius:5px;margin-top:3px"><div style="height:9px;width:${o.t/omax*100}%;background:var(--g);border-radius:5px"></div></div></div>`).join(''):'<p class="note">Registre consultas na aba “Consultas” para ver de qual etapa do follow-up elas vêm.</p>';
+  const orig=ap.length?oc.map(o=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${ORIG[o.k]}</span><span class="note">${o.t} agendadas · ${o.r} realizadas · ${o.c} canceladas</span></div><div style="height:9px;background:var(--line);border-radius:5px;margin-top:3px"><div style="height:9px;width:${o.t/omax*100}%;background:var(--g);border-radius:5px"></div></div></div>`).join(''):'<p class="note">Registre consultas para analisar origens.</p>';
+
   const rg=['sim','contato','nao'].map(k=>({k,n:perd.filter(a=>a.regained===k).length})),pend=perd.filter(a=>!a.regained).length;
-  const rgh=perd.length?`<div class="lg" style="font-size:14px;color:var(--ink)">${rg.map(r=>`<span class="tag">${REG[r.k]}: <b>${r.n}</b></span>`).join('')}${pend?`<span class="tag">Sem informação: <b>${pend}</b></span>`:''}</div><p class="note">Taxa de recuperação: ${pf(pct(rec,perd.length))}</p>`:'<p class="note">Quando houver cancelamentos ou reagendamentos registrados, a recuperação aparece aqui.</p>';
-  const DEN={novo:tl,c2:sum(ws,'fu2'),c3:sum(ws,'fu3'),c4:sum(ws,'fu4'),c5:sum(ws,'fu5')};
-  const et=Object.keys(ORIG).map(k=>{const n=ap.filter(a=>a.origin===k).length,d=DEN[k];return {k,n,d,r:d?pct(n,d):null}});
-  const rmax=Math.max(1,...et.map(e=>e.r||0));
-  const etH=ap.length?`<div class="wrap"><table><tr><th>Etapa</th><th>Contatados</th><th>Agendadas</th><th>Taxa de agendamento</th><th></th></tr>${et.map(e=>`<tr><td>${esc(ORIG[e.k])}</td><td>${e.d==null?'—':e.d.toLocaleString('pt-BR')}</td><td>${e.n}</td><td><b>${e.r==null?'—':pf(e.r)}</b></td><td style="width:90px"><div style="height:8px;background:var(--line);border-radius:4px"><div style="height:8px;width:${(e.r||0)/rmax*100}%;background:var(--g);border-radius:4px"></div></div></td></tr>`).join('')}</table></div><p class="note">Agendadas é o número de consultas registradas na aba Consultas com aquela origem. Contatados é a soma de todas as semanas lançadas: novos leads para “Novo lead” e os contatados de cada follow-up (2 a 5) nas demais. Etapas sem total de contatados, como “Sem retorno”, ficam sem taxa.</p>`:'<p class="note">Registre consultas na aba “Consultas”, informando de qual etapa vieram, para calcular a taxa por etapa.</p>';
+  const rgh=perd.length?`<div class="lg" style="font-size:14px;color:var(--ink)">${rg.map(r=>`<span class="tag">${REG[r.k]}: <b>${r.n}</b></span>`).join('')}${pend?`<span class="tag">Sem informação: <b>${pend}</b></span>`:''}</div><p class="note">Taxa de recuperação: ${pf(pct(rec,perd.length))}</p>`:'<p class="note">Sem cancelamentos registrados no período.</p>';
+
   const p2=v=>v.toFixed(cfg.dec??2).replace('.',',')+'%',ta2=sum(ws,'ativas');
   const sw=ws.some(w=>w.id===selWeek)?selWeek:last.id,wi=ws.findIndex(w=>w.id===sw),wk=ws[wi],wend=ws[wi+1]?ws[wi+1].id:pEnd;
   const apw=ap.filter(a=>(a.schedOn||'')>=sw&&(a.schedOn||'')<wend);
   const stg=(list,d)=>{const D={novo:d.novos,c2:d.fu2,c3:d.fu3,c4:d.fu4,c5:d.fu5};const rows=Object.keys(ORIG).map(k=>{const n=list.filter(a=>a.origin===k).length,x=D[k];return {k,n,x,r:x?pct(n,x):null}});const m=Math.max(1,...rows.map(e=>e.r||0));
     return list.length?`<div class="wrap"><table><tr><th>Etapa</th><th>Contatados</th><th>Agendadas</th><th>Taxa</th><th></th></tr>${rows.map(e=>`<tr><td>${esc(ORIG[e.k])}</td><td>${e.x==null?'—':(e.x||0).toLocaleString('pt-BR')}</td><td>${e.n}</td><td><b>${e.r==null?'—':pf(e.r)}</b></td><td style="width:90px"><div style="height:8px;background:var(--line);border-radius:4px"><div style="height:8px;width:${(e.r||0)/m*100}%;background:var(--g);border-radius:4px"></div></div></td></tr>`).join('')}</table></div>`:'<p class="note">Nenhuma consulta registrada neste período.</p>'};
-  const stgT=(list,d,at,ca,lb)=>{const row=`<tr style="font-weight:700;border-top:2px solid var(--line)"><td>${lb||'Total (agendadas na semana ÷ conversas ativas)'}</td><td>${at.toLocaleString('pt-BR')}</td><td>${ca}</td><td><b>${p2(pct(ca,at))}</b></td><td></td></tr>`;const h=stg(list,d);return h.includes('</table>')?h.replace('</table>',row+'</table>'):h+`<div class="wrap"><table>${row}</table></div>`};
+  const stgT=(list,d,at,ca,lb)=>{const row=`<tr style="font-weight:700;border-top:2px solid var(--line)"><td>${lb||'Total (agendadas ÷ ativas)'}</td><td>${at.toLocaleString('pt-BR')}</td><td>${ca}</td><td><b>${p2(pct(ca,at))}</b></td><td></td></tr>`;const h=stg(list,d);return h.includes('</table>')?h.replace('</table>',row+'</table>'):h+`<div class="wrap"><table>${row}</table></div>`};
   const selW=`<label class="note">Semana <select id="selw">${ws.map(w=>`<option value="${w.id}"${w.id===sw?' selected':''}>${fdf(w.id)}</option>`).join('')}</select></label>`;
   const GER={novos:tl,fu2:sum(ws,'fu2'),fu3:sum(ws,'fu3'),fu4:sum(ws,'fu4'),fu5:sum(ws,'fu5')};
-  const tgW=pct(last.cagend||0,last.ativas||0),cvW=pct(last.agend||0,last.resp||0);
-  const fo=v=>WA.map(w=>`<option value="${w.id}"${w.id===v?' selected':''}>${fdf(w.id)}</option>`).join('');
+  const cvW=pct(last.agend||0,last.resp||0);
   const po=[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada'],...WA.slice().reverse().map(w=>[w.id,'Semana de '+fdf(w.id)])].map(([v,l])=>`<option value="${v}"${v===pSel?' selected':''}>${l}</option>`).join('');
+
   const cm=cfg.metrics||[],cs=m=>{try{return ev(m.expr,ws)}catch(e){return null}};
   const cKpi=cm.filter(m=>m.where==='kpi').map(m=>{const v=cs(m);return kp(esc(m.title),v==null?'—':fmtM(v,m.fmt),'card personalizado')}).join('');
   const cCh=cm.filter(m=>m.where!=='kpi').map(m=>{const v=ws.map(w=>{try{return Math.round(ev(m.expr,[w])*100)/100}catch(e){return 0}}),ser=[{n:m.title,c:css('p'),v}];return card(esc(m.title),ser,chart(L,ser,m.where==='bar'?'group':'line',m.fmt==='pct'))}).join('');
-  const fbar=`<div class="card" style="margin-bottom:14px"><div class="row" style="margin:0"><label class="note">Período<br><select id="pp">${po}</select></label></div><p class="note" style="margin:8px 0 0">Mostrando ${ws.length} semana(s): ${fdf(pFrom)} a ${fdf(pTo)}. Os totais do momento (conversas ativas, sem resposta, pensando…) mostram o valor do fim do período escolhido.</p></div>`;
+  const fbar=`<div class="card" style="margin-bottom:14px"><div class="row" style="margin:0"><label class="note">Período<br><select id="pp">${po}</select></label></div><p class="note" style="margin:8px 0 0">Mostrando ${ws.length} semana(s): ${fdf(pFrom)} a ${fdf(pTo)}.</p></div>`;
+
   return fbar+`<div class="grid kpis">
-    ${kp('Total de conversas ativas',(last.ativas||0).toLocaleString('pt-BR'),'na semana de '+fd(last.id))}${kp('Taxa Geral de Agendamento (%)',p2(pct(cag,ta2/ws.length)),cag+' consultas agendadas ÷ '+Math.round(ta2/ws.length).toLocaleString('pt-BR')+' (média de conversas ativas)<br>'+(ws.length>1?ws.length+' semanas · por semana: '+p2(pct(cag,ta2/ws.length)/ws.length):'semana de '+fd(last.id)))}${kp('Conversão do FU em Agendamento (%)',p2(pct(ta,tr)),ta+' agendamentos ÷ '+tr.toLocaleString('pt-BR')+' respostas do FU<br>'+(ws.length>1?ws.length+' semanas · última semana: '+p2(cvW):'semana de '+fd(last.id)))}${kp('Novos leads',tl,ws.length+' semanas')}${kp('Consultas agendadas',cag.toLocaleString('pt-BR'),'no período selecionado')}
+    ${kp('Total de conversas ativas',(last.ativas||0).toLocaleString('pt-BR'),'na semana de '+fd(last.id))}
+    ${kp('Taxa Geral de Agendamento (%)',p2(pct(cag,ta2/ws.length)),cag+' consultas ÷ '+Math.round(ta2/ws.length).toLocaleString('pt-BR')+' ativas médias')}
+    ${kp('Conversão do FU em Agendamento (%)',p2(pct(ta,tr)),ta+' agendamentos ÷ '+tr.toLocaleString('pt-BR')+' respostas')}
+    ${kp('Novos leads',tl,ws.length+' semanas')}${kp('Consultas agendadas',cag.toLocaleString('pt-BR'),'no período')}
     ${kp('Mensagens de follow-up',tm.toLocaleString('pt-BR'),'')}${kp('Taxa de resposta do FU',pf(pct(tr,tm)),tr+' respostas')}
-    ${kp('Comparecimento (check-in)',pf(pct(real,tot)),real+' de '+tot+' consultas da agenda')}${kp('Cancelamento',pf(pct(can,tot)),can+' de '+tot+' consultas da agenda')}${kp('Reagendamento',pf(pct(rea,tot)),rea+' de '+tot+' consultas da agenda')}${kp('Cancelados recuperados',perd.length?pf(pct(rec,perd.length)):'—',rec+' de '+perd.length)}${kp('Reagendamentos em andamento',andam,'pacientes com “Conseguiu reagendar?” = Em contato (total atual)')}${cKpi}</div>
+    ${kp('Comparecimento (check-in)',pf(pct(real,tot)),real+' de '+tot+' consultas')}
+    ${kp('Cancelamento',pf(pct(can,tot)),can+' de '+tot+' consultas')}
+    ${kp('Reagendamento',pf(pct(rea,tot)),rea+' de '+tot+' consultas')}
+    ${kp('Cancelados recuperados',perd.length?pf(pct(rec,perd.length)):'—',rec+' de '+perd.length)}
+    ${kp('Reagendamentos em andamento',andam,'pacientes com “Em contato”')}
+    ${cKpi}
+  </div>
   <div class="ins">${ins}</div>
   <div class="grid charts">
     ${card('Mensagens de follow-up por tentativa',fu,chart(L,fu,'stack'))}
@@ -425,18 +924,18 @@ function dash(){
     ${card('Status dos pacientes (total acumulado em cada semana)',st,chart(L,st,'stack'))}
     ${card('Agenda: realizadas, canceladas e reagendadas',ag,chart(L,ag,'group'))}
     ${card('Funil: leads, respostas e agendamentos',fl,chart(L,fl,'group'))}
-    <div class="card"><h2>Taxa de agendamento por etapa · da semana</h2><div class="row" style="margin:0 0 8px">${selW}</div><p class="note" style="margin:0 0 6px">Considera as consultas agendadas de ${fdf(sw)} até antes da próxima semana lançada, sobre os contatados dessa semana.</p>${stgT(apw,wk,wk.ativas||0,wk.cagend||0)}</div>
-    <div class="card"><h2>Taxa de agendamento por etapa · geral</h2><p class="note" style="margin:0 0 6px">Todas as semanas somadas. Agendadas é o que foi registrado na aba Consultas; etapas sem total de contatados ficam sem taxa. A linha Total usa as consultas agendadas na última semana ÷ as conversas ativas dessa mesma semana.</p>${stgT(ap,GER,last.ativas||0,last.cagend||0,'Total da última semana ('+fdf(last.id)+'): agendadas ÷ conversas ativas')}</div>
+    <div class="card"><h2>Taxa de agendamento por etapa · da semana</h2><div class="row" style="margin:0 0 8px">${selW}</div>${stgT(apw,wk,wk.ativas||0,wk.cagend||0)}</div>
+    <div class="card"><h2>Taxa de agendamento por etapa · geral</h2>${stgT(ap,GER,last.ativas||0,last.cagend||0,'Total última semana')}</div>
     ${cCh}
     <div class="card"><h2>De onde vêm as consultas</h2>${orig}<h2 style="margin-top:18px">Recuperação de cancelamentos</h2>${rgh}</div>
   </div>`;
 }
 
-/* ---------- semana ---------- */
 function buildForm(){const o=$('#w_novos')?readForm():null;$('#wf').innerHTML=FIELDS.filter(f=>f[0]!=='cagend').map(([k])=>`<label>${esc(lab(k))}<input type="number" min="0" id="w_${k}" value="0"></label>`).join('');if(o)fillForm(o)}
 function fillForm(v){FIELDS.forEach(([k])=>{const el=$('#w_'+k);if(el)el.value=v?(v[k]||0):0})}
 function loadWeek(){const id=$('#wd').value;fillForm(W().find(w=>w.id===id)||weeks[id])}
 function readForm(){const w0=weeks[$('#wd').value]||{},o={...w0};FIELDS.forEach(([k])=>{const el=$('#w_'+k);o[k]=el?Math.max(0,parseInt(el.value)||0):(w0[k]||0)});return o}
+
 function weekList(){
   const all=W().reverse();if(!all.length)return '<p class="note">Nenhuma semana lançada.</p>';
   const ws=all.filter(w=>(!wFilt.from||w.id>=wFilt.from)&&(!wFilt.to||w.id<=wFilt.to));
@@ -444,6 +943,7 @@ function weekList(){
   if(!ws.length)return fb+'<p class="note">Nenhuma semana neste período.</p>';
   return fb+`<div class="wrap"><table><tr><th>Semana</th>${FIELDS.map(f=>`<th>${esc(lab(f[0]))}</th>`).join('')}<th></th></tr>${ws.map(w=>{const ed=editRow===w.id;return `<tr><td><a href="#" data-e="${w.id}">${fdf(w.id)}</a></td>${FIELDS.map(([k])=>`<td>${ed&&k!=='cagend'?`<input type="number" min="0" data-ek="${k}" value="${w[k]||0}">`:(w[k]||0)+((k==='cagend'&&w.auto)||(['creal','ccanc','creag'].includes(k)&&w.autoS)?' <span class="tag">auto</span>':'')}</td>`).join('')}<td><button class="b s" data-we="${w.id}">Editar</button><button class="b" data-ws="${w.id}"${ed?'':' disabled'}>Salvar</button><button class="b s" data-wx="${w.id}" style="color:var(--r)">Excluir</button></td></tr>`}).join('')}</table></div>`;
 }
+
 async function importRows(rows){
   let n=0;for(const r of rows){const c=r.split('\t');const m=(c[0]||'').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);if(!m)continue;
     const id=`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`,o={};
@@ -452,26 +952,34 @@ async function importRows(rows){
   toast(n?n+' semana(s) importada(s)':'Nenhuma linha reconhecida');
 }
 
-/* ---------- consultas ---------- */
 const opts=(o,sel)=>Object.entries(o).map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v}</option>`).join('');
+
 function fbarA(ids){const f=aFilt,tot=Object.keys(appts).length,WS=W().slice().reverse();
   return `<div class="f" style="margin-bottom:10px"><label>Semana em que foi criada<select data-af="week"><option value="">Todas</option>${WS.map(w=>`<option value="${w.id}"${f.week===w.id?' selected':''}>Semana de ${fdf(w.id)}</option>`).join('')}</select></label><label>Consulta a partir de<input type="date" data-af="from" value="${f.from}"></label><label>Consulta até<input type="date" data-af="to" value="${f.to}"></label><label>Veio de<select data-af="origin"><option value="">Todas</option>${opts(ORIG,f.origin)}</select></label><label>Status<select data-af="status"><option value="">Todos</option>${opts(STAT,f.status)}</select></label></div><div class="row" style="margin:0 0 10px"><button class="b s" data-afc="1">Limpar filtros</button><span class="note">Mostrando ${ids.length} de ${tot} consultas</span></div>`}
+
 function apptList(){
   const f=aFilt,WS=W(),wr=f.week?(()=>{const i=WS.findIndex(w=>w.id===f.week);return i<0?null:[f.week,WS[i+1]?WS[i+1].id:'9999-12-31']})():null;
   const ids=Object.keys(appts).filter(k=>{const a=appts[k],s=a.schedOn||'',c=a.consult||'';return (!wr||(s>=wr[0]&&s<wr[1]))&&(!f.from||c>=f.from)&&(!f.to||(c&&c<=f.to))&&(!f.origin||a.origin===f.origin)&&(!f.status||a.status===f.status)}).sort((a,b)=>(appts[b].consult||'').localeCompare(appts[a].consult||''));
   if(!ids.length)return fbarA(ids)+'<p class="note">'+(Object.keys(appts).length?'Nenhuma consulta encontrada com estes filtros.':'Nenhuma consulta registrada ainda.')+'</p>';
-  return fbarA(ids)+`<div class="wrap"><table><tr><th>Paciente</th><th>Veio de</th><th>Agendada em</th><th>Consulta</th><th>Status</th><th>Conseguiu reagendar?</th><th>Nova data</th><th></th></tr>${ids.map(id=>{const a=appts[id],lost=a.status==='cancelada'||a.status==='reagendada';
+  return fbarA(ids)+`<div class="wrap"><table><tr><th>Paciente</th><th>Veio de</th><th>Agendada em</th><th>Consulta</th><th>Status</th><th>Conseguiu reagendar?</th><th>Nova data</th><th></th></tr>${ids.map(id=>{const a=appts[id];
     return `<tr><td>${esc(a.patient)}</td><td><select data-id="${id}" data-k="origin">${opts(ORIG,a.origin)}</select></td><td><input type="date" data-id="${id}" data-k="schedOn" value="${a.schedOn||''}"></td><td><input type="date" data-id="${id}" data-k="consult" value="${a.consult||''}"></td><td><select data-id="${id}" data-k="status">${opts(STAT,a.status)}</select></td><td><select data-id="${id}" data-k="regained">${opts(REG,a.regained||'')}</select></td><td><input type="date" data-id="${id}" data-k="newDate" value="${a.newDate||''}"></td><td><button class="x" data-del="${id}" title="Excluir" aria-label="Excluir">×</button></td></tr>`}).join('')}</table></div>`;
 }
 
-/* ---------- shell ---------- */
 function render(){
   const ae=document.activeElement;if(ae&&ae.matches&&ae.matches('[data-id]')&&cur==='cons')return;
-  $('#dash').innerHTML=dash();if(!editRow)$('#wl').innerHTML=weekList();$('#al').innerHTML=apptList();
+  $('#dash').innerHTML=dash();
+  if(!editRow)$('#wl').innerHTML=weekList();
+  $('#al').innerHTML=apptList();
+  updatePastePreviewUI();
 }
+
 function go(t){cur=t;['dash','sem','cons','cfg'].forEach(s=>$('#'+s).classList.toggle('hide',s!==t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='dash')render();if(t==='cfg')renderCfg()}
+
 $('#nav').onclick=e=>{if(e.target.dataset.t)go(e.target.dataset.t)};
-buildForm();$('#wd').value=today();$('#cp_s').value=today();$('#cp_o').innerHTML=opts(ORIG,'novo');
+buildForm();
+$('#wd').value=today();
+$('#cp_s').value=today();
+$('#cp_o').innerHTML=opts(ORIG,'novo');
 $('#wd').onchange=loadWeek;
 $('#cp').onclick=()=>{const id=$('#wd').value,ks=Object.keys(weeks).sort().filter(k=>k<id),p=ks.length?weeks[ks[ks.length-1]]:null;if(p){fillForm(p);toast('Valores copiados de '+fdf(ks[ks.length-1]))}else toast('Não há semana anterior')};
 $('#ws').onclick=async()=>{const id=$('#wd').value;if(!id)return toast('Escolha a data da semana');await saveDoc('weeks/'+id,readForm());toast('Semana salva')};
@@ -479,31 +987,74 @@ $('#wdel').onclick=async()=>{const id=$('#wd').value;if(weeks[id]&&confirm('Excl
 $('#imp').onclick=()=>importRows($('#paste').value.split(/\r?\n/));
 $('#seed').onclick=async()=>{for(const [id,v] of Object.entries(SEED)){const o={};BASEF.forEach(([k],i)=>o[k]=v[i]);await saveDoc('weeks/'+id,{...(weeks[id]||{}),...o})}toast('Semanas carregadas')};
 $('#wl').onclick=e=>{const id=e.target.dataset.e;if(id){e.preventDefault();$('#wd').value=id;loadWeek();window.scrollTo({top:0,behavior:'smooth'})}};
-$('#cp_add').onclick=async()=>{const n=$('#cp_n').value.trim();if(!n)return toast('Informe o paciente');
-  const id='a'+Date.now().toString(36);await saveDoc('appts/'+id,{patient:n,origin:$('#cp_o').value,schedOn:$('#cp_s').value||today(),consult:$('#cp_c').value,status:'agendada',regained:'',newDate:''});$('#cp_n').value='';toast('Consulta adicionada')};
-$('#al').onchange=async e=>{const t=e.target,id=t.dataset.id;if(t.dataset.af){aFilt[t.dataset.af]=t.value;$('#al').innerHTML=apptList();return}if(!id)return;const a={...appts[id],[t.dataset.k]:t.value};
+
+$('#cp_add').onclick=async()=>{
+  const n=$('#cp_n').value.trim();if(!n)return toast('Informe o paciente');
+  const id='a'+Date.now().toString(36);
+  await saveDoc('appts/'+id,{patient:n,origin:$('#cp_o').value,schedOn:$('#cp_s').value||today(),consult:$('#cp_c').value,status:'agendada',regained:'',newDate:''});
+  $('#cp_n').value='';toast('Consulta adicionada');
+};
+
+$('#al').onchange=async e=>{
+  const t=e.target,id=t.dataset.id;
+  if(t.dataset.af){aFilt[t.dataset.af]=t.value;$('#al').innerHTML=apptList();return}
+  if(!id)return;
+  const a={...appts[id],[t.dataset.k]:t.value};
   if(t.dataset.k==='status'&&a.status==='reagendada'&&!a.regained)a.regained='sim';
   if(t.dataset.k==='newDate'&&t.value&&(!a.regained||a.regained==='contato'))a.regained='sim';
-  await saveDoc('appts/'+id,a);document.activeElement.blur();render()};
-$('#al').onclick=async e=>{if(e.target.dataset.afc){aFilt={week:'',from:'',to:'',origin:'',status:''};$('#al').innerHTML=apptList();return}const id=e.target.dataset.del;if(id&&confirm('Excluir esta consulta?'))await delDoc('appts/'+id)};
-$('#cfg').onchange=e=>{const t=e.target;if(t.id==='sy_u'){saveCfg({sheetdb:t.value.trim()});tick();return}
-  if(t.dataset.tk){saveCfg({theme:{...(cfg.theme||{}),[t.dataset.tk]:t.value}});return}
-  if(t.dataset.hk){const h={...(cfg.hide||{})};if(t.checked)delete h[t.dataset.hk];else h[t.dataset.hk]=1;saveCfg({hide:h});return}
-  if(t.dataset.gk){const g={...(cfg.goals||{})},v=parseFloat(t.value);if(isNaN(v))delete g[t.dataset.gk];else g[t.dataset.gk]=v;saveCfg({goals:g});return}
-  if(t.dataset.dk){if(t.dataset.dk==='defP')pSel=t.value;saveCfg({[t.dataset.dk]:t.dataset.dk==='dec'?+t.value:t.value});return}
-  if(t.id==='c_t')return saveCfg({title:t.value.trim()||'Painel KOMMO'});
-  if(t.dataset.lk){const l={...(cfg.labels||{})},v=t.value.trim();if(v)l[t.dataset.lk]=v;else delete l[t.dataset.lk];saveCfg({labels:l});t.value=lab(t.dataset.lk);return}
-  if(t.dataset.ok){const os=Object.entries(ORIG).map(([k,n])=>({k,n:k===t.dataset.ok?(t.value.trim()||n):n}));saveCfg({origins:os});t.value=ORIG[t.dataset.ok]}};
-$('#cfg').onclick=async e=>{const t=e.target,id=t.id;
+  await saveDoc('appts/'+id,a);
+  document.activeElement.blur();
+  render();
+};
+
+$('#al').onclick=async e=>{
+  if(e.target.dataset.afc){aFilt={week:'',from:'',to:'',origin:'',status:''};$('#al').innerHTML=apptList();return}
+  const id=e.target.dataset.del;
+  if(id&&confirm('Excluir esta consulta?'))await delDoc('appts/'+id);
+};
+
+/* Eventos da Área de Colar Consultas (Sem Salvamento Automático) */
+$('#ps_btn_parse').onclick=parseInputText;
+$('#ps_t').oninput=()=>{setTimeout(parseInputText,150)};
+$('#ps_btn_clear').onclick=()=>{
+  $('#ps_t').value='';
+  pastePreview=[];
+  updatePastePreviewUI();
+};
+$('#ps_save_btn').onclick=savePreviewAppts;
+
+$('#ps_preview_box').addEventListener('input',e=>{
+  const t=e.target,idx=t.dataset.pidx,k=t.dataset.pk;
+  if(idx!=null&&k&&pastePreview[idx]){
+    pastePreview[idx][k]=t.value;
+    const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
+    const btnSave=$('#ps_save_btn');
+    if(btnSave){
+      btnSave.textContent=`Salvar consultas (${validItems.length})`;
+      btnSave.disabled=validItems.length===0||isSavingPaste;
+    }
+  }
+});
+
+$('#ps_preview_box').addEventListener('click',e=>{
+  const t=e.target,delIdx=t.dataset.pdel;
+  if(delIdx!=null&&pastePreview[delIdx]){
+    pastePreview.splice(delIdx,1);
+    updatePastePreviewUI();
+  }
+});
+
+$('#cfg').onclick=async e=>{
+  const t=e.target,id=t.id;
   if(id==='sy_now'){t.blur();return sheetSync('manual')}
-  if(id==='sy_test'){t.blur();t.disabled=true;t.textContent='Testando…';return sheetTest()}
+  if(id==='sy_test'){t.blur();return sheetTest()}
   if(id==='c_ts'){await saveCfg({title:$('#c_t').value.trim()||'Painel KOMMO'});return toast('Nome salvo')}
   if(t.dataset.ls||t.dataset.os){const i=document.querySelector(t.dataset.ls?'[data-lk="'+t.dataset.ls+'"]':'[data-ok="'+t.dataset.os+'"]');i.dispatchEvent(new Event('change',{bubbles:true}));return toast('Salvo')}
   if(id==='f_add'){const n=$('#f_n').value.trim();if(!n)return toast('Informe o nome do campo');await saveCfg({extra:[...(cfg.extra||[]),{k:'x'+Date.now().toString(36),n,snap:$('#f_t').value==='1'}]});renderCfg();return toast('Campo adicionado')}
-  if(t.dataset.lx){const k=t.dataset.lx;if(!confirm('Excluir o campo “'+lab(k)+'”? Os números já lançados continuam guardados, mas o campo some dos formulários e da lista.'))return;const l={...(cfg.labels||{})};delete l[k];
+  if(t.dataset.lx){const k=t.dataset.lx;if(!confirm('Excluir o campo “'+lab(k)+'”? Os números já lançados continuam guardados.'))return;const l={...(cfg.labels||{})};delete l[k];
     if((cfg.extra||[]).some(x=>x.k===k))await saveCfg({extra:cfg.extra.filter(x=>x.k!==k),labels:l});else await saveCfg({removed:[...(cfg.removed||[]),k],labels:l});renderCfg();return toast('Campo excluído')}
   if(id==='c_or'){await saveCfg({origins:[]});renderCfg();return toast('Origens restauradas')}
-  if(id==='c_wipe'){if(confirm('Apagar TODAS as semanas e consultas? Isso não pode ser desfeito.')&&confirm('Tem certeza? Baixe o backup antes se precisar.')){for(const k of Object.keys(weeks))await delDoc('weeks/'+k);for(const k of Object.keys(appts))await delDoc('appts/'+k);toast('Dados apagados')}return}
+  if(id==='c_wipe'){if(confirm('Apagar TODAS as semanas e consultas? Isso não pode ser desfeito.')&&confirm('Tem certeza? Baixe o backup antes.')){for(const k of Object.keys(weeks))await delDoc('weeks/'+k);for(const k of Object.keys(appts))await delDoc('appts/'+k);toast('Dados apagados')}return}
   if(id==='c_tr'){await saveCfg({theme:{}});return renderCfg()}
   if(id==='m_go')return aiMetric();
   if(id==='m_man')return showM({title:'',expr:'',fmt:'num',where:'kpi'});
@@ -512,23 +1063,34 @@ $('#cfg').onclick=async e=>{const t=e.target,id=t.id;
   if(t.dataset.md){await saveCfg({metrics:(cfg.metrics||[]).filter((_,i)=>i!==+t.dataset.md)});return renderCfg()}
   if(id==='c_rl'){await saveCfg({labels:{},removed:[]});renderCfg();return toast('Nomes e campos originais restaurados')}
   if(id==='c_oa'){const n=$('#c_on').value.trim();if(!n)return;const os=Object.entries(ORIG).map(([k,v])=>({k,n:v}));os.push({k:'o'+Date.now().toString(36),n});await saveCfg({origins:os});return renderCfg()}
-  if(t.dataset.od){const k=t.dataset.od;if(Object.values(appts).some(a=>a.origin===k))return toast('Há consultas com esta origem. Mude a origem delas antes de remover.');if(Object.keys(ORIG).length<2)return toast('Mantenha ao menos uma origem');const os=Object.entries(ORIG).filter(([x])=>x!==k).map(([x,n])=>({k:x,n}));await saveCfg({origins:os});return renderCfg()}
-  if(id==='c_ew')return exp('semanas.csv',['Data',...FIELDS.map(f=>lab(f[0]))],W().map(w=>[fdf(w.id),...FIELDS.map(f=>w[f[0]]||0)]));
-  if(id==='c_ea')return exp('consultas.csv',['Paciente','Veio de','Agendada em','Consulta','Status','Reagendou?','Nova data'],Object.values(appts).map(a=>[a.patient,ORIG[a.origin]||a.origin,fdf(a.schedOn),fdf(a.consult),STAT[a.status]||a.status,REG[a.regained||''],fdf(a.newDate)]))};
-$('#ps_b').onclick=importPaste;$('#ps_t').addEventListener('paste',()=>setTimeout(importPaste,60));
-$('#dash').onchange=e=>{const t=e.target;if(t.id==='selw'){selWeek=t.value;render()}
-  if(t.id==='pp'){pSel=t.value;render()}
-  if(t.id==='pf'){pAuto=false;pFrom=t.value;if(pTo<pFrom)pTo=pFrom;render()}
-  if(t.id==='pt'){pAuto=false;pTo=t.value;if(pFrom>pTo)pFrom=pTo;render()}};
-$('#dash').onclick=e=>{const q=e.target.dataset.q;if(!q)return;const A=W();if(!A.length)return;const L=A[A.length-1].id;
-  if(q==='all'){pAuto=true}else{pAuto=false;pTo=L;pFrom=A[Math.max(0,A.length-(+q))].id}render()};
-$('#wl').addEventListener('click',async e=>{const t=e.target,d=t.dataset;
+  if(t.dataset.od){const k=t.dataset.od;if(Object.values(appts).some(a=>a.origin===k))return toast('Há consultas com esta origem. Mude a origem antes.');if(Object.keys(ORIG).length<2)return toast('Mantenha ao menos uma origem');const os=Object.entries(ORIG).filter(([x])=>x!==k).map(([x,n])=>({k:x,n}));await saveCfg({origins:os});return renderCfg()}
+  if(id==='c_ew')return exp('semanas.csv',['Data',...WCOLS.slice(1)],W().map(w=>[fdf(w.id),...WCOLS.slice(1).map(c=>w[c]||0)]));
+  if(id==='c_ea')return exp('consultas.csv',['ID','Paciente','Veio de','Agendada em','Consulta','Status','Reagendou?','Nova data'],Object.entries(appts).map(([id,a])=>[id,a.patient,ORIG[a.origin]||a.origin,fdf(a.schedOn),fdf(a.consult),STAT[a.status]||a.status,REG[a.regained||'']||a.regained,fdf(a.newDate)]));
+};
+
+$('#cfg').onchange=e=>{
+  const t=e.target;
+  if(t.dataset.tk){saveCfg({theme:{...(cfg.theme||{}),[t.dataset.tk]:t.value}});return}
+  if(t.dataset.hk){const h={...(cfg.hide||{})};if(t.checked)delete h[t.dataset.hk];else h[t.dataset.hk]=1;saveCfg({hide:h});return}
+  if(t.dataset.gk){const g={...(cfg.goals||{})},v=parseFloat(t.value);if(isNaN(v))delete g[t.dataset.gk];else g[t.dataset.gk]=v;saveCfg({goals:g});return}
+  if(t.dataset.dk){if(t.dataset.dk==='defP')pSel=t.value;saveCfg({[t.dataset.dk]:t.dataset.dk==='dec'?+t.value:t.value});return}
+  if(t.id==='c_t')return saveCfg({title:t.value.trim()||'Painel KOMMO'});
+  if(t.dataset.lk){const l={...(cfg.labels||{})},v=t.value.trim();if(v)l[t.dataset.lk]=v;else delete l[t.dataset.lk];saveCfg({labels:l});t.value=lab(t.dataset.lk);return}
+  if(t.dataset.ok){const os=Object.entries(ORIG).map(([k,n])=>({k,n:k===t.dataset.ok?(t.value.trim()||n):n}));saveCfg({origins:os});t.value=ORIG[t.dataset.ok]}
+};
+
+$('#dash').onchange=e=>{const t=e.target;if(t.id==='selw'){selWeek=t.value;render()}if(t.id==='pp'){pSel=t.value;render()}};
+$('#wl').addEventListener('click',async e=>{
+  const t=e.target,d=t.dataset;
   if(d.we){editRow=d.we;$('#wl').innerHTML=weekList();return}
   if(d.ws){const id=d.ws,o={...weeks[id]};document.querySelectorAll('#wl [data-ek]').forEach(i=>{o[i.dataset.ek]=Math.max(0,parseInt(i.value)||0)});editRow=null;await saveDoc('weeks/'+id,o);toast('Semana salva');return}
   if(d.wx){if(confirm('Excluir a semana de '+fdf(d.wx)+'?')){if(editRow===d.wx)editRow=null;await delDoc('weeks/'+d.wx);toast('Semana excluída')}return}
-  if(d.wfc){wFilt={from:'',to:''};$('#wl').innerHTML=weekList()}});
+  if(d.wfc){wFilt={from:'',to:''};$('#wl').innerHTML=weekList()}
+});
 $('#wl').addEventListener('change',e=>{const k=e.target.dataset.wf;if(k){wFilt[k]=e.target.value;$('#wl').innerHTML=weekList()}});
+
 init();
 </script>
-<script type="module" src="app-firebase.js"></script></body>
+<script type="module" src="app-firebase.js"></script>
+</body>
 </html>
