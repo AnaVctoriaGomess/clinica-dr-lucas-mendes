@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function autorizado() {
+      return request.auth != null && request.auth.uid == 'mOGkv4yJZ1f7HlzOZPT8qqNRDdF3';
+    }
+
+    function versaoOk() {
+      return request.resource.data._v is int &&
+        (resource == null 
+          ? request.resource.data._v == 1
+          : (!('_v' in resource.data) || resource.data._v == null 
+              ? request.resource.data._v == 1 
+              : request.resource.data._v == resource.data._v + 1));
+    }
+
+    match /weeks/{id} {
+      allow read: if autorizado();
+      allow create, update: if autorizado() 
+        && id.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && versaoOk() 
+        && request.resource.data.size() <= 80;
+      allow delete: if autorizado();
+    }
+
+    match /appts/{id} {
+      allow read: if autorizado();
+      allow create, update: if autorizado() 
+        && versaoOk()
+        && request.resource.data.patient is string 
+        && request.resource.data.patient.size() <= 200
+        && request.resource.data.size() <= 20;
+      allow delete: if autorizado();
+    }
+
+    match /config/{id} {
+      allow read: if autorizado();
+      allow create, update: if autorizado() 
+        && id == 'main' 
+        && versaoOk()
+        && request.resource.data.cfg is map;
+      allow delete: if false;
+    }
+
+    match /{document=**} { 
+      allow read, write: if false; 
+    }
+  }
+}
