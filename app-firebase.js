@@ -1,3 +1,4 @@
+// app-firebase.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { 
   getAuth, 
@@ -12,10 +13,12 @@ import {
   doc, 
   collection, 
   onSnapshot, 
-  runTransaction 
+  runTransaction,
+  getDoc
 } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
+// Inicialização segura
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -25,6 +28,15 @@ let unsubWeeks = null;
 let unsubAppts = null;
 let unsubConfig = null;
 
+// Diagnóstico e rastreamento de operações
+let lastReadTime = null;
+let lastWriteTime = null;
+let lastCheckTime = null;
+let lastCheckStatus = "sem_confirmacao"; // 'conectado' | 'verificando' | 'erro' | 'sem_confirmacao'
+let lastCheckError = null;
+let isWriting = false;
+
+// Estado independente por escuta
 const syncState = {
   weeks: { loaded: false, error: null },
   appts: { loaded: false, error: null },
@@ -42,6 +54,7 @@ function resolverEmail(usuarioOuEmail) {
   return (usuarioOuEmail || "").trim();
 }
 
+// Elementos da interface
 const body = document.body;
 const loginOverlay = document.getElementById("lg");
 const loginForm = document.getElementById("lf");
@@ -91,6 +104,7 @@ function iniciarEscutas() {
   resetarSyncState();
   atualizarStatusUI();
 
+  // 1. Escuta /weeks
   unsubWeeks = onSnapshot(collection(db, "weeks"), (snapshot) => {
     const dados = {};
     snapshot.forEach((d) => { dados[d.id] = d.data(); });
@@ -98,13 +112,18 @@ function iniciarEscutas() {
     if (typeof window.setWeeks === "function") window.setWeeks(dados);
     syncState.weeks.loaded = true;
     syncState.weeks.error = null;
+    lastReadTime = Date.now();
+    lastCheckStatus = "conectado";
     checarProntidaoERenderizar();
   }, (err) => {
-    console.error("Erro /weeks:", err);
+    console.error("Erro na escuta /weeks:", err);
     syncState.weeks.error = err.code === "permission-denied" ? "Permissão negada em semanas" : (err.message || "Falha em semanas");
+    lastCheckStatus = "erro";
+    lastCheckError = syncState.weeks.error;
     checarProntidaoERenderizar();
   });
 
+  // 2. Escuta /appts
   unsubAppts = onSnapshot(collection(db, "appts"), (snapshot) => {
     const dados = {};
     snapshot.forEach((d) => { dados[d.id] = d.data(); });
@@ -112,13 +131,18 @@ function iniciarEscutas() {
     if (typeof window.setAppts === "function") window.setAppts(dados);
     syncState.appts.loaded = true;
     syncState.appts.error = null;
+    lastReadTime = Date.now();
+    lastCheckStatus = "conectado";
     checarProntidaoERenderizar();
   }, (err) => {
-    console.error("Erro /appts:", err);
+    console.error("Erro na escuta /appts:", err);
     syncState.appts.error = err.code === "permission-denied" ? "Permissão negada em consultas" : (err.message || "Falha em consultas");
+    lastCheckStatus = "erro";
+    lastCheckError = syncState.appts.error;
     checarProntidaoERenderizar();
   });
 
+  // 3. Escuta /config/main
   unsubConfig = onSnapshot(doc(db, "config", "main"), (snap) => {
     const cfgData = snap.exists() ? (snap.data().cfg || {}) : {};
     window.cfg = cfgData;
@@ -126,14 +150,19 @@ function iniciarEscutas() {
     if (typeof window.applyCfg === "function") window.applyCfg();
     syncState.config.loaded = true;
     syncState.config.error = null;
+    lastReadTime = Date.now();
+    lastCheckStatus = "conectado";
     checarProntidaoERenderizar();
   }, (err) => {
-    console.error("Erro /config/main:", err);
+    console.error("Erro na escuta /config/main:", err);
     syncState.config.error = err.code === "permission-denied" ? "Permissão negada em configurações" : (err.message || "Falha em configurações");
+    lastCheckStatus = "erro";
+    lastCheckError = syncState.config.error;
     checarProntidaoERenderizar();
   });
 }
 
+// Monitoramento de login
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   if (user) {
@@ -192,12 +221,26 @@ function calcularProximaVersao(docSnapshot) {
   throw new Error("Versão (_v) inválida no banco. Atualização cancelada por segurança.");
 }
 
+const fdt = t => t ? new Date(t).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+
 window.DATA = {
   get ready() {
     return !!currentUser &&
       syncState.weeks.loaded && !syncState.weeks.error &&
       syncState.appts.loaded && !syncState.appts.error &&
       syncState.config.loaded && !syncState.config.error;
+  },
+
+  get isWriting() {
+    return isWriting;
+  },
+
+  get lastRead() {
+    return lastReadTime;
+  },
+
+  get lastWrite() {
+    return lastWriteTime;
   },
 
   get loadingMessage() {
@@ -208,16 +251,40 @@ window.DATA = {
     if (syncState.config.error) errosAtivos.push(syncState.config.error);
     if (errosAtivos.length > 0) return errosAtivos.join(" · ");
     if (!syncState.weeks.loaded || !syncState.appts.loaded || !syncState.config.loaded) {
-      return "Sincronizando dados com servidor...";
+      return "Sincronizando dados iniciais do servidor...";
     }
     return "Conexão confirmada";
   },
 
+  // Verificação ativa, autorizada e não destrutiva do Firestore
+  async checkConnection() {
+    if (!currentUser) throw new Error("Usuário não autenticado");
+    lastCheckStatus = "verificando";
+    atualizarStatusUI();
+    try {
+      const snap = await getDoc(doc(db, "config", "main"));
+      lastCheckTime = Date.now();
+      lastReadTime = Date.now();
+      lastCheckStatus = "conectado";
+      lastCheckError = null;
+      return true;
+    } catch (err) {
+      lastCheckTime = Date.now();
+      lastCheckStatus = "erro";
+      lastCheckError = err.message || err.code;
+      throw err;
+    } finally {
+      atualizarStatusUI();
+    }
+  },
+
   async write(col, id, data) {
     if (!navigator.onLine) {
-      alert("Sem conexão com a internet.");
+      alert("Sem conexão com a internet. A gravação foi cancelada.");
       throw new Error("offline");
     }
+    isWriting = true;
+    atualizarStatusUI();
     const ref = doc(db, col, id);
     try {
       await runTransaction(db, async (txn) => {
@@ -229,11 +296,15 @@ window.DATA = {
         const novaVersao = calcularProximaVersao(snap);
         txn.set(ref, { ...data, _v: novaVersao });
       });
+      lastWriteTime = Date.now();
       showSaveToast("Dados salvos!");
     } catch (err) {
       console.error("Erro gravação:", err);
       alert("Erro ao gravar: " + (err.code === "permission-denied" ? "Permissão negada (UID não autorizado)" : (err.message || err.code)));
       throw err;
+    } finally {
+      isWriting = false;
+      atualizarStatusUI();
     }
   },
 
@@ -242,6 +313,8 @@ window.DATA = {
       alert("Sem conexão com a internet.");
       return;
     }
+    isWriting = true;
+    atualizarStatusUI();
     const ref = doc(db, "config", "main");
     try {
       await runTransaction(db, async (txn) => {
@@ -250,6 +323,7 @@ window.DATA = {
         const cfgAtual = snap.exists() ? (snap.data().cfg || {}) : {};
         txn.set(ref, { cfg: { ...cfgAtual, ...patch }, _v: novaVersao });
       });
+      lastWriteTime = Date.now();
       const updated = { ...(window.cfg || {}), ...patch };
       window.cfg = updated;
       if (typeof window.setCfg === "function") window.setCfg(updated);
@@ -258,6 +332,9 @@ window.DATA = {
     } catch (err) {
       console.error("Erro config:", err);
       alert("Erro ao salvar config: " + (err.message || err.code));
+    } finally {
+      isWriting = false;
+      atualizarStatusUI();
     }
   },
 
@@ -266,9 +343,56 @@ window.DATA = {
 
   cardHtml() {
     const email = currentUser ? currentUser.email : "Não conectado";
-    const status = this.loadingMessage;
-    const color = this.ready ? "var(--g)" : (status.includes("Permissão") || status.includes("Falha") ? "var(--r)" : "var(--a)");
-    return "<h2>Status da Conexão Firebase</h2><p class='note'>Projeto: <b>clinica-dr-lucas-mendes</b></p><p class='note'>Usuário conectado: <b>" + email + "</b></p><p class='note'>Estado do banco: <b style='color:" + color + "'>" + status + "</b></p>";
+    const uid = currentUser ? currentUser.uid : "—";
+    const authTag = currentUser 
+      ? '<span class="tag" style="background:var(--g);color:#fff">Autenticado</span>' 
+      : '<span class="tag" style="background:var(--r);color:#fff">Desconectado</span>';
+
+    const onlineTag = navigator.onLine 
+      ? '' 
+      : ' <span class="tag" style="background:var(--r);color:#fff">Offline (status desatualizado)</span>';
+
+    const fsStateTag = lastCheckStatus === 'conectado'
+      ? '<span class="tag" style="background:var(--g);color:#fff">Conectado</span>'
+      : lastCheckStatus === 'verificando'
+      ? '<span class="tag" style="background:var(--b);color:#fff">Verificando...</span>'
+      : lastCheckStatus === 'erro'
+      ? '<span class="tag" style="background:var(--r);color:#fff">Erro de leitura</span>'
+      : '<span class="tag">Sem confirmação recente</span>';
+
+    const writeTag = isWriting 
+      ? '<span class="tag" style="background:var(--a);color:#fff">Gravação pendente...</span>' 
+      : '<span class="tag">Nenhuma gravação pendente</span>';
+
+    return `
+      <h2>Status da Conexão Firebase</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-top:12px">
+        <div style="background:var(--bg);padding:12px;border-radius:10px">
+          <h3 style="font-size:13px;text-transform:uppercase;margin:0 0 8px;color:var(--mut)">Autenticação</h3>
+          <p style="margin:3px 0">Estado: ${authTag}</p>
+          <p style="margin:3px 0">E-mail: <b>${email}</b></p>
+          <p class="note" style="margin:3px 0;word-break:break-all">UID: <code>${uid}</code></p>
+        </div>
+
+        <div style="background:var(--bg);padding:12px;border-radius:10px">
+          <h3 style="font-size:13px;text-transform:uppercase;margin:0 0 8px;color:var(--mut)">Conexão com Firestore</h3>
+          <p style="margin:3px 0">Estado: ${fsStateTag}${onlineTag}</p>
+          <p style="margin:3px 0">Projeto: <b>clinica-dr-lucas-mendes</b></p>
+          <p class="note" style="margin:3px 0">Último teste: <b>${fdt(lastCheckTime || lastReadTime)}</b></p>
+          ${lastCheckError ? `<p class="note" style="color:var(--r);margin:3px 0">${lastCheckError}</p>` : ''}
+          <div class="row" style="margin-top:8px">
+            <button class="b s" id="btn_fb_verificar" style="padding:4px 10px;font-size:12px">Verificar conexão agora</button>
+          </div>
+        </div>
+
+        <div style="background:var(--bg);padding:12px;border-radius:10px">
+          <h3 style="font-size:13px;text-transform:uppercase;margin:0 0 8px;color:var(--mut)">Atualização dos Dados</h3>
+          <p style="margin:3px 0">Última leitura dos dados: <b>${fdt(lastReadTime)}</b></p>
+          <p style="margin:3px 0">Última gravação realizada: <b>${fdt(lastWriteTime)}</b></p>
+          <p style="margin:3px 0">Fila local: ${writeTag}</p>
+        </div>
+      </div>
+    `;
   },
 
   migHtml() {
@@ -276,73 +400,21 @@ window.DATA = {
   }
 };
 
+// Evento do botão de verificação ativa do Firebase
 document.addEventListener("click", async (e) => {
-  if (e.target && e.target.id === "btn_mig_verificar") {
-    const report = document.getElementById("mig_relatorio");
-    if (!report) return;
-    if (!window.DATA.ready) {
-      report.innerHTML = "<span style='color:var(--r)'>Aguarde a conexão com o Firestore estar confirmada. (" + window.DATA.loadingMessage + ")</span>";
-      return;
-    }
-    const raw = localStorage.getItem("kommo_painel_v1");
-    if (!raw) {
-      report.innerHTML = "<span style='color:var(--g)'>Nenhum dado local antigo encontrado em <code>kommo_painel_v1</code>.</span>";
-      return;
-    }
+  if (e.target && e.target.id === "btn_fb_verificar") {
+    const btn = e.target;
+    btn.disabled = true;
+    btn.textContent = "Verificando...";
     try {
-      const parsed = JSON.parse(raw);
-      const sem = parsed.weeks || {};
-      const app = parsed.appts || {};
-      report.innerHTML = "<p>Encontrados: <b>" + Object.keys(sem).length + " semanas</b> e <b>" + Object.keys(app).length + " consultas</b>.</p><button class='b' id='btn_mig_executar'>Importar com validação e anti-sobrescrita</button>";
-
-      const execBtn = document.getElementById("btn_mig_executar");
-      if (execBtn) {
-        execBtn.onclick = async () => {
-          execBtn.disabled = true;
-          execBtn.textContent = "Processando migração segura...";
-          let imp = 0, pres = 0; const errs = [];
-
-          for (const [id, w] of Object.entries(sem)) {
-            if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(id) || Object.keys(w).length > 80) {
-              errs.push("Semana " + id + " rejeitada por violar regras. Mantida intacta localmente.");
-              continue;
-            }
-            try {
-              const res = await runTransaction(db, async (txn) => {
-                const s = await txn.get(doc(db, "weeks", id));
-                if (s.exists()) return "pres";
-                txn.set(doc(db, "weeks", id), { ...w, _v: 1 });
-                return "imp";
-              });
-              if (res === "imp") imp++; else pres++;
-            } catch (x) { errs.push("Semana " + id + ": " + (x.message || x.code)); }
-          }
-
-          for (const [id, a] of Object.entries(app)) {
-            if (typeof a.patient !== "string" || !a.patient.trim() || a.patient.length > 200 || Object.keys(a).length > 20) {
-              errs.push("Consulta " + id + " rejeitada por violar formato. Mantida intacta localmente.");
-              continue;
-            }
-            try {
-              const res = await runTransaction(db, async (txn) => {
-                const s = await txn.get(doc(db, "appts", id));
-                if (s.exists()) return "pres";
-                txn.set(doc(db, "appts", id), { ...a, _v: 1 });
-                return "imp";
-              });
-              if (res === "imp") imp++; else pres++;
-            } catch (x) { errs.push("Consulta " + id + ": " + (x.message || x.code)); }
-          }
-
-          if (errs.length === 0) {
-            report.innerHTML = "<span style='color:var(--g);font-weight:600;'>Migração concluída com sucesso:</span> " + imp + " novos registros importados, " + pres + " preservados intactos.";
-          } else {
-            report.innerHTML = "<span style='color:var(--a);font-weight:600;'>Concluída com pendências:</span> " + imp + " importados, " + pres + " preservados.<br><pre>" + errs.join("\n") + "</pre>";
-          }
-        };
-      }
+      await window.DATA.checkConnection();
+      showSaveToast("Conexão Firestore confirmada!");
     } catch (err) {
-      report.innerHTML = "<span style='color:var(--r)'>Erro: " + err.message + "</span>";
+      console.error("Falha ao testar conexão:", err);
+      showSaveToast("Erro na verificação do Firestore");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Verificar conexão agora";
     }
   }
 });
