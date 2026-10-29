@@ -30,8 +30,9 @@ main{max-width:1180px;margin:auto;padding:12px 22px 40px}
 .lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
 svg{width:100%;height:auto;display:block;overflow:visible}
 svg text{fill:var(--mut);font-size:10px;font-family:inherit}
-.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:14px;line-height:1.55}
+.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;padding:16px 20px;margin-bottom:14px;font-size:14px;line-height:1.6}
 .ins p{margin:6px 0}
+.ins h3{font-size:14.5px;margin:12px 0 6px;color:var(--ink);font-weight:700}
 .wrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
@@ -58,6 +59,7 @@ h1{font-size:19px;font-weight:700;letter-spacing:-.01em}
 #st::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--g);margin-right:6px;vertical-align:1px}
 nav{background:var(--bg);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
 nav button{font-size:13.5px;padding:7px 13px;border-radius:8px;transition:background .15s,color .15s}
+nav button:hover:not(.on){background:var(--line);color:var(--ink)}
 nav button.on{box-shadow:0 1px 3px rgba(0,0,0,.2)}
 main{padding-top:20px}
 h2{font-size:15px;font-weight:600;letter-spacing:-.005em;margin-bottom:12px}
@@ -99,7 +101,7 @@ body.locked>header,body.locked>main{display:none}
 #lf label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 #sv{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--g);color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;pointer-events:none}#sv.on{opacity:1;transform:none}
 
-/* Tooltip profissional para gráficos */
+/* Tooltip nos gráficos */
 #chart_tip{position:fixed;z-index:999;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12px;line-height:1.45;box-shadow:0 6px 22px rgba(0,0,0,.2);opacity:0;transform:translate(-50%,-100%) translateY(-10px);transition:opacity .15s ease,transform .15s ease;min-width:140px;max-width:260px;font-feature-settings:"tnum"}
 #chart_tip.on{opacity:1;transform:translate(-50%,-100%) translateY(-12px)}
 #chart_tip .tip-title{font-weight:700;font-size:13px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
@@ -203,9 +205,30 @@ function toast(t){
 async function saveDoc(path,data){const [col,id]=path.split('/');await DATA.write(col,id,data)}
 async function delDoc(path){const [col,id]=path.split('/');await DATA.write(col,id,null)}
 
-/* ---------- SheetDB Oficial com Validação Inteligente ---------- */
+/* ---------- CONVERSÃO NUMÉRICA SEGURA (FASE 2) ---------- */
+function parseSafeNum(val,fieldName=''){
+  if(val===null||val===undefined)return{valid:false,value:0,reason:'ausente',raw:val};
+  if(typeof val==='number'){
+    if(isNaN(val))return{valid:false,value:0,reason:'NaN',raw:val};
+    return{valid:true,value:val,isZero:val===0,raw:val};
+  }
+  const s=String(val).trim();
+  if(s==='')return{valid:false,value:0,reason:'vazio',raw:val};
+  if(/^\d+\s+\d+$/.test(s)){
+    return{valid:false,value:0,reason:'ambiguo_espaco',raw:s,note:`Valor ambíguo "${s}" no campo ${fieldName}`};
+  }
+  const clean=s.replace(/\./g,'').replace(',','.');
+  const n=Number(clean);
+  if(isNaN(n))return{valid:false,value:0,reason:'texto_invalido',raw:s,note:`Texto não numérico "${s}" no campo ${fieldName}`};
+  return{valid:true,value:n,isZero:n===0,raw:s};
+}
+
+/* ---------- SHEETDB OFICIAL (FASE 1 & FASE 4) ---------- */
 let syncing=false;
-const SDB={semanas:'https://sheetdb.io/api/v1/sk39abnekybca',consultas:'https://sheetdb.io/api/v1/fhrcm4cao9i6e'};
+const SDB={
+  semanas:'https://sheetdb.io/api/v1/sk39abnekybca',
+  consultas:'https://sheetdb.io/api/v1/bvqe5doucg58z'
+};
 const SHN={semanas:'Lançar Semanas',consultas:'Consultas'};
 const WCOLS=['semana','novos','antigas','ativas','fu2','fu3','fu4','fu5','resp','agend','semresp','pensando','aguard','nao','cagend','ccanc','creag','creal'];
 const ACOLS=['id','paciente','origem','agendada_em','consulta','status','reagendou','nova_data'];
@@ -242,18 +265,6 @@ function extractKeysFromResponse(data){
   return [];
 }
 
-function buildSheetDbUrl(baseUrl,path='',query=''){
-  const [base,existingQuery]=baseUrl.split('?');
-  const fullPath=base.replace(/\/+$/,'')+(path?'/'+path.replace(/^\/+/,''):'');
-  const params=new URLSearchParams(existingQuery||'');
-  if(query){
-    const extra=new URLSearchParams(query);
-    for(const [k,v] of extra.entries())params.set(k,v);
-  }
-  const qStr=params.toString();
-  return fullPath+(qStr?'?'+qStr:'');
-}
-
 async function sdb(url,opt){
   const c=new AbortController(),t=setTimeout(()=>c.abort(),25000);
   try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'})}
@@ -263,52 +274,32 @@ async function sdb(url,opt){
 
 async function httpErr(r,what){
   let b='';try{b=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch(e){}
-  const dica=r.status===402||r.status===429?' (limite de requisições do plano SheetDB atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (autenticação exigida ou negada)':'';
+  const dica=r.status===402||r.status===429?' (limite de requisições atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (autenticação exigida ou negada)':'';
   return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''));
 }
 
-async function resolveSheetEndpoint(sh,cols){
-  const baseUrl=SDB[sh];
-  const sheetName=SHN[sh];
-  const candidateUrls=[
-    baseUrl,
-    buildSheetDbUrl(baseUrl,'','sheet='+encodeURIComponent(sheetName)),
-    buildSheetDbUrl(baseUrl,'','sheet='+encodeURIComponent(sh))
-  ];
-
-  let lastKeys=[];
-  let lastError=null;
-
-  for(const testUrl of candidateUrls){
-    try{
-      const keysUrl=buildSheetDbUrl(testUrl,'keys');
-      let r=await sdb(keysUrl);
-      let data=null;
-      if(r.ok){
-        data=await r.json();
-      }else{
-        const rootUrl=buildSheetDbUrl(testUrl,'','limit=1');
-        r=await sdb(rootUrl);
-        if(r.ok)data=await r.json();
-      }
-
-      if(data){
-        const extracted=extractKeysFromResponse(data);
-        if(extracted.length>0){
-          lastKeys=extracted;
-          const normExtracted=extracted.map(cleanKey);
-          const miss=cols.filter(c=>!normExtracted.includes(cleanKey(c)));
-          if(miss.length===0){
-            return {url:testUrl,keys:extracted,ok:true};
-          }
-        }
-      }
-    }catch(e){
-      lastError=e.message||String(e);
-    }
+async function checkKeys(sh,cols){
+  const url=SDB[sh];
+  let r=await sdb(url+'/keys');
+  let data=null;
+  if(r.ok){
+    data=await r.json();
+  }else{
+    r=await sdb(url+'?limit=1');
+    if(!r.ok)throw await httpErr(r,'Acessar API "'+SHN[sh]+'"');
+    data=await r.json();
   }
 
-  return {url:baseUrl,keys:lastKeys,ok:false,error:lastError};
+  const extracted=extractKeysFromResponse(data);
+  const normExtracted=extracted.map(cleanKey);
+  const miss=cols.filter(c=>!normExtracted.includes(cleanKey(c)));
+
+  if(miss.length){
+    let detail=`Aba "${SHN[sh]}" precisa destes cabeçalhos na Linha 1: ${cols.join(', ')}. Cabeçalhos ausentes: ${miss.join(', ')}.`;
+    if(extracted.length)detail+=` Detectados na planilha: ${extracted.join(', ')}.`;
+    throw new Error(detail);
+  }
+  return true;
 }
 
 function persistSync(){
@@ -398,6 +389,7 @@ async function syncSingleSheet(sh){
   const isSem=sh==='semanas';
   const cols=isSem?WCOLS:ACOLS;
   const kc=isSem?'semana':'id';
+  const url=SDB[sh];
   const hd={'Content-Type':'application/json',Accept:'application/json'};
 
   sync[sh].status='syncing';
@@ -405,27 +397,13 @@ async function syncSingleSheet(sh){
   paintSync();
 
   try{
-    const check=await resolveSheetEndpoint(sh,cols);
-    if(!check.ok){
-      const foundNorm=(check.keys||[]).map(cleanKey);
-      const miss=cols.filter(c=>!foundNorm.includes(cleanKey(c)));
-      let detail=`Aba "${SHN[sh]}": cabeçalhos ausentes: ${miss.join(', ')}.`;
-      if(check.keys&&check.keys.length){
-        detail+=` Encontrados na planilha: ${check.keys.join(', ')}.`;
-        if(!isSem&&check.keys.some(k=>cleanKey(k)==='semana')){
-          detail+=` (Aviso: detectados cabeçalhos de 'Lançar Semanas'. Confirme se a aba no Google Sheets chama-se 'Consultas').`;
-        }
-      }
-      if(check.error)detail+=` Erro: ${check.error}`;
-      throw new Error(detail);
-    }
+    await checkKeys(sh,cols);
 
-    const resolvedUrl=check.url;
     const rows=isSem
       ? W().map(w=>({semana:String(w.id||''),novos:Number(w.novos||0),antigas:Number(w.antigas||0),ativas:Number(w.ativas||0),fu2:Number(w.fu2||0),fu3:Number(w.fu3||0),fu4:Number(w.fu4||0),fu5:Number(w.fu5||0),resp:Number(w.resp||0),agend:Number(w.agend||0),semresp:Number(w.semresp||0),pensando:Number(w.pensando||0),aguard:Number(w.aguard||0),nao:Number(w.nao||0),cagend:Number(w.cagend||0),ccanc:Number(w.ccanc||0),creag:Number(w.creag||0),creal:Number(w.creal||0)}))
       : Object.entries(appts).map(([id,a])=>({id:String(id||''),paciente:String(a.patient||''),origem:String(ORIG[a.origin]||a.origin||''),agendada_em:String(a.schedOn||''),consulta:String(a.consult||''),status:String(STAT[a.status]||a.status||''),reagendou:String(REG[a.regained||'']||a.regained||''),nova_data:String(a.newDate||'')}));
 
-    const r=await sdb(resolvedUrl);
+    const r=await sdb(url);
     if(!r.ok)throw await httpErr(r,'Ler aba "'+SHN[sh]+'"');
     const ex=await r.json();
     if(!Array.isArray(ex))throw new Error('Resposta inválida do SheetDB ao consultar "'+SHN[sh]+'"');
@@ -446,14 +424,13 @@ async function syncSingleSheet(sh){
 
     for(const x of toUpdate){
       const keyVal=String(x[kc]||'').trim();
-      const patchUrl=buildSheetDbUrl(resolvedUrl,`${kc}/${encodeURIComponent(keyVal)}`);
+      const patchUrl=url+'/'+kc+'/'+encodeURIComponent(keyVal);
       const patchRes=await sdb(patchUrl,{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});
       if(!patchRes.ok)throw await httpErr(patchRes,'Atualizar linha na aba "'+SHN[sh]+'"');
     }
 
     if(toAdd.length){
-      const postUrl=buildSheetDbUrl(resolvedUrl);
-      const postRes=await sdb(postUrl,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
+      const postRes=await sdb(url,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
       if(!postRes.ok)throw await httpErr(postRes,'Acrescentar linhas na aba "'+SHN[sh]+'"');
     }
 
@@ -521,16 +498,7 @@ async function sheetTest(){
   for(const sh of ['semanas','consultas']){
     try{
       const cols=sh==='semanas'?WCOLS:ACOLS;
-      const check=await resolveSheetEndpoint(sh,cols);
-      if(!check.ok){
-        const foundNorm=(check.keys||[]).map(cleanKey);
-        const miss=cols.filter(c=>!foundNorm.includes(cleanKey(c)));
-        let detail=`Aba "${SHN[sh]}": `;
-        if(miss.length)detail+=`cabeçalhos ausentes: ${miss.join(', ')}. `;
-        if(check.keys&&check.keys.length)detail+=`Encontrados na planilha: ${check.keys.join(', ')}. `;
-        if(check.error)detail+=`Erro: ${check.error}`;
-        throw new Error(detail);
-      }
+      await checkKeys(sh,cols);
       sync[sh].error='';
       toast(`Planilha "${SHN[sh]}": conexão e cabeçalhos OK!`);
     }catch(err){
@@ -598,8 +566,8 @@ function syncInner(){
           <b>Planilha: Lançar Semanas</b>
           ${tagSh(sem.status)}
         </div>
-        <p class="note" style="margin:6px 0 2px">Último sucesso: <b>${fdt(sem.lastSuccess)}</b></p>
-        <p class="note" style="margin:2px 0 2px">Última tentativa: <b>${fdt(sem.lastAttempt)}</b></p>
+        <p class="note" style="margin:6px 0 2px">Endpoint: <code>.../sk39abnekybca</code></p>
+        <p class="note" style="margin:2px 0 2px">Último sucesso: <b>${fdt(sem.lastSuccess)}</b></p>
         <p class="note" style="margin:2px 0">Linhas: ${sem.rowsTotal||0} total · <b>${sem.rowsUpdated||0} atualizadas</b> · <b>${sem.rowsAdded||0} novas</b></p>
         ${sem.error?`<p class="note" style="color:var(--r);margin-top:6px;word-break:break-word">${esc(sem.error)}</p>`:''}
       </div>
@@ -609,8 +577,8 @@ function syncInner(){
           <b>Planilha: Consultas</b>
           ${tagSh(app.status)}
         </div>
-        <p class="note" style="margin:6px 0 2px">Último sucesso: <b>${fdt(app.lastSuccess)}</b></p>
-        <p class="note" style="margin:2px 0 2px">Última tentativa: <b>${fdt(app.lastAttempt)}</b></p>
+        <p class="note" style="margin:6px 0 2px">Endpoint: <code>.../bvqe5doucg58z</code></p>
+        <p class="note" style="margin:2px 0 2px">Último sucesso: <b>${fdt(app.lastSuccess)}</b></p>
         <p class="note" style="margin:2px 0">Linhas: ${app.rowsTotal||0} total · <b>${app.rowsUpdated||0} atualizadas</b> · <b>${app.rowsAdded||0} novas</b></p>
         ${app.error?`<p class="note" style="color:var(--r);margin-top:6px;word-break:break-word">${esc(app.error)}</p>`:''}
       </div>
@@ -671,7 +639,7 @@ function init(){
   setInterval(tickSync,30000);
 }
 
-/* ---------- Configuração ---------- */
+/* ---------- CONFIGURAÇÃO ---------- */
 const SNAP=['semresp','pensando','aguard','nao'];
 function lab(k){return (cfg.labels&&cfg.labels[k])||((BASEF.find(f=>f[0]===k)||(cfg.extra||[]).map(e=>[e.k,e.n]).find(f=>f[0]===k)||[])[1])||k}
 function isSn(k){return SNAP.includes(k)||(cfg.extra||[]).some(e=>e.k===k&&e.snap)}
@@ -719,6 +687,7 @@ function metricHtml(){const ms=cfg.metrics||[],ow={kpi:'card no quadro geral',li
   return `<div class="card" style="margin-top:14px"><h2>Métricas e cards personalizados</h2><label class="note" style="display:block">O que você quer medir?<textarea id="m_q" rows="2" style="width:100%" placeholder="Ex.: % de pacientes que não vão seguir sobre o total de conversas ativas"></textarea></label><div class="row"><label class="note">Onde mostrar<br><select id="m_w"><option value="">Automático</option><option value="kpi">Card no quadro geral</option><option value="line">Gráfico de linha</option><option value="bar">Gráfico de barras</option></select></label><button class="b" id="m_go">Sugerir fórmula</button><button class="b s" id="m_man">Criar manualmente</button></div><div id="m_pv" class="hide" style="margin-top:12px"><div class="f"><label>Título<input id="m_t"></label><label>Fórmula<input id="m_e"></label><label>Formato<select id="m_f"><option value="num">Número</option><option value="pct">Porcentagem</option></select></label><label>Onde<select id="m_w2"><option value="kpi">Card no quadro geral</option><option value="line">Gráfico de linha</option><option value="bar">Gráfico de barras</option></select></label></div><p class="note" id="m_r"></p><p class="note">Funções: SUM, LAST, AVG, MAX, MIN e DIV(a,b). Campos: ${FK.join(', ')}</p><div class="row"><button class="b s" id="m_pre">Pré-visualizar</button><button class="b" id="m_add">Adicionar ao painel</button></div></div><h2 style="margin-top:18px">Já adicionadas</h2>${ms.length?ms.map((m,i)=>`<div class="row" style="margin-top:6px"><span style="flex:1;min-width:200px"><b>${esc(m.title)}</b><br><span class="note">${esc(m.expr)} · ${ow[m.where]||''}</span></span><button class="x" data-md="${i}" aria-label="Remover" title="Remover">×</button></div>`).join(''):'<p class="note">Nenhuma ainda.</p>'}</div>`}
 
 const KL=['Total de conversas ativas','Taxa Geral de Agendamento (%)','Conversão do FU em Agendamento (%)','Novos leads','Consultas agendadas','Mensagens de follow-up','Taxa de resposta do FU','Comparecimento (check-in)','Cancelamento','Reagendamento','Cancelados recuperados','Reagendamentos em andamento'],CL=['Mensagens de follow-up por tentativa','Resposta e conversão do follow-up','Status dos pacientes (total acumulado em cada semana)','Agenda: realizadas, canceladas e reagendadas','Funil: leads, respostas e agendamentos'];
+
 function viewHtml(){const h=cfg.hide||{},go=cfg.goals||{},ck=(p,l)=>`<label style="flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:13px"><input type="checkbox" style="width:auto" data-hk="${p}:${esc(l)}"${h[p+':'+l]?'':' checked'}>${esc(l)}</label>`,gi=(k,l)=>`<label>${l}<input type="number" step="0.1" min="0" data-gk="${k}" value="${go[k]??''}" placeholder="sem meta"></label>`,sel=(k,v,o)=>`<select data-dk="${k}">${o.map(([x,l])=>`<option value="${x}"${String(v)===String(x)?' selected':''}>${l}</option>`).join('')}</select>`;
   return `<div class="card" style="margin-top:14px"><h2>Exibição do painel</h2><h2 style="font-size:14px">Cards do quadro geral</h2><div class="f">${KL.map(l=>ck('k',l)).join('')}</div><h2 style="font-size:14px;margin-top:14px">Gráficos</h2><div class="f">${CL.map(l=>ck('c',l)).join('')}</div><div class="f" style="margin-top:14px"><label>Período ao abrir${sel('defP',cfg.defP||'all',[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada']])}</label><label>Casas decimais das taxas principais${sel('dec',cfg.dec??2,[[0,'0'],[1,'1'],[2,'2']])}</label></div></div>
   <div class="card" style="margin-top:14px"><h2>Metas</h2><div class="f">${gi('tg','Taxa Geral de Agendamento')}${gi('conv','Conversão do FU em Agendamento')}${gi('resp','Taxa de resposta do FU')}${gi('comp','Comparecimento (check-in)')}${gi('canc','Cancelamento (máximo)')}</div></div>
@@ -756,7 +725,7 @@ async function addM(){
   await saveCfg({metrics:[...(cfg.metrics||[]),m]});renderCfg();toast('Adicionado ao painel');
 }
 
-/* ---------- Importação Manual de Consultas (Sem Salvamento Automático) ---------- */
+/* ---------- IMPORTAÇÃO MANUAL DE CONSULTAS (SEM SALVAMENTO AUTOMÁTICO) ---------- */
 let pastePreview=[];
 let isSavingPaste=false;
 
@@ -924,11 +893,11 @@ async function savePreviewAppts(isExplicitUserClick){
     updatePastePreviewUI();
   }
 }
-
-/* ---------- Motor de Resumo Dinâmico ---------- */
+  /* ---------- MOTOR DE RESUMO ANALÍTICO E COMPARATIVO (FASE 8) ---------- */
 const msgs=w=>(w.fu2||0)+(w.fu3||0)+(w.fu4||0)+(w.fu5||0);
 function sum(arr,f){return arr.reduce((a,w)=>a+(typeof f==='function'?f(w):(w[f]||0)),0)}
 
+// Cálculo quantitativo desacoplado com validação numérica e tratamento de zero
 function calculatePeriodMetrics(ws,ap,allWeeks){
   if(!ws||!ws.length)return null;
 
@@ -936,6 +905,17 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
   const isMulti=numWeeks>1;
   const startDate=ws[0].id;
   const endDate=ws[numWeeks-1].id;
+
+  // Auditoria segura com parseSafeNum para evitar corrupções silenciosas
+  const auditErrors=[];
+  ws.forEach(w=>{
+    ['novos','antigas','ativas','fu2','fu3','fu4','fu5','resp','agend','semresp','pensando','aguard','nao'].forEach(f=>{
+      if(w[f]!==undefined){
+        const check=parseSafeNum(w[f],f);
+        if(!check.valid&&check.note)auditErrors.push(`Semana ${fdf(w.id)}: ${check.note}`);
+      }
+    });
+  });
 
   const totalNovos=sum(ws,'novos');
   const totalAntigas=sum(ws,'antigas');
@@ -963,6 +943,7 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
   const aguardFinal=lastW.aguard||0;
   const naoFinal=lastW.nao||0;
 
+  // Taxas com denominadores matematicamente rigorosos
   const respRate=totalMsgs>0?(totalResp/totalMsgs*100):0;
   const convRate=totalResp>0?(totalAgend/totalResp*100):0;
   const realRate=totalAgenda>0?(totalReal/totalAgenda*100):0;
@@ -991,12 +972,8 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
     const worstAgend=ws.reduce((min,w)=>(w.agend||0)<(min.agend||0)?w:min,ws[0]);
 
     multiData={
-      bestLeads,
-      worstLeads,
-      bestResp,
-      worstResp,
-      bestAgend,
-      worstAgend,
+      bestLeads,worstLeads,bestResp,worstResp,bestAgend,worstAgend,
+      firstW,lastW,
       deltaLeads:(lastW.novos||0)-(firstW.novos||0),
       deltaMsgs:msgs(lastW)-msgs(firstW),
       deltaRespRate:pct(lastW.resp||0,msgs(lastW))-pct(firstW.resp||0,msgs(firstW)),
@@ -1026,90 +1003,167 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
     ativasFinal,semrespFinal,pensandoFinal,aguardFinal,naoFinal,
     respRate,convRate,realRate,cancRate,reagRate,
     perdCount:perd.length,recCount:rec,recRate,andamCount:andam,
+    auditErrors,
     multiData,singleData
   };
 }
 
+// Redação analítica completa estruturada nos 8 blocos estratégicos da Fase 8
 function generateDynamicSummary(m){
   if(!m)return '<p class="note">Nenhum dado disponível para o período selecionado.</p>';
 
-  let secA='';
+  const varStr=(cur,prev)=>{
+    if(prev===null||prev===undefined)return 'sem base comparável';
+    const diff=cur-prev;
+    if(prev===0)return `${diff>=0?'+'+diff:diff} (percentual não calculável)`;
+    const p=(diff/prev)*100;
+    return `${diff>=0?'+'+diff:diff} (${p>=0?'+'+pf(p):pf(p)})`;
+  };
+
+  // 1. Visão Geral
+  let b1='';
   if(m.isMulti){
-    secA=`
-      <p style="margin:2px 0 6px"><b>A. Visão Geral do Período (${m.numWeeks} semanas: de ${fdf(m.startDate)} a ${fdf(m.endDate)})</b></p>
-      <p>No consolidado de ${m.numWeeks} semanas, o painel registrou <b>${m.totalNovos.toLocaleString('pt-BR')} novos leads</b> (média de ${Math.round(m.totalNovos/m.numWeeks)}/semana) e <b>${m.totalAntigas.toLocaleString('pt-BR')} conversas antigas retomadas</b>. Foram enviadas <b>${m.totalMsgs.toLocaleString('pt-BR')} mensagens de follow-up</b>, obtendo <b>${m.totalResp.toLocaleString('pt-BR')} respostas</b> (taxa média de <b>${pf(m.respRate)}</b>) e <b>${m.totalAgend} agendamentos gerados</b> (conversão de <b>${pf(m.convRate)}</b>). Pela agenda passaram <b>${m.totalAgenda} consultas</b> (${m.totalReal} realizadas, ${m.totalReag} reagendadas e ${m.totalCanc} canceladas).</p>
+    b1=`
+      <h3>1. Visão Geral do Período (${m.numWeeks} semanas: de ${fdf(m.startDate)} a ${fdf(m.endDate)})</h3>
+      <p>O período consolidado totalizou <b>${m.totalNovos.toLocaleString('pt-BR')} novos leads</b> (média semanal de ${Math.round(m.totalNovos/m.numWeeks)}) e <b>${m.totalAntigas.toLocaleString('pt-BR')} conversas antigas retomadas</b>. Foram disparadas <b>${m.totalMsgs.toLocaleString('pt-BR')} mensagens de follow-up</b>, obtendo <b>${m.totalResp.toLocaleString('pt-BR')} respostas</b> e gerando <b>${m.totalAgend} agendamentos</b> pelo follow-up. A agenda da clínica processou <b>${m.totalAgenda} consultas com desfecho</b> (${m.totalReal} presenças confirmadas no check-in).</p>
     `;
   }else{
     const s=m.singleData;
-    secA=`
-      <p style="margin:2px 0 6px"><b>A. Visão Geral da Semana de ${fdf(m.startDate)}</b></p>
-      <p>Nesta semana específica, entraram <b>${m.totalNovos} novos leads</b> e <b>${m.totalAntigas} conversas antigas</b> foram retomadas. Foram disparadas <b>${m.totalMsgs.toLocaleString('pt-BR')} mensagens de follow-up</b>, gerando <b>${m.totalResp} respostas</b> (taxa de <b>${pf(m.respRate)}</b>) e <b>${m.totalAgend} agendamentos</b> diretos pelo follow-up (conversão de <b>${pf(m.convRate)}</b>). A agenda da semana processou <b>${m.totalAgenda} consultas</b> (${m.totalReal} comparecimentos confirmados).${s.prevW?` Em relação à semana anterior (${fdf(s.prevW.id)}), a entrada de leads variou em <b>${s.deltaLeads>=0?'+'+s.deltaLeads:s.deltaLeads}</b> e as mensagens em <b>${s.deltaMsgs>=0?'+'+s.deltaMsgs:s.deltaMsgs}</b>.`:''}</p>
+    b1=`
+      <h3>1. Visão Geral da Semana de ${fdf(m.startDate)}</h3>
+      <p>Na semana em análise, foram cadastrados <b>${m.totalNovos} novos leads</b> e <b>${m.totalAntigas} conversas antigas</b> foram retomadas. Foram enviadas <b>${m.totalMsgs.toLocaleString('pt-BR')} mensagens de follow-up</b>, gerando <b>${m.totalResp} respostas</b> e <b>${m.totalAgend} agendamentos</b>. A agenda registrou <b>${m.totalAgenda} consultas com desfecho</b> (${m.totalReal} realizadas).${s.prevW?` Em relação à semana anterior (${fdf(s.prevW.id)}), a entrada de leads variou em <b>${varStr(m.totalNovos,s.prevW.novos||0)}</b>.`:''}</p>
     `;
   }
 
-  const secB=`
-    <p style="margin:10px 0 4px"><b>B. Indicadores Consolidados</b></p>
-    <div style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 14px;font-size:13px">
-      <div><b>Aquisição:</b> ${m.totalNovos.toLocaleString('pt-BR')} novos leads · ${m.totalAntigas} retomados · ${m.ativasFinal.toLocaleString('pt-BR')} ativas atuais</div>
-      <div><b>Follow-up enviado:</b> ${m.totalMsgs.toLocaleString('pt-BR')} msgs (FU2: ${m.totalFu2} · FU3: ${m.totalFu3} · FU4: ${m.totalFu4} · FU5: ${m.totalFu5})</div>
-      <div><b>Conversão FU:</b> ${m.totalResp.toLocaleString('pt-BR')} respostas (<b>${pf(m.respRate)}</b>) ➔ ${m.totalAgend} agendamentos (<b>${pf(m.convRate)}</b>)</div>
-      <div><b>Status atual no fim do período:</b> ${m.semrespFinal} sem resposta · ${m.pensandoFinal} pensando · ${m.aguardFinal} aguardando · ${m.naoFinal} descartados</div>
-      <div><b>Desfecho da Agenda (${m.totalAgenda}):</b> ${m.totalReal} realizadas (<b>${pf(m.realRate)}</b>) · ${m.totalReag} reagendadas (<b>${pf(m.reagRate)}</b>) · ${m.totalCanc} canceladas (<b>${pf(m.cancRate)}</b>)</div>
-      <div><b>Recuperação de perdas:</b> ${m.perdCount>0?`${m.recCount} de ${m.perdCount} recuperados (${pf(m.recRate)}) · ${m.andamCount} em andamento`:'Nenhum cancelamento no período'}</div>
-    </div>
-  `;
+  // 2. Comparativo de Indicadores
+  let b2='';
+  if(m.isMulti){
+    b2=`
+      <h3>2. Comparativo de Indicadores Consolidados</h3>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 14px;font-size:13px">
+        <div><b>Novos Leads:</b> ${m.totalNovos.toLocaleString('pt-BR')} (média: ${Math.round(m.totalNovos/m.numWeeks)}/sem)</div>
+        <div><b>Mensagens de Follow-up:</b> ${m.totalMsgs.toLocaleString('pt-BR')} (média: ${Math.round(m.totalMsgs/m.numWeeks)}/sem)</div>
+        <div><b>Taxa Geral de Resposta:</b> <b>${pf(m.respRate)}</b> (${m.totalResp} de ${m.totalMsgs})</div>
+        <div><b>Conversão do Follow-up:</b> <b>${pf(m.convRate)}</b> (${m.totalAgend} de ${m.totalResp})</div>
+        <div><b>Comparecimento na Agenda:</b> <b>${pf(m.realRate)}</b> (${m.totalReal} de ${m.totalAgenda})</div>
+        <div><b>Cancelamento na Agenda:</b> <b>${pf(m.cancRate)}</b> (${m.totalCanc} de ${m.totalAgenda})</div>
+      </div>
+    `;
+  }else{
+    const s=m.singleData;
+    b2=`
+      <h3>2. Comparativo da Semana com Período Anterior</h3>
+      <div style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 14px;font-size:13px">
+        <div><b>Novos Leads:</b> ${m.totalNovos} · Variação: <b>${s.prevW?varStr(m.totalNovos,s.prevW.novos||0):'sem base anterior'}</b></div>
+        <div><b>Follow-up Enviado:</b> ${m.totalMsgs} msgs · Variação: <b>${s.prevW?varStr(m.totalMsgs,msgs(s.prevW)):''}`;
+  }
 
-  let secC='';
+  // 3. Evolução Semanal e Tendências
+  let b3='';
   if(m.isMulti){
     const d=m.multiData;
-    const bestRespText=d.bestResp?`semana de <b>${fdf(d.bestResp.id)}</b> com <b>${pf(pct(d.bestResp.resp||0,msgs(d.bestResp)))}</b> (${d.bestResp.resp} respostas)`:'—';
-    const worstRespText=d.worstResp?`semana de <b>${fdf(d.worstResp.id)}</b> com <b>${pf(pct(d.worstResp.resp||0,msgs(d.worstResp)))}</b>`:'—';
-
-    secC=`
-      <p style="margin:10px 0 4px"><b>C. Análise de Desempenho e Comparação entre Semanas</b></p>
-      <p>• <b>Destaques de volume e conversão:</b> A semana com maior captação de leads foi a de <b>${fdf(d.bestLeads.id)}</b> (${d.bestLeads.novos} leads), enquanto a de menor volume foi <b>${fdf(d.worstLeads.id)}</b> (${d.worstLeads.novos} leads). A melhor taxa de resposta do follow-up ocorreu na ${bestRespText}, contra ${worstRespText} no ponto mais baixo.</p>
-      <p>• <b>Evolução temporal (1ª vs. Última semana):</b> Entre ${fdf(m.startDate)} e ${fdf(m.endDate)}, a entrada semanal de leads variou em <b>${d.deltaLeads>=0?'+'+d.deltaLeads:d.deltaLeads}</b>, enquanto o envio de mensagens de follow-up variou em <b>${d.deltaMsgs>=0?'+'+d.deltaMsgs:d.deltaMsgs}</b>. A taxa de resposta oscilou <b>${d.deltaRespRate>=0?'+'+pf(d.deltaRespRate):pf(d.deltaRespRate)}</b> pontos percentuais. No mesmo intervalo, pacientes sem resposta variaram em <b>${d.deltaSemresp>=0?'+'+d.deltaSemresp:d.deltaSemresp}</b>.</p>
-      <p>• <b>Gargalos identificados:</b> ${m.semrespFinal>100?`Existe um acúmulo de <b>${m.semrespFinal} pacientes sem retorno</b> no follow-up. `:''}${m.cancRate>15?`A taxa de cancelamento da agenda (${pf(m.cancRate)}) representa um ponto de atenção crítico no período. `:''}${m.pensandoFinal+m.aguardFinal>10?`Há <b>${m.pensandoFinal+m.aguardFinal} pacientes</b> retidos nas fases 'pensando' e 'aguardando cadastro' exigindo ação de fechamento.`:''}</p>
+    const bR=d.bestResp?`semana de <b>${fdf(d.bestResp.id)}</b> (${pf(pct(d.bestResp.resp||0,msgs(d.bestResp)))}: ${d.bestResp.resp} respostas)`:'—';
+    const wR=d.worstResp?`semana de <b>${fdf(d.worstResp.id)}</b> (${pf(pct(d.worstResp.resp||0,msgs(d.worstResp)))})`:'—';
+    b3=`
+      <h3>3. Evolução Semanal e Tendências</h3>
+      <p>• <b>Destaques de Volume:</b> O pico de novos leads ocorreu na semana de <b>${fdf(d.bestLeads.id)}</b> (${d.bestLeads.novos} leads), e o ponto mais baixo na de <b>${fdf(d.worstLeads.id)}</b> (${d.worstLeads.novos} leads).</p>
+      <p>• <b>Destaques de Eficiência:</b> A maior taxa de resposta do follow-up foi na ${bR}, contra ${wR} no menor patamar.</p>
+      <p>• <b>Variação 1ª vs. Última Semana:</b> Os novos leads variaram em <b>${varStr(d.lastW.novos||0,d.firstW.novos||0)}</b>, enquanto o envio de mensagens de follow-up variou em <b>${varStr(msgs(d.lastW),msgs(d.firstW))}</b>. Pacientes sem resposta variaram em <b>${d.deltaSemresp>=0?'+'+d.deltaSemresp:d.deltaSemresp}</b>.</p>
     `;
   }else{
     const s=m.singleData;
-    secC=`
-      <p style="margin:10px 0 4px"><b>C. Análise de Desempenho da Semana</b></p>
-      ${s.prevW?`
-        <p>• <b>Comparativo com a semana de ${fdf(s.prevW.id)}:</b> A entrada de novos leads variou em <b>${s.deltaLeads>=0?'+'+s.deltaLeads:s.deltaLeads}</b> (${s.curW.novos||0} vs. ${s.prevW.novos||0}). O volume de follow-up variou em <b>${s.deltaMsgs>=0?'+'+s.deltaMsgs:s.deltaMsgs} msgs</b>. A taxa de resposta foi de <b>${pf(m.respRate)}</b> (variação de <b>${s.deltaRespRate>=0?'+'+pf(s.deltaRespRate):pf(s.deltaRespRate)}</b>). O volume de pacientes sem resposta teve variação de <b>${s.deltaSemresp>=0?'+'+s.deltaSemresp:s.deltaSemresp}</b>.</p>
-      `:`
-        <p>• <b>Linha de base:</b> Esta é a primeira semana do histórico disponível no painel. Apresenta taxa de resposta de <b>${pf(m.respRate)}</b> e comparecimento na agenda de <b>${pf(m.realRate)}</b>.</p>
-      `}
-      <p>• <b>Ponto de atenção na semana:</b> ${m.cancRate>15?`Cancelamentos elevados (${pf(m.cancRate)} das consultas da semana). `:''}${m.semrespFinal>0?`Volume de pacientes sem resposta fechou em ${m.semrespFinal}. `:''}${m.totalResp>0&&m.convRate<15?`Conversão de respostas em agendamento em ${pf(m.convRate)}, indicando oportunidade na condução final da conversa.`:''}</p>
+    b3=`
+      <h3>3. Tendência e Contexto Semanal</h3>
+      <p>${s.prevW?`Em relação à semana de ${fdf(s.prevW.id)}, as mensagens enviadas tiveram variação de <b>${varStr(m.totalMsgs,msgs(s.prevW))}</b> e a taxa de resposta oscilou <b>${s.deltaRespRate>=0?'+'+pf(s.deltaRespRate):pf(s.deltaRespRate)}</b> pontos percentuais.`: 'Esta é a primeira semana com dados disponíveis no painel, servindo como baseline de referência para os períodos posteriores.'}</p>
     `;
   }
 
-  const prioridades=[];
-  if(m.cancRate>15||(m.totalCanc>0&&m.recRate<30)){
-    prioridades.push(`<b>1. Protocolo ativo de confirmação e recuperação de cancelamentos:</b> ${m.totalCanc} consultas foram canceladas no período (taxa de cancelamento de ${pf(m.cancRate)}). Cada consulta resgatada impacta diretamente a taxa de comparecimento.`);
-  }
-  if(m.pensandoFinal+m.aguardFinal>=8){
-    prioridades.push(`<b>${prioridades.length+1}. Ação de fechamento com pacientes 'pensando' e 'aguardando':</b> Existem ${m.pensandoFinal} pacientes pesquisando e ${m.aguardFinal} aguardando cadastro. São contatos quentes com alta probabilidade de agendamento imediato.`);
-  }
-  if(m.semrespFinal>=80||(m.totalMsgs>0&&m.respRate<18)){
-    prioridades.push(`<b>${prioridades.length+1}. Otimização dos disparos de reengajamento (FU 2 a FU 4):</b> Taxa de resposta geral em ${pf(m.respRate)} e ${m.semrespFinal} pacientes parados sem retorno. Reformular a primeira pergunta do follow-up para incentivar respostas curtas.`);
-  }
-  if(prioridades.length<3&&m.totalNovos>0){
-    prioridades.push(`<b>${prioridades.length+1}. Acelerar a velocidade de resposta aos novos leads:</b> Foram ${m.totalNovos} leads no período. Atender no menor tempo possível assegura o melhor aproveitamento do topo de funil.`);
-  }
-
-  const secD=`
-    <p style="margin:10px 0 4px"><b>D. Conclusão e Prioridades Práticas</b></p>
-    <p><b>Diagnóstico:</b> ${m.isMulti?`O período consolidado demonstra ${m.totalAgend} agendamentos gerados a partir de ${m.totalNovos} leads. O maior gargalo de conversão concentra-se ${m.semrespFinal>150?'no reengajamento de contatos sem resposta':'na retenção e recuperação de cancelamentos na agenda'}.`:`A semana de ${fdf(m.startDate)} encerrou com ${m.totalReal} consultas realizadas e ${m.totalAgend} agendamentos originados no follow-up.`}</p>
-    <div style="margin-top:6px">
-      ${prioridades.slice(0,3).map(p=>`<p style="margin:3px 0">${p}</p>`).join('')}
-    </div>
+  // 4. Conversão do Funil
+  const b4=`
+    <h3>4. Conversão do Funil de Atendimento</h3>
+    <p>• <b>Avanço no Follow-up:</b> De ${m.totalMsgs.toLocaleString('pt-BR')} mensagens enviadas nas tentativas (FU 2: ${m.totalFu2}, FU 3: ${m.totalFu3}, FU 4: ${m.totalFu4}, FU 5: ${m.totalFu5}), foram obtidas <b>${m.totalResp} respostas</b> (taxa de <b>${pf(m.respRate)}</b> = ${m.totalResp} ÷ ${m.totalMsgs}).</p>
+    <p>• <b>Conversão em Agendamento:</b> Das respostas recebidas, <b>${m.totalAgend} geraram agendamento direto</b> pelo follow-up (taxa de <b>${pf(m.convRate)}</b> = ${m.totalAgend} ÷ ${m.totalResp}).</p>
+    <p class="note">Nota metodológica: Os volumes de FU 2 a 5 representam disparos da semana e não devem ser somados como contatos únicos individuais.</p>
   `;
 
-  return secA+secB+secC+secD;
+  // 5. Situação dos Agendamentos e Consultas
+  const b5=`
+    <h3>5. Desfecho da Agenda e Comparecimento</h3>
+    <p>• <b>Consultas da Agenda (${m.totalAgenda}):</b> <b>${m.totalReal} realizadas</b> (taxa de presença de <b>${pf(m.realRate)}</b> = ${m.totalReal} ÷ ${m.totalAgenda}), <b>${m.totalReag} reagendadas</b> (<b>${pf(m.reagRate)}</b>) e <b>${m.totalCanc} canceladas</b> (<b>${pf(m.cancRate)}</b>).</p>
+    <p>• <b>Recuperação de Cancelamentos:</b> ${m.perdCount>0?`Foram identificados ${m.perdCount} cancelamentos/reagendamentos nas consultas registradas, dos quais <b>${m.recCount} foram recuperados</b> (taxa de recuperação de <b>${pf(m.recRate)}</b>) e <b>${m.andamCount}</b> continuam em contato ativo.`:'Nenhum cancelamento com necessidade de recuperação registrado no período.'}</p>
+  `;
+
+  // 6. Diagnóstico de Gargalos Sustentados pelos Dados
+  const gargalos=[];
+  if(m.cancRate>15){
+    gargalos.push(`<b>Taxa de cancelamento elevada (${pf(m.cancRate)}):</b> Ocorreram ${m.totalCanc} cancelamentos nas consultas com desfecho da agenda. Investigar antecedência e método de confirmação prévia.`);
+  }
+  if(m.semrespFinal>=100){
+    gargalos.push(`<b>Acúmulo de pacientes sem retorno (${m.semrespFinal}):</b> Volume represado ao final do período indica necessidade de reciclagem de mensagens ou perguntas abertas nos follow-ups intermediários.`);
+  }
+  if(m.pensandoFinal+m.aguardFinal>=10){
+    gargalos.push(`<b>Estagnação nas etapas de decisão:</b> ${m.pensandoFinal} pacientes em 'pensando' e ${m.aguardFinal} em 'aguardando cadastro'. Representam ${m.pensandoFinal+m.aguardFinal} potenciais consultas travadas no pré-agendamento.`);
+  }
+  if(!gargalos.length){
+    gargalos.push(`<b>Operação equilibrada:</b> Não foram identificados gargalos com desvios superiores aos limites operacionais no período analisado.`);
+  }
+  const b6=`
+    <h3>6. Diagnóstico de Gargalos Operacionais</h3>
+    ${gargalos.map(g=>`<p>• ${g}</p>`).join('')}
+  `;
+
+  // 7. Pontos Positivos e Oportunidades
+  const positivos=[];
+  if(m.realRate>=60&&m.totalAgenda>0){
+    positivos.push(`<b>Comparecimento consistente:</b> Taxa de presença na agenda em ${pf(m.realRate)} (${m.totalReal} consultas realizadas).`);
+  }
+  if(m.convRate>=20&&m.totalResp>0){
+    positivos.push(`<b>Boa eficiência na condução de respostas:</b> ${pf(m.convRate)} das respostas foram convertidas em agendamentos pelo follow-up.`);
+  }
+  if(m.totalNovos>100){
+    positivos.push(`<b>Captação ativa:</b> Entrada expressiva de ${m.totalNovos} novos leads alimentando o topo do funil.`);
+  }
+  if(!positivos.length&&m.totalReal>0){
+    positivos.push(`<b>Manutenção de agenda:</b> ${m.totalReal} consultas cumpridas no período.`);
+  }
+  const b7=`
+    <h3>7. Pontos Positivos e Oportunidades</h3>
+    ${positivos.map(p=>`<p>• ${p}</p>`).join('')}
+  `;
+
+  // 8. Plano de Ação Priorizado
+  const acoes=[];
+  if(m.cancRate>15||(m.totalCanc>0&&m.recRate<30)){
+    acoes.push(`• <b>[Prioridade ALTA] Ativação de confirmação prévia e resgate:</b> Taxa de cancelamento em ${pf(m.cancRate)} (${m.totalCanc} consultas canceladas). Ação: Ligar com 48h e 24h de antecedência. Meta interna: reduzir cancelamentos abaixo de 12%.`);
+  }
+  if(m.pensandoFinal+m.aguardFinal>=8){
+    acoes.push(`• <b>[Prioridade MÉDIA] Mutirão de fechamento para pacientes retidos:</b> Existem ${m.pensandoFinal} pacientes pesquisando e ${m.aguardFinal} aguardando cadastro. Ação: Mensagem direta tirando dúvidas pontuais para converter o agendamento nas próximas 48 horas.`);
+  }
+  if(m.semrespFinal>=80||(m.totalMsgs>0&&m.respRate<18)){
+    acoes.push(`• <b>[Prioridade MÉDIA] Revisão de copy no FU 2 e FU 3:</b> Taxa de resposta de follow-up em ${pf(m.respRate)} com ${m.semrespFinal} pacientes sem resposta. Ação: Reformular a pergunta do 2º contato com alternativas objetivas de horário.`);
+  }
+  if(acoes.length<3&&m.totalNovos>0){
+    acoes.push(`• <b>[Prioridade BAIXA] Agilidade no 1º contato de novos leads:</b> Foram ${m.totalNovos} novos contatos no período. Ação: Monitorar o tempo de resposta inicial para manter a taxa de primeiro retorno em alta.`);
+  }
+  const b8=`
+    <h3>8. Plano de Ação Priorizado</h3>
+    ${acoes.slice(0,3).map(a=>`<p style="margin:4px 0">${a}</p>`).join('')}
+  `;
+
+  let alertBox='';
+  if(m.auditErrors&&m.auditErrors.length){
+    alertBox=`
+      <div style="background:color-mix(in srgb,var(--r) 10%,var(--card));border:1px solid var(--r);border-radius:8px;padding:8px 12px;margin:8px 0;font-size:12.5px">
+        <b>Alertas na Qualidade dos Dados da Planilha (Fase 2):</b>
+        ${m.auditErrors.map(e=>`<div style="color:var(--r);margin-top:2px">• ${esc(e)}</div>`).join('')}
+      </div>
+    `;
+  }
+
+  return b1+b2+b3+b4+b5+b6+b7+b8+alertBox;
 }
 
-/* ---------- Gráficos SVG com Tooltip Completo ---------- */
+/* ---------- GRÁFICOS SVG COM TOOLTIPS INTERATIVOS (FASE 6) ---------- */
 const NICE=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=5?5:10)*p};
 
 function chart(labels,series,mode,isPct,categories){
@@ -1552,7 +1606,6 @@ $('#cfg').onclick=async e=>{
 
 $('#cfg').onchange=e=>{
   const t=e.target;
-  
   if(t.dataset.tk){saveCfg({theme:{...(cfg.theme||{}),[t.dataset.tk]:t.value}});return}
   if(t.dataset.hk){const h={...(cfg.hide||{})};if(t.checked)delete h[t.dataset.hk];else h[t.dataset.hk]=1;saveCfg({hide:h});return}
   if(t.dataset.gk){const g={...(cfg.goals||{})},v=parseFloat(t.value);if(isNaN(v))delete g[t.dataset.gk];else g[t.dataset.gk]=v;saveCfg({goals:g});return}
@@ -1568,7 +1621,7 @@ $('#dash').onchange=e=>{
   if(t.id==='pp'){pSel=t.value;render()}
 };
 
-$('#wl').addEventListener('click',async e=>{
+  $('#wl').addEventListener('click',async e=>{
   const t=e.target,d=t.dataset;
   if(d.we){editRow=d.we;$('#wl').innerHTML=weekList();return}
   if(d.ws){const id=d.ws,o={...weeks[id]};document.querySelectorAll('#wl [data-ek]').forEach(i=>{o[i.dataset.ek]=Math.max(0,parseInt(i.value)||0)});editRow=null;await saveDoc('weeks/'+id,o);toast('Semana salva');return}
@@ -1582,4 +1635,3 @@ init();
 <script type="module" src="app-firebase.js"></script>
 </body>
 </html>
-
