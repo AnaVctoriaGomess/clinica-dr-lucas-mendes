@@ -128,7 +128,7 @@ svg circle[data-tip-series]:hover{filter:brightness(1.25);stroke-width:2.5px}
 <section id="sem" class="hide">
   <div class="card">
     <h2>Lançamento semanal</h2>
-    <p class="note">Escolha a data da semana. Se já existe, os valores são carregados para edição. Campos com “total atual” guardam o momento presente. Consultas agendadas na semana são contadas automaticamente pela data “Agendada em”.</p>
+    <p class="note">Escolha a data da semana. Se já existe, os valores são carregados para edição. Todos os campos estão disponíveis para edição manual (incluindo Consultas agendadas na semana). Se não for preenchido manualmente, ele calcula automaticamente pela data “Agendada em”.</p>
     <div class="row" style="margin:0 0 12px"><label class="note">Data da semana<br><input type="date" id="wd"></label><button class="b s" id="cp">Copiar valores da semana anterior</button></div>
     <div class="f" id="wf"></div>
     <div class="row"><button class="b" id="ws">Salvar semana</button><button class="b s" id="wdel">Excluir esta semana</button></div>
@@ -186,9 +186,9 @@ const SEED={"2026-09-23":[321,64,380,0,0,0,0,0,0,326,25,8,5,40,0,0,1],"2026-09-2
 const ORIG={novo:'Novo lead',c2:'2º contato (FU 2)',c3:'3º contato (FU 3)',c4:'4º contato (FU 4)',c5:'5º contato (FU 5)',sem:'Sem retorno no follow-up'};
 const STAT={agendada:'Agendada',realizada:'Realizada',cancelada:'Cancelada',reagendada:'Reagendada'};
 const REG={'':'—',sim:'Sim, reagendado',contato:'Em contato',nao:'Não conseguiu'};
-var db=null,sync={},editRow=null,wFilt={from:'',to:''},weeks={},appts={},cur='dash',cfg={},selWeek='',pFrom='',pTo='',pAuto=true,pSel='all',aFilt={week:'',from:'',to:'',origin:'',status:''};
+var db=null,sync={},editRow=null,wFilt={from:'',to:''},weeks={},appts={},cur='dash',cfg={},selWeek='',pFrom='',pTo='',pAuto=true,pSel='all',aFilt={week:'',from:'',to:'',origin:'',status:'',q:''};
 
-// Carregamento de segurança em cache local (nunca perde dados ou alterações)
+// Carregamento de segurança de dados em cache local (nunca perde dados ou alterações)
 try {
   const cw = localStorage.getItem('kommo_weeks_v3') || localStorage.getItem('kommo_weeks_cache');
   if (cw) {
@@ -229,7 +229,7 @@ window.setCfg = c => {
   }
 };
 
-/* ===== FUNÇÃO W() OBRIGATÓRIA ===== */
+/* ===== FUNÇÃO W() COM SUPORTE A CAGEND MANUAL ===== */
 function W() {
   const keys = Object.keys(weeks || {}).sort();
   return keys.map((id, i) => {
@@ -238,18 +238,19 @@ function W() {
     const nextId = keys[i + 1] || '9999-12-31';
 
     const allAppts = Object.values(appts || {});
-    // Contagem automática de consultas agendadas na semana pelo schedOn
+    // Contagem de consultas agendadas na semana pelo schedOn
     const schedInWeek = allAppts.filter(a => {
       const s = a.schedOn || '';
       return s >= id && s < nextId;
     });
 
-    if (w.auto !== false) {
+    // Se o usuário não definiu manualmente, calcula automaticamente pelas consultas da semana
+    if (!w.manualCagend && (w.auto === true || w.cagend === undefined)) {
       w.cagend = schedInWeek.length;
       w.auto = true;
     }
 
-    // Status das consultas da semana pelo desfecho (consult)
+    // Status das consultas que ocorreram na semana
     const consultInWeek = allAppts.filter(a => {
       const c = a.consult || '';
       return c >= id && c < nextId;
@@ -1507,17 +1508,17 @@ function dash(){
   </div>`;
 }
 
-function buildForm(){const o=$('#w_novos')?readForm():null;$('#wf').innerHTML=FIELDS.filter(f=>f[0]!=='cagend').map(([k])=>`<label>${esc(lab(k))}<input type="number" min="0" id="w_${k}" value="0"></label>`).join('');if(o)fillForm(o)}
+function buildForm(){const o=$('#w_novos')?readForm():null;$('#wf').innerHTML=FIELDS.map(([k])=>`<label>${esc(lab(k))}<input type="number" min="0" id="w_${k}" value="0"></label>`).join('');if(o)fillForm(o)}
 function fillForm(v){FIELDS.forEach(([k])=>{const el=$('#w_'+k);if(el)el.value=v?(v[k]||0):0})}
 function loadWeek(){const id=$('#wd').value;fillForm(W().find(w=>w.id===id)||weeks[id])}
-function readForm(){const w0=weeks[$('#wd').value]||{},o={...w0};FIELDS.forEach(([k])=>{const el=$('#w_'+k);o[k]=el?Math.max(0,parseInt(el.value)||0):(w0[k]||0)});return o}
+function readForm(){const w0=weeks[$('#wd').value]||{},o={...w0};FIELDS.forEach(([k])=>{const el=$('#w_'+k);o[k]=el?Math.max(0,parseInt(el.value)||0):(w0[k]||0)});if($('#w_cagend')){o.manualCagend=true;o.auto=false;}return o}
 
 function weekList(){
   const all=W().reverse();if(!all.length)return '<p class="note">Nenhuma semana lançada.</p>';
   const ws=all.filter(w=>(!wFilt.from||w.id>=wFilt.from)&&(!wFilt.to||w.id<=wFilt.to));
   const fb=`<div class="row" style="margin:0 0 10px"><label class="note">Período de<br><input type="date" data-wf="from" value="${wFilt.from}"></label><label class="note">até<br><input type="date" data-wf="to" value="${wFilt.to}"></label><button class="b s" data-wfc="1">Limpar filtro</button><span class="note">Mostrando ${ws.length} de ${all.length} semanas</span></div>`;
   if(!ws.length)return fb+'<p class="note">Nenhuma semana neste período.</p>';
-  return fb+`<div class="wrap"><table><tr><th>Semana</th>${FIELDS.map(f=>`<th>${esc(lab(f[0]))}</th>`).join('')}<th></th></tr>${ws.map(w=>{const ed=editRow===w.id;return `<tr><td><a href="#" data-e="${w.id}">${fdf(w.id)}</a></td>${FIELDS.map(([k])=>`<td>${ed&&k!=='cagend'?`<input type="number" min="0" data-ek="${k}" value="${w[k]||0}">`:(w[k]||0)+((k==='cagend'&&w.auto)||(['creal','ccanc','creag'].includes(k)&&w.autoS)?' <span class="tag">auto</span>':'')}</td>`).join('')}<td><button class="b s" data-we="${w.id}">Editar</button><button class="b" data-ws="${w.id}"${ed?'':' disabled'}>Salvar</button><button class="b s" data-wx="${w.id}" style="color:var(--r)">Excluir</button></td></tr>`}).join('')}</table></div>`;
+  return fb+`<div class="wrap"><table><tr><th>Semana</th>${FIELDS.map(f=>`<th>${esc(lab(f[0]))}</th>`).join('')}<th></th></tr>${ws.map(w=>{const ed=editRow===w.id;return `<tr><td><a href="#" data-e="${w.id}">${fdf(w.id)}</a></td>${FIELDS.map(([k])=>`<td>${ed?`<input type="number" min="0" data-ek="${k}" value="${w[k]||0}">`:(w[k]||0)+(k==='cagend'&&w.auto&&!w.manualCagend?' <span class="tag">auto</span>':'')}</td>`).join('')}<td><button class="b s" data-we="${w.id}">Editar</button><button class="b" data-ws="${w.id}"${ed?'':' disabled'}>Salvar</button><button class="b s" data-wx="${w.id}" style="color:var(--r)">Excluir</button></td></tr>`}).join('')}</table></div>`;
 }
 
 async function importRows(rows){
@@ -1531,18 +1532,24 @@ async function importRows(rows){
 const opts=(o,sel)=>Object.entries(o).map(([k,v])=>`<option value="${k}"${k===sel?' selected':''}>${v}</option>`).join('');
 
 function fbarA(ids){const f=aFilt,tot=Object.keys(appts).length,WS=W().slice().reverse();
-  return `<div class="f" style="margin-bottom:10px"><label>Semana em que foi criada<select data-af="week"><option value="">Todas</option>${WS.map(w=>`<option value="${w.id}"${f.week===w.id?' selected':''}>Semana de ${fdf(w.id)}</option>`).join('')}</select></label><label>Consulta a partir de<input type="date" data-af="from" value="${f.from}"></label><label>Consulta até<input type="date" data-af="to" value="${f.to}"></label><label>Veio de<select data-af="origin"><option value="">Todas</option>${opts(ORIG,f.origin)}</select></label><label>Status<select data-af="status"><option value="">Todos</option>${opts(STAT,f.status)}</select></label></div><div class="row" style="margin:0 0 10px"><button class="b s" data-afc="1">Limpar filtros</button><span class="note">Mostrando ${ids.length} de ${tot} consultas</span></div>`}
+  return `<div class="f" style="margin-bottom:10px"><label style="grid-column:1/-1">Pesquisar paciente<input type="search" data-af="q" placeholder="Digite o nome ou iniciais do paciente..." value="${esc(f.q||'')}"></label><label>Semana em que foi criada<select data-af="week"><option value="">Todas</option>${WS.map(w=>`<option value="${w.id}"${f.week===w.id?' selected':''}>Semana de ${fdf(w.id)}</option>`).join('')}</select></label><label>Consulta a partir de<input type="date" data-af="from" value="${f.from}"></label><label>Consulta até<input type="date" data-af="to" value="${f.to}"></label><label>Veio de<select data-af="origin"><option value="">Todas</option>${opts(ORIG,f.origin)}</select></label><label>Status<select data-af="status"><option value="">Todos</option>${opts(STAT,f.status)}</select></label></div><div class="row" style="margin:0 0 10px"><button class="b s" data-afc="1">Limpar filtros e pesquisa</button><span class="note">Mostrando ${ids.length} de ${tot} consultas</span></div>`}
 
 function apptList(){
   const f=aFilt,WS=W(),wr=f.week?(()=>{const i=WS.findIndex(w=>w.id===f.week);return i<0?null:[f.week,WS[i+1]?WS[i+1].id:'9999-12-31']})():null;
-  const ids=Object.keys(appts).filter(k=>{const a=appts[k],s=a.schedOn||'',c=a.consult||'';return (!wr||(s>=wr[0]&&s<wr[1]))&&(!f.from||c>=f.from)&&(!f.to||(c&&c<=f.to))&&(!f.origin||a.origin===f.origin)&&(!f.status||a.status===f.status)}).sort((a,b)=>(appts[b].consult||'').localeCompare(appts[a].consult||''));
-  if(!ids.length)return fbarA(ids)+'<p class="note">'+(Object.keys(appts).length?'Nenhuma consulta encontrada com estes filtros.':'Nenhuma consulta registrada ainda.')+'</p>';
+  const qClean=(f.q||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const ids=Object.keys(appts).filter(k=>{
+    const a=appts[k],s=a.schedOn||'',c=a.consult||'';
+    const pName=String(a.patient||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const matchesQ=!qClean||pName.includes(qClean);
+    return matchesQ&&(!wr||(s>=wr[0]&&s<wr[1]))&&(!f.from||c>=f.from)&&(!f.to||(c&&c<=f.to))&&(!f.origin||a.origin===f.origin)&&(!f.status||a.status===f.status);
+  }).sort((a,b)=>(appts[b].consult||'').localeCompare(appts[a].consult||''));
+  if(!ids.length)return fbarA(ids)+'<p class="note">'+(Object.keys(appts).length?'Nenhuma consulta encontrada com estes filtros ou pesquisa.':'Nenhuma consulta registrada ainda.')+'</p>';
   return fbarA(ids)+`<div class="wrap"><table><tr><th>Paciente</th><th>Veio de</th><th>Agendada em</th><th>Consulta</th><th>Status</th><th>Conseguiu reagendar?</th><th>Nova data</th><th></th></tr>${ids.map(id=>{const a=appts[id];
     return `<tr><td>${esc(a.patient)}</td><td><select data-id="${id}" data-k="origin">${opts(ORIG,a.origin)}</select></td><td><input type="date" data-id="${id}" data-k="schedOn" value="${a.schedOn||''}"></td><td><input type="date" data-id="${id}" data-k="consult" value="${a.consult||''}"></td><td><select data-id="${id}" data-k="status">${opts(STAT,a.status)}</select></td><td><select data-id="${id}" data-k="regained">${opts(REG,a.regained||'')}</select></td><td><input type="date" data-id="${id}" data-k="newDate" value="${a.newDate||''}"></td><td><button class="x" data-del="${id}" title="Excluir" aria-label="Excluir">×</button></td></tr>`}).join('')}</table></div>`;
 }
 
 function render(){
-  const ae=document.activeElement;if(ae&&ae.matches&&ae.matches('[data-id]')&&cur==='cons')return;
+  const ae=document.activeElement;if(ae&&ae.matches&&ae.matches('[data-id],[data-af="q"]')&&cur==='cons')return;
   $('#dash').innerHTML=dash();
   if(!editRow)$('#wl').innerHTML=weekList();
   $('#al').innerHTML=apptList();
@@ -1583,8 +1590,23 @@ $('#al').onchange=async e=>{
   render();
 };
 
+$('#al').addEventListener('input',e=>{
+  const t=e.target;
+  if(t&&t.dataset&&t.dataset.af==='q'){
+    aFilt.q=t.value;
+    const curVal=t.value;
+    const curSel=t.selectionStart;
+    $('#al').innerHTML=apptList();
+    const newInp=document.querySelector('[data-af="q"]');
+    if(newInp){
+      newInp.focus();
+      newInp.setSelectionRange(curSel,curSel);
+    }
+  }
+});
+
 $('#al').onclick=async e=>{
-  if(e.target.dataset.afc){aFilt={week:'',from:'',to:'',origin:'',status:''};$('#al').innerHTML=apptList();return}
+  if(e.target.dataset.afc){aFilt={week:'',from:'',to:'',origin:'',status:'',q:''};$('#al').innerHTML=apptList();return}
   const id=e.target.dataset.del;
   if(id&&confirm('Excluir esta consulta?')){await delDoc('appts/'+id);toast('Consulta excluída')}
 };
@@ -1668,7 +1690,7 @@ $('#dash').onchange=e=>{
 $('#wl').addEventListener('click',async e=>{
   const t=e.target,d=t.dataset;
   if(d.we){editRow=d.we;$('#wl').innerHTML=weekList();return}
-  if(d.ws){const id=d.ws,o={...weeks[id]};document.querySelectorAll('#wl [data-ek]').forEach(i=>{o[i.dataset.ek]=Math.max(0,parseInt(i.value)||0)});editRow=null;await saveDoc('weeks/'+id,o);toast('Semana salva com sucesso!');return}
+  if(d.ws){const id=d.ws,o={...weeks[id]};document.querySelectorAll('#wl [data-ek]').forEach(i=>{o[i.dataset.ek]=Math.max(0,parseInt(i.value)||0)});o.manualCagend=true;o.auto=false;editRow=null;await saveDoc('weeks/'+id,o);toast('Semana salva com sucesso!');return}
   if(d.wx){if(confirm('Excluir a semana de '+fdf(d.wx)+'?')){if(editRow===d.wx)editRow=null;await delDoc('weeks/'+d.wx);toast('Semana excluída')}return}
   if(d.wfc){wFilt={from:'',to:''};$('#wl').innerHTML=weekList()}
 });
