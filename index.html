@@ -49,7 +49,7 @@ button.x{border:0;background:none;color:var(--r);cursor:pointer;font-size:16px}
 .tag{padding:2px 8px;border-radius:99px;font-size:12px;background:var(--line);display:inline-block}
 .note{color:var(--mut);font-size:13px}
 .hide{display:none}
-#msg{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:90}
+#msg{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:90;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 #msg.on{opacity:1}
 body{font-feature-settings:"tnum";-webkit-font-smoothing:antialiased}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--card)}
@@ -84,7 +84,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--g);box-s
 button.b{padding:8px 15px;box-shadow:0 1px 2px rgba(0,0,0,.12)}
 button.b:hover{filter:brightness(1.07)}
 button.b.s{box-shadow:none}button.b.s:hover{background:var(--bg);filter:none;border-color:var(--k)}
-button.b:disabled{opacity:.55;cursor:not-allowed}
+button.b:disabled{opacity:.55;cursor:wait}
 button.x{border-radius:6px;padding:2px 7px;transition:background .15s}button.x:hover{background:color-mix(in srgb,var(--r) 12%,transparent)}
 .f label{font-weight:500}
 .tag{font-weight:500}
@@ -101,7 +101,7 @@ body.locked>header,body.locked>main{display:none}
 #lf label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 #sv{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--g);color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;pointer-events:none}#sv.on{opacity:1;transform:none}
 
-/* Tooltip nos gráficos */
+/* Tooltip profissional para gráficos */
 #chart_tip{position:fixed;z-index:999;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12px;line-height:1.45;box-shadow:0 6px 22px rgba(0,0,0,.2);opacity:0;transform:translate(-50%,-100%) translateY(-10px);transition:opacity .15s ease,transform .15s ease;min-width:140px;max-width:260px;font-feature-settings:"tnum"}
 #chart_tip.on{opacity:1;transform:translate(-50%,-100%) translateY(-12px)}
 #chart_tip .tip-title{font-weight:700;font-size:13px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
@@ -195,11 +195,10 @@ const pct=(a,b)=>b?(a/b*100):0;
 const pf=v=>v.toFixed(1).replace('.',',')+'%';
 const today=()=>new Date().toISOString().slice(0,10);
 const fdt=t=>t?new Date(t).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}):'—';
-
-function toast(t){
+  function toast(t){
   const m=$('#msg');if(!m)return;
   m.textContent=t;m.classList.add('on');
-  setTimeout(()=>m.classList.remove('on'),2400);
+  setTimeout(()=>m.classList.remove('on'),2500);
 }
 
 async function saveDoc(path,data){const [col,id]=path.split('/');await DATA.write(col,id,data)}
@@ -638,8 +637,7 @@ function init(){
   tickSync();
   setInterval(tickSync,30000);
 }
-
-/* ---------- CONFIGURAÇÃO ---------- */
+  /* ---------- CONFIGURAÇÃO ---------- */
 const SNAP=['semresp','pensando','aguard','nao'];
 function lab(k){return (cfg.labels&&cfg.labels[k])||((BASEF.find(f=>f[0]===k)||(cfg.extra||[]).map(e=>[e.k,e.n]).find(f=>f[0]===k)||[])[1])||k}
 function isSn(k){return SNAP.includes(k)||(cfg.extra||[]).some(e=>e.k===k&&e.snap)}
@@ -892,12 +890,11 @@ async function savePreviewAppts(isExplicitUserClick){
     isSavingPaste=false;
     updatePastePreviewUI();
   }
-}
+  }
   /* ---------- MOTOR DE RESUMO ANALÍTICO E COMPARATIVO (FASE 8) ---------- */
 const msgs=w=>(w.fu2||0)+(w.fu3||0)+(w.fu4||0)+(w.fu5||0);
 function sum(arr,f){return arr.reduce((a,w)=>a+(typeof f==='function'?f(w):(w[f]||0)),0)}
 
-// Cálculo quantitativo desacoplado com validação numérica e tratamento de zero
 function calculatePeriodMetrics(ws,ap,allWeeks){
   if(!ws||!ws.length)return null;
 
@@ -906,7 +903,6 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
   const startDate=ws[0].id;
   const endDate=ws[numWeeks-1].id;
 
-  // Auditoria segura com parseSafeNum para evitar corrupções silenciosas
   const auditErrors=[];
   ws.forEach(w=>{
     ['novos','antigas','ativas','fu2','fu3','fu4','fu5','resp','agend','semresp','pensando','aguard','nao'].forEach(f=>{
@@ -943,7 +939,6 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
   const aguardFinal=lastW.aguard||0;
   const naoFinal=lastW.nao||0;
 
-  // Taxas com denominadores matematicamente rigorosos
   const respRate=totalMsgs>0?(totalResp/totalMsgs*100):0;
   const convRate=totalResp>0?(totalAgend/totalResp*100):0;
   const realRate=totalAgenda>0?(totalReal/totalAgenda*100):0;
@@ -1008,7 +1003,6 @@ function calculatePeriodMetrics(ws,ap,allWeeks){
   };
 }
 
-// Redação analítica completa estruturada nos 8 blocos estratégicos da Fase 8
 function generateDynamicSummary(m){
   if(!m)return '<p class="note">Nenhum dado disponível para o período selecionado.</p>';
 
@@ -1020,7 +1014,6 @@ function generateDynamicSummary(m){
     return `${diff>=0?'+'+diff:diff} (${p>=0?'+'+pf(p):pf(p)})`;
   };
 
-  // 1. Visão Geral
   let b1='';
   if(m.isMulti){
     b1=`
@@ -1035,7 +1028,6 @@ function generateDynamicSummary(m){
     `;
   }
 
-  // 2. Comparativo de Indicadores
   let b2='';
   if(m.isMulti){
     b2=`
@@ -1058,7 +1050,6 @@ function generateDynamicSummary(m){
         <div><b>Follow-up Enviado:</b> ${m.totalMsgs} msgs · Variação: <b>${s.prevW?varStr(m.totalMsgs,msgs(s.prevW)):''}`;
   }
 
-  // 3. Evolução Semanal e Tendências
   let b3='';
   if(m.isMulti){
     const d=m.multiData;
@@ -1078,7 +1069,6 @@ function generateDynamicSummary(m){
     `;
   }
 
-  // 4. Conversão do Funil
   const b4=`
     <h3>4. Conversão do Funil de Atendimento</h3>
     <p>• <b>Avanço no Follow-up:</b> De ${m.totalMsgs.toLocaleString('pt-BR')} mensagens enviadas nas tentativas (FU 2: ${m.totalFu2}, FU 3: ${m.totalFu3}, FU 4: ${m.totalFu4}, FU 5: ${m.totalFu5}), foram obtidas <b>${m.totalResp} respostas</b> (taxa de <b>${pf(m.respRate)}</b> = ${m.totalResp} ÷ ${m.totalMsgs}).</p>
@@ -1086,14 +1076,12 @@ function generateDynamicSummary(m){
     <p class="note">Nota metodológica: Os volumes de FU 2 a 5 representam disparos da semana e não devem ser somados como contatos únicos individuais.</p>
   `;
 
-  // 5. Situação dos Agendamentos e Consultas
   const b5=`
     <h3>5. Desfecho da Agenda e Comparecimento</h3>
     <p>• <b>Consultas da Agenda (${m.totalAgenda}):</b> <b>${m.totalReal} realizadas</b> (taxa de presença de <b>${pf(m.realRate)}</b> = ${m.totalReal} ÷ ${m.totalAgenda}), <b>${m.totalReag} reagendadas</b> (<b>${pf(m.reagRate)}</b>) e <b>${m.totalCanc} canceladas</b> (<b>${pf(m.cancRate)}</b>).</p>
     <p>• <b>Recuperação de Cancelamentos:</b> ${m.perdCount>0?`Foram identificados ${m.perdCount} cancelamentos/reagendamentos nas consultas registradas, dos quais <b>${m.recCount} foram recuperados</b> (taxa de recuperação de <b>${pf(m.recRate)}</b>) e <b>${m.andamCount}</b> continuam em contato ativo.`:'Nenhum cancelamento com necessidade de recuperação registrado no período.'}</p>
   `;
 
-  // 6. Diagnóstico de Gargalos Sustentados pelos Dados
   const gargalos=[];
   if(m.cancRate>15){
     gargalos.push(`<b>Taxa de cancelamento elevada (${pf(m.cancRate)}):</b> Ocorreram ${m.totalCanc} cancelamentos nas consultas com desfecho da agenda. Investigar antecedência e método de confirmação prévia.`);
@@ -1112,7 +1100,6 @@ function generateDynamicSummary(m){
     ${gargalos.map(g=>`<p>• ${g}</p>`).join('')}
   `;
 
-  // 7. Pontos Positivos e Oportunidades
   const positivos=[];
   if(m.realRate>=60&&m.totalAgenda>0){
     positivos.push(`<b>Comparecimento consistente:</b> Taxa de presença na agenda em ${pf(m.realRate)} (${m.totalReal} consultas realizadas).`);
@@ -1131,7 +1118,6 @@ function generateDynamicSummary(m){
     ${positivos.map(p=>`<p>• ${p}</p>`).join('')}
   `;
 
-  // 8. Plano de Ação Priorizado
   const acoes=[];
   if(m.cancRate>15||(m.totalCanc>0&&m.recRate<30)){
     acoes.push(`• <b>[Prioridade ALTA] Ativação de confirmação prévia e resgate:</b> Taxa de cancelamento em ${pf(m.cancRate)} (${m.totalCanc} consultas canceladas). Ação: Ligar com 48h e 24h de antecedência. Meta interna: reduzir cancelamentos abaixo de 12%.`);
@@ -1326,8 +1312,7 @@ function setupChartTooltips(){
     }
   },{passive:true});
 }
-
-function dash(){
+  function dash(){
   const WA=W();
   const nW=WA.length;
   pFrom=nW?WA[0].id:'';
@@ -1504,17 +1489,50 @@ $('#cp_s').value=today();
 $('#cp_o').innerHTML=opts(ORIG,'novo');
 $('#wd').onchange=loadWeek;
 $('#cp').onclick=()=>{const id=$('#wd').value,ks=Object.keys(weeks).sort().filter(k=>k<id),p=ks.length?weeks[ks[ks.length-1]]:null;if(p){fillForm(p);toast('Valores copiados de '+fdf(ks[ks.length-1]))}else toast('Não há semana anterior')};
-$('#ws').onclick=async()=>{const id=$('#wd').value;if(!id)return toast('Escolha a data da semana');await saveDoc('weeks/'+id,readForm());toast('Semana salva')};
+
+// Gravação de Semana com feedback visual e tratamento de erro
+$('#ws').onclick=async()=>{
+  const id=$('#wd').value;
+  if(!id)return toast('Escolha a data da semana');
+  const btn=$('#ws');btn.disabled=true;btn.textContent='Salvando…';
+  try{
+    await saveDoc('weeks/'+id,readForm());
+    toast('Semana salva com sucesso!');
+  }catch(e){
+    toast('Erro ao salvar semana: '+(e.message||e));
+  }finally{
+    btn.disabled=false;btn.textContent='Salvar semana';
+  }
+};
+
 $('#wdel').onclick=async()=>{const id=$('#wd').value;if(weeks[id]&&confirm('Excluir a semana de '+fdf(id)+'?')){await delDoc('weeks/'+id);fillForm(null)}};
 $('#imp').onclick=()=>importRows($('#paste').value.split(/\r?\n/));
 $('#seed').onclick=async()=>{for(const [id,v] of Object.entries(SEED)){const o={};BASEF.forEach(([k],i)=>o[k]=v[i]);await saveDoc('weeks/'+id,{...(weeks[id]||{}),...o})}toast('Semanas carregadas')};
 $('#wl').onclick=e=>{const id=e.target.dataset.e;if(id){e.preventDefault();$('#wd').value=id;loadWeek();window.scrollTo({top:0,behavior:'smooth'})}};
 
+// Adição de Consulta com feedback visual e tratamento de erro
 $('#cp_add').onclick=async()=>{
-  const n=$('#cp_n').value.trim();if(!n)return toast('Informe o paciente');
-  const id='a'+Date.now().toString(36);
-  await saveDoc('appts/'+id,{patient:n,origin:$('#cp_o').value,schedOn:$('#cp_s').value||today(),consult:$('#cp_c').value,status:'agendada',regained:'',newDate:''});
-  $('#cp_n').value='';toast('Consulta adicionada');
+  const n=$('#cp_n').value.trim();
+  if(!n)return toast('Informe o paciente');
+  const btn=$('#cp_add');btn.disabled=true;btn.textContent='Adicionando…';
+  try{
+    const id='a'+Date.now().toString(36);
+    await saveDoc('appts/'+id,{
+      patient:n,
+      origin:$('#cp_o').value||'novo',
+      schedOn:$('#cp_s').value||today(),
+      consult:$('#cp_c').value||'',
+      status:'agendada',
+      regained:'',
+      newDate:''
+    });
+    $('#cp_n').value='';
+    toast('Consulta adicionada com sucesso!');
+  }catch(e){
+    toast('Erro ao adicionar consulta: '+(e.message||e));
+  }finally{
+    btn.disabled=false;btn.textContent='Adicionar consulta';
+  }
 };
 
 $('#al').onchange=async e=>{
@@ -1529,7 +1547,7 @@ $('#al').onchange=async e=>{
   render();
 };
 
-// Eventos de busca textual e limpeza na aba consultas
+// Eventos de busca textual na aba consultas
 $('#al').addEventListener('input',e=>{
   if(e.target&&e.target.id==='c_search'){
     aFilt.search=e.target.value;
@@ -1621,7 +1639,7 @@ $('#dash').onchange=e=>{
   if(t.id==='pp'){pSel=t.value;render()}
 };
 
-  $('#wl').addEventListener('click',async e=>{
+$('#wl').addEventListener('click',async e=>{
   const t=e.target,d=t.dataset;
   if(d.we){editRow=d.we;$('#wl').innerHTML=weekList();return}
   if(d.ws){const id=d.ws,o={...weeks[id]};document.querySelectorAll('#wl [data-ek]').forEach(i=>{o[i.dataset.ek]=Math.max(0,parseInt(i.value)||0)});editRow=null;await saveDoc('weeks/'+id,o);toast('Semana salva');return}
