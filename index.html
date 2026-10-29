@@ -28,10 +28,10 @@ main{max-width:1180px;margin:auto;padding:12px 22px 40px}
 .kpi small{display:block;color:var(--mut);font-size:12px;margin-top:2px}
 .lg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mut);margin-bottom:6px}
 .lg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
-svg{width:100%;height:auto;display:block;overflow:visible}
+svg{width:100%;height:auto;display:block}
 svg text{fill:var(--mut);font-size:10px;font-family:inherit}
-.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:14px;line-height:1.55}
-.ins p{margin:6px 0}
+.ins{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--a);border-radius:10px;padding:12px 16px;margin-bottom:14px}
+.ins p{margin:3px 0}
 .wrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
@@ -69,9 +69,10 @@ h2{font-size:15px;font-weight:600;letter-spacing:-.005em;margin-bottom:12px}
 .kpi span{display:block;font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
 .kpi b{font-size:30px;font-weight:700;letter-spacing:-.02em;margin-top:6px}
 .kpi small{line-height:1.35;margin-top:4px}
-.ins{border-radius:12px;background:color-mix(in srgb,var(--a) 9%,var(--card));border-color:color-mix(in srgb,var(--a) 30%,var(--line))}
+.ins{border-radius:12px;background:color-mix(in srgb,var(--a) 9%,var(--card));border-color:color-mix(in srgb,var(--a) 30%,var(--line));font-size:14px}
 .lg{font-size:12px;margin-bottom:8px}
 svg text{font-size:10.5px}
+svg rect{transition:opacity .15s}svg rect:hover{opacity:.82}
 th{font-size:11.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;background:var(--bg);position:sticky;top:0}
 th:first-child{border-radius:8px 0 0 8px}th:last-child{border-radius:0 8px 8px 0}
 td{padding:9px 8px}
@@ -99,18 +100,6 @@ body.locked>header,body.locked>main{display:none}
 #ov .box{max-width:480px}#ov .box h2{margin:0;font-size:18px}#ov .box p{margin:0}
 #lf label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 #sv{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--g);color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transform:translateY(6px);transition:opacity .2s,transform .2s;pointer-events:none}#sv.on{opacity:1;transform:none}
-
-/* Tooltip profissional para gráficos */
-#chart_tip{position:fixed;z-index:999;pointer-events:none;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:8px 12px;font-size:12px;line-height:1.45;box-shadow:0 6px 22px rgba(0,0,0,.2);opacity:0;transform:translate(-50%,-100%) translateY(-10px);transition:opacity .15s ease,transform .15s ease;min-width:140px;max-width:260px;font-feature-settings:"tnum"}
-#chart_tip.on{opacity:1;transform:translate(-50%,-100%) translateY(-12px)}
-#chart_tip .tip-title{font-weight:700;font-size:13px;margin-bottom:2px;display:flex;align-items:center;gap:6px}
-#chart_tip .tip-title i{display:inline-block;width:9px;height:9px;border-radius:2px;flex-shrink:0}
-#chart_tip .tip-cat{color:var(--mut);font-size:11px;margin-bottom:5px}
-#chart_tip .tip-val{font-size:12.5px;color:var(--ink)}
-#chart_tip .tip-total{margin-top:5px;padding-top:4px;border-top:1px dashed var(--line);font-size:11px;color:var(--mut)}
-svg [data-tip-series]{cursor:pointer;transition:transform .1s ease,filter .15s ease,opacity .15s ease}
-svg rect[data-tip-series]:hover{filter:brightness(1.18);opacity:.96}
-svg circle[data-tip-series]:hover{filter:brightness(1.25);stroke-width:2.5px}
 </style>
 </head>
 <body class="locked">
@@ -150,21 +139,22 @@ svg circle[data-tip-series]:hover{filter:brightness(1.25);stroke-width:2.5px}
     <div class="row"><button class="b" id="cp_add">Adicionar consulta</button></div>
   </div>
 
+  <!-- Importação com prévia e sem salvamento automático -->
   <div class="card" style="margin-top:14px">
     <h2>Colar dados do paciente</h2>
-    <p class="note">Cole ou digite os dados dos pacientes. O sistema irá <b>apenas interpretar o texto e montar uma prévia</b> em tela para sua revisão. <b>Nenhum dado é salvo no Firebase automaticamente</b>. O salvamento ocorre exclusivamente ao clicar em <b>“Salvar consultas”</b>.</p>
-    <textarea id="ps_t" rows="3" style="width:100%" placeholder="Exemplos:&#10;Maria S. ; 3º contato ; 28/10&#10;João Silva ; Novo lead ; 05/11/2026 ; Realizada&#10;Ou cole um trecho de conversa..."></textarea>
+    <p class="note">Cole ou digite os dados dos pacientes. O sistema identifica os dados e gera uma <b>pré-visualização para revisão</b>. Nenhum dado é gravado no Firebase automaticamente. Revise, altere ou remova itens antes de confirmar o salvamento.</p>
+    <textarea id="ps_t" rows="3" style="width:100%" placeholder="Exemplos:&#10;Maria S. ; 3º contato ; 28/10&#10;João Silva ; Novo lead ; 05/11/2026&#10;Ou cole trecho de conversa..."></textarea>
     <div class="row" style="margin-top:8px">
-      <button class="b s" type="button" id="ps_btn_parse">Interpretar texto</button>
-      <button class="b s" type="button" id="ps_btn_clear">Limpar</button>
-      <button class="b" type="button" id="ps_save_btn" disabled>Salvar consultas (0)</button>
+      <button class="b s" id="ps_btn_parse">Interpretar texto</button>
+      <button class="b s" id="ps_btn_clear">Limpar</button>
+      <button class="b" id="ps_save_btn" disabled>Salvar consultas (0)</button>
     </div>
     <div id="ps_preview_box" style="margin-top:14px"></div>
   </div>
 
   <div class="card wrap" style="margin-top:14px">
     <h2>Consultas registradas</h2>
-    <p class="note">Mude o status quando a consulta acontecer (check-in), for cancelada ou reagendada.</p>
+    <p class="note">Mude o status quando a consulta acontecer (check-in), for cancelada ou reagendada. Comparecimento, cancelamento e reagendamento são recalculados automaticamente pela data da consulta.</p>
     <div id="al"></div>
   </div>
 </section>
@@ -173,7 +163,6 @@ svg circle[data-tip-series]:hover{filter:brightness(1.25);stroke-width:2.5px}
 </main>
 
 <div id="msg"></div><div id="sv" role="status" aria-live="polite"></div><div id="ov"></div>
-<div id="chart_tip" role="tooltip" aria-hidden="true"></div>
 <div id="lg"><form id="lf" autocomplete="on"><h1>Painel KOMMO</h1><p class="note" style="margin:0">Acesso restrito.</p><label>Nome de usuário<input id="lu" autocomplete="username" required></label><label>Senha<input id="lp" type="password" autocomplete="current-password" required></label><p id="le" class="note" style="color:var(--r);margin:0;min-height:1.2em"></p><button class="b" id="lb" type="submit">Entrar</button></form></div>
 
 <script>
@@ -204,113 +193,14 @@ function toast(t){
 async function saveDoc(path,data){const [col,id]=path.split('/');await DATA.write(col,id,data)}
 async function delDoc(path){const [col,id]=path.split('/');await DATA.write(col,id,null)}
 
-/* ---------- SheetDB Oficial com Validação Inteligente ---------- */
+/* ---------- SheetDB Oficial e Independente ---------- */
 let syncing=false;
 const SDB={semanas:'https://sheetdb.io/api/v1/sk39abnekybca',consultas:'https://sheetdb.io/api/v1/fhrcm4cao9i6e'};
 const SHN={semanas:'Lançar Semanas',consultas:'Consultas'};
+
+// Cabeçalhos oficiais imutáveis exigidos nas planilhas
 const WCOLS=['semana','novos','antigas','ativas','fu2','fu3','fu4','fu5','resp','agend','semresp','pensando','aguard','nao','cagend','ccanc','creag','creal'];
 const ACOLS=['id','paciente','origem','agendada_em','consulta','status','reagendou','nova_data'];
-
-function cleanKey(str){
-  return String(str||'')
-    .replace(/^\uFEFF/,'')
-    .replace(/[\u200B-\u200D\uFEFF]/g,'')
-    .replace(/\u00A0/g,' ')
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g,'');
-}
-
-function extractKeysFromResponse(data){
-  if(!data)return [];
-  if(Array.isArray(data)){
-    if(!data.length)return [];
-    if(typeof data[0]==='string')return data.map(s=>String(s).trim());
-    if(typeof data[0]==='object'&&data[0]!==null){
-      if('name' in data[0]&&typeof data[0].name==='string')return data.map(item=>String(item.name||'').trim());
-      if('key' in data[0]&&typeof data[0].key==='string')return data.map(item=>String(item.key||'').trim());
-      const s=new Set();
-      data.forEach(r=>{if(r&&typeof r==='object')Object.keys(r).forEach(k=>s.add(k.trim()))});
-      return Array.from(s);
-    }
-  }
-  if(typeof data==='object'&&data!==null){
-    if(Array.isArray(data.keys))return data.keys.map(s=>String(s).trim());
-    if(Array.isArray(data.columns))return data.columns.map(s=>String(s).trim());
-    return Object.keys(data).map(s=>s.trim());
-  }
-  return [];
-}
-
-function buildSheetDbUrl(baseUrl,path='',query=''){
-  const [base,existingQuery]=baseUrl.split('?');
-  const fullPath=base.replace(/\/+$/,'')+(path?'/'+path.replace(/^\/+/,''):'');
-  const params=new URLSearchParams(existingQuery||'');
-  if(query){
-    const extra=new URLSearchParams(query);
-    for(const [k,v] of extra.entries())params.set(k,v);
-  }
-  const qStr=params.toString();
-  return fullPath+(qStr?'?'+qStr:'');
-}
-
-async function sdb(url,opt){
-  const c=new AbortController(),t=setTimeout(()=>c.abort(),25000);
-  try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'})}
-  catch(e){throw new Error(e&&e.name==='AbortError'?'Tempo esgotado (25s) sem resposta do SheetDB':(navigator.onLine===false?'Sem conexão com a internet':'Bloqueio de rede ou CORS ao conectar no SheetDB'))}
-  finally{clearTimeout(t)}
-}
-
-async function httpErr(r,what){
-  let b='';try{b=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch(e){}
-  const dica=r.status===402||r.status===429?' (limite de requisições do plano SheetDB atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (autenticação exigida ou negada)':'';
-  return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''));
-}
-
-async function resolveSheetEndpoint(sh,cols){
-  const baseUrl=SDB[sh];
-  const sheetName=SHN[sh];
-  const candidateUrls=[
-    baseUrl,
-    buildSheetDbUrl(baseUrl,'','sheet='+encodeURIComponent(sheetName)),
-    buildSheetDbUrl(baseUrl,'','sheet='+encodeURIComponent(sh))
-  ];
-
-  let lastKeys=[];
-  let lastError=null;
-
-  for(const testUrl of candidateUrls){
-    try{
-      const keysUrl=buildSheetDbUrl(testUrl,'keys');
-      let r=await sdb(keysUrl);
-      let data=null;
-      if(r.ok){
-        data=await r.json();
-      }else{
-        const rootUrl=buildSheetDbUrl(testUrl,'','limit=1');
-        r=await sdb(rootUrl);
-        if(r.ok)data=await r.json();
-      }
-
-      if(data){
-        const extracted=extractKeysFromResponse(data);
-        if(extracted.length>0){
-          lastKeys=extracted;
-          const normExtracted=extracted.map(cleanKey);
-          const miss=cols.filter(c=>!normExtracted.includes(cleanKey(c)));
-          if(miss.length===0){
-            return {url:testUrl,keys:extracted,ok:true};
-          }
-        }
-      }
-    }catch(e){
-      lastError=e.message||String(e);
-    }
-  }
-
-  return {url:baseUrl,keys:lastKeys,ok:false,error:lastError};
-}
 
 function persistSync(){
   try{localStorage.setItem('kommo_sync_v3',JSON.stringify(sync));return true}catch(e){return false}
@@ -337,6 +227,7 @@ function initSyncState(){
   };
 }
 
+// Fuso horário oficial America/Sao_Paulo
 function getSaoPauloParts(d=new Date()){
   const f=new Intl.DateTimeFormat('en-US',{
     timeZone:'America/Sao_Paulo',
@@ -354,23 +245,28 @@ function getSaoPauloParts(d=new Date()){
   };
 }
 
+// Retorna ID e horário do último slot programado no fuso de SP
 function getLastSlotInfo(now=new Date()){
   for(let i=0;i<=7;i++){
     const d=new Date(now.getTime()-i*86400000);
     const sp=getSaoPauloParts(d);
     if(sp.weekday>=1&&sp.weekday<=5){
       const h=sp.weekday===5?16:17,m=sp.weekday===5?50:53;
+      const slotTime=new Date(now.getTime()-i*86400000);
+      // Ajusta horário aproximado
       const spNow=getSaoPauloParts(now);
       const diffMins=(spNow.hour*60+spNow.minute)-(h*60+m)+(i*1440);
       if(diffMins>=0){
         const slotDateStr=`${sp.year}-${String(sp.month).padStart(2,'0')}-${String(sp.day).padStart(2,'0')}`;
-        return {id:`${slotDateStr}_${h}h${m}`,dateStr:slotDateStr,hour:h,minute:m,timestamp:now.getTime()-diffMins*60000};
+        const slotId=`${slotDateStr}_${h}h${m}`;
+        return {id:slotId,dateStr:slotDateStr,hour:h,minute:m,timestamp:now.getTime()-diffMins*60000};
       }
     }
   }
   return null;
 }
 
+// Próximo envio programado
 function getNextSlotString(now=new Date()){
   const sp=getSaoPauloParts(now);
   for(let i=0;i<=7;i++){
@@ -390,71 +286,74 @@ function getNextSlotString(now=new Date()){
   return 'Segunda-feira às 17:53 (horário de Brasília)';
 }
 
+async function sdb(url,opt){
+  const c=new AbortController(),t=setTimeout(()=>c.abort(),25000);
+  try{return await fetch(url,{...opt,signal:c.signal,cache:'no-store'})}
+  catch(e){throw new Error(e&&e.name==='AbortError'?'Tempo esgotado (25s) sem resposta do SheetDB':(navigator.onLine===false?'Sem conexão com a internet':'Bloqueio de rede ou CORS ao conectar no SheetDB'))}
+  finally{clearTimeout(t)}
+}
+
+async function httpErr(r,what){
+  let b='';try{b=(await r.text()).replace(/\s+/g,' ').slice(0,140)}catch(e){}
+  const dica=r.status===402||r.status===429?' (limite de requisições do plano SheetDB atingido)':r.status===404?' (link da API não encontrado)':r.status===401||r.status===403?' (autenticação exigida ou negada)':'';
+  return new Error(what+': HTTP '+r.status+dica+(b?' – '+b:''));
+}
+
+// Validação dos cabeçalhos oficiais com tolerância a maiúsculas e espaços
+async function checkKeys(sh,cols){
+  const r=await sdb(SDB[sh]+'/keys');
+  if(!r.ok)return;
+  let k;try{k=await r.json()}catch(e){return}
+  if(!Array.isArray(k))return;
+  const norm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const sheetKeysNorm=k.map(norm);
+  const miss=cols.filter(c=>!sheetKeysNorm.includes(norm(c)));
+  if(miss.length){
+    throw new Error(`A aba "${SHN[sh]}" no Google Sheets precisa destes cabeçalhos na Linha 1: ${cols.join(', ')}. Cabeçalhos ausentes identificados: ${miss.join(', ')}`);
+  }
+}
+
 function addSyncHistory(sh,ok,msg){
   const item={t:Date.now(),sh,ok,m:String(msg).slice(0,180)};
   sync.hist=[item,...(sync.hist||[])].slice(0,12);
 }
 
+// Sincronização independente por planilha
 async function syncSingleSheet(sh){
   const isSem=sh==='semanas';
   const cols=isSem?WCOLS:ACOLS;
   const kc=isSem?'semana':'id';
+  const url=SDB[sh];
   const hd={'Content-Type':'application/json',Accept:'application/json'};
+
+  const rows=isSem
+    ? W().map(w=>({semana:String(w.id||''),novos:Number(w.novos||0),antigas:Number(w.antigas||0),ativas:Number(w.ativas||0),fu2:Number(w.fu2||0),fu3:Number(w.fu3||0),fu4:Number(w.fu4||0),fu5:Number(w.fu5||0),resp:Number(w.resp||0),agend:Number(w.agend||0),semresp:Number(w.semresp||0),pensando:Number(w.pensando||0),aguard:Number(w.aguard||0),nao:Number(w.nao||0),cagend:Number(w.cagend||0),ccanc:Number(w.ccanc||0),creag:Number(w.creag||0),creal:Number(w.creal||0)}))
+    : Object.entries(appts).map(([id,a])=>({id:String(id||''),paciente:String(a.patient||''),origem:String(ORIG[a.origin]||a.origin||''),agendada_em:String(a.schedOn||''),consulta:String(a.consult||''),status:String(STAT[a.status]||a.status||''),reagendou:String(REG[a.regained||'']||a.regained||''),nova_data:String(a.newDate||'')}));
 
   sync[sh].status='syncing';
   sync[sh].lastAttempt=Date.now();
   paintSync();
 
   try{
-    const check=await resolveSheetEndpoint(sh,cols);
-    if(!check.ok){
-      const foundNorm=(check.keys||[]).map(cleanKey);
-      const miss=cols.filter(c=>!foundNorm.includes(cleanKey(c)));
-      let detail=`Aba "${SHN[sh]}": cabeçalhos ausentes: ${miss.join(', ')}.`;
-      if(check.keys&&check.keys.length){
-        detail+=` Encontrados na planilha: ${check.keys.join(', ')}.`;
-        if(!isSem&&check.keys.some(k=>cleanKey(k)==='semana')){
-          detail+=` (Aviso: foram detectados cabeçalhos da aba 'Lançar Semanas'. Confirme se a aba no Google Sheets está nomeada exatamente como 'Consultas').`;
-        }
-      }
-      if(check.error)detail+=` Erro: ${check.error}`;
-      throw new Error(detail);
-    }
-
-    const resolvedUrl=check.url;
-    const rows=isSem
-      ? W().map(w=>({semana:String(w.id||''),novos:Number(w.novos||0),antigas:Number(w.antigas||0),ativas:Number(w.ativas||0),fu2:Number(w.fu2||0),fu3:Number(w.fu3||0),fu4:Number(w.fu4||0),fu5:Number(w.fu5||0),resp:Number(w.resp||0),agend:Number(w.agend||0),semresp:Number(w.semresp||0),pensando:Number(w.pensando||0),aguard:Number(w.aguard||0),nao:Number(w.nao||0),cagend:Number(w.cagend||0),ccanc:Number(w.ccanc||0),creag:Number(w.creag||0),creal:Number(w.creal||0)}))
-      : Object.entries(appts).map(([id,a])=>({id:String(id||''),paciente:String(a.patient||''),origem:String(ORIG[a.origin]||a.origin||''),agendada_em:String(a.schedOn||''),consulta:String(a.consult||''),status:String(STAT[a.status]||a.status||''),reagendou:String(REG[a.regained||'']||a.regained||''),nova_data:String(a.newDate||'')}));
-
-    const r=await sdb(resolvedUrl);
+    await checkKeys(sh,cols);
+    const r=await sdb(url);
     if(!r.ok)throw await httpErr(r,'Ler aba "'+SHN[sh]+'"');
     const ex=await r.json();
     if(!Array.isArray(ex))throw new Error('Resposta inválida do SheetDB ao consultar "'+SHN[sh]+'"');
 
-    const have=new Map();
-    ex.forEach(x=>{
-      const val=String(x[kc]||'').trim();
-      if(val)have.set(val.toLowerCase(),val);
-    });
+    const have=new Set(ex.map(x=>String(x[kc]||'').trim()));
+    const toUpdate=rows.filter(x=>have.has(String(x[kc]).trim()));
+    const toAdd=rows.filter(x=>!have.has(String(x[kc]).trim()));
 
-    const toUpdate=[];
-    const toAdd=[];
-    rows.forEach(x=>{
-      const keyVal=String(x[kc]||'').trim();
-      if(have.has(keyVal.toLowerCase()))toUpdate.push(x);
-      else toAdd.push(x);
-    });
-
+    // Atualiza existentes sem apagar
     for(const x of toUpdate){
-      const keyVal=String(x[kc]||'').trim();
-      const patchUrl=buildSheetDbUrl(resolvedUrl,`${kc}/${encodeURIComponent(keyVal)}`);
-      const patchRes=await sdb(patchUrl,{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});
+      const patchRes=await sdb(url+'/'+kc+'/'+encodeURIComponent(x[kc]),{method:'PATCH',headers:hd,body:JSON.stringify({data:x})});
       if(!patchRes.ok)throw await httpErr(patchRes,'Atualizar linha na aba "'+SHN[sh]+'"');
     }
 
+    // Acrescenta novos
     if(toAdd.length){
-      const postUrl=buildSheetDbUrl(resolvedUrl);
-      const postRes=await sdb(postUrl,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
+      const postRes=await sdb(url,{method:'POST',headers:hd,body:JSON.stringify({data:toAdd})});
       if(!postRes.ok)throw await httpErr(postRes,'Acrescentar linhas na aba "'+SHN[sh]+'"');
     }
 
@@ -467,7 +366,7 @@ async function syncSingleSheet(sh){
       rowsUpdated:toUpdate.length,
       rowsAdded:toAdd.length
     };
-    addSyncHistory(sh,true,`Enviado: ${rows.length} total (${toUpdate.length} atualizados, ${toAdd.length} novos)`);
+    addSyncHistory(sh,true,`Enviado com sucesso: ${rows.length} total (${toUpdate.length} atualizados, ${toAdd.length} novos)`);
     return true;
   }catch(err){
     const msg=String(err.message||err);
@@ -488,6 +387,7 @@ async function sheetSync(trigger='manual'){
   const lastSlot=getLastSlotInfo();
   if(lastSlot)sync.general.lastAttemptSlot=lastSlot.id;
 
+  // Execução independente: a falha de uma não impede a outra
   const resSem=await syncSingleSheet('semanas');
   const resApp=await syncSingleSheet('consultas');
 
@@ -501,8 +401,8 @@ async function sheetSync(trigger='manual'){
   }else if(resSem||resApp){
     sync.general.status='partial_error';
     sync.general.retryCount=(sync.general.retryCount||0)+1;
-    sync.general.retryAt=Date.now()+600000;
-    toast('SheetDB: sincronização parcial');
+    sync.general.retryAt=Date.now()+600000; // 10 minutos
+    toast('SheetDB: sincronização parcial (uma das planilhas falhou)');
   }else{
     sync.general.status='error';
     sync.general.retryCount=(sync.general.retryCount||0)+1;
@@ -522,18 +422,9 @@ async function sheetTest(){
   for(const sh of ['semanas','consultas']){
     try{
       const cols=sh==='semanas'?WCOLS:ACOLS;
-      const check=await resolveSheetEndpoint(sh,cols);
-      if(!check.ok){
-        const foundNorm=(check.keys||[]).map(cleanKey);
-        const miss=cols.filter(c=>!foundNorm.includes(cleanKey(c)));
-        let detail=`Aba "${SHN[sh]}": `;
-        if(miss.length)detail+=`cabeçalhos ausentes: ${miss.join(', ')}. `;
-        if(check.keys&&check.keys.length)detail+=`Encontrados na planilha: ${check.keys.join(', ')}. `;
-        if(check.error)detail+=`Erro: ${check.error}`;
-        throw new Error(detail);
-      }
+      await checkKeys(sh,cols);
       sync[sh].error='';
-      toast(`Planilha "${SHN[sh]}": conexão e cabeçalhos OK!`);
+      toast(`Planilha "${SHN[sh]}": cabeçalhos e conexão OK!`);
     }catch(err){
       sync[sh].error=err.message;
       alert(`Teste na planilha "${SHN[sh]}":\n`+err.message);
@@ -545,11 +436,13 @@ async function sheetTest(){
 
 function tickSync(){
   if(syncing||!(window.DATA&&DATA.ready))return;
+  // 1. Retentativa de erro (10 minutos)
   if(sync.general.retryAt&&Date.now()>=sync.general.retryAt){
     sync.general.retryAt=0;
     sheetSync('retry');
     return;
   }
+  // 2. Horário programado ou pendente após abertura
   const lastSlot=getLastSlotInfo();
   if(lastSlot&&sync.general.lastSuccessSlot!==lastSlot.id&&sync.general.lastAttemptSlot!==lastSlot.id){
     sheetSync('slot_pending');
@@ -581,7 +474,7 @@ function syncInner(){
 
   return `
     <h2>Sincronização com o SheetDB</h2>
-    <p class="note">O Firebase é a fonte oficial dos dados. A sincronização automática ocorre de <b>segunda a quinta às 17h53</b> e na <b>sexta às 16h50</b> (horário de Brasília). <i>O navegador precisa estar aberto no horário para executar; caso esteja fechado, a sincronização é executada assim que o painel for aberto.</i></p>
+    <p class="note">O Firebase é a fonte oficial dos dados. O envio ao SheetDB é independente e atualiza linhas existentes sem apagar nada. A sincronização automática ocorre de <b>segunda a quinta às 17h53</b> e na <b>sexta às 16h50</b> (horário de Brasília). <i>Atenção: o navegador precisa estar aberto no horário para executar o envio; caso a página esteja fechada, o envio pendente é executado assim que o painel for aberto.</i></p>
 
     <div style="background:var(--bg);padding:12px;border-radius:10px;margin:12px 0">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
@@ -590,10 +483,11 @@ function syncInner(){
       </div>
       <p style="margin:4px 0" class="note">Última sincronização completa bem-sucedida: <b>${fdt(g.lastSuccess)}</b></p>
       <p style="margin:4px 0" class="note">Última tentativa geral: <b>${fdt(g.lastAttempt)}</b></p>
-      ${g.retryAt?`<p class="note" style="color:var(--a);margin:4px 0">Nova tentativa agendada para <b>${new Date(g.retryAt).toLocaleTimeString('pt-BR',{timeStyle:'short'})}</b> (tentativa #${g.retryCount})</p>`:''}
+      ${g.retryAt?`<p class="note" style="color:var(--a);margin:4px 0">Nova tentativa automática agendada para <b>${new Date(g.retryAt).toLocaleTimeString('pt-BR',{timeStyle:'short'})}</b> (tentativa #${g.retryCount})</p>`:''}
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:12px 0">
+      <!-- Card Semanas -->
       <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--card)">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <b>Planilha: Lançar Semanas</b>
@@ -605,6 +499,7 @@ function syncInner(){
         ${sem.error?`<p class="note" style="color:var(--r);margin-top:6px;word-break:break-word">${esc(sem.error)}</p>`:''}
       </div>
 
+      <!-- Card Consultas -->
       <div style="border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--card)">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <b>Planilha: Consultas</b>
@@ -649,9 +544,6 @@ function paintSync(){
 
 function stLine(){
   const fbOk=window.DATA&&DATA.ready;
-  const lastReadStr=window.DATA&&window.DATA.lastRead
-    ? new Intl.DateTimeFormat('pt-BR',{timeZone:'America/Sao_Paulo',hour:'2-digit',minute:'2-digit'}).format(new Date(window.DATA.lastRead))
-    : '';
   const sText=sync.general.status==='success'
     ?'SheetDB: sincronizado'
     :sync.general.status==='partial_error'
@@ -659,7 +551,7 @@ function stLine(){
     :sync.general.status==='error'
     ?'SheetDB: erro'
     :'SheetDB: aguardando';
-  $('#st').textContent=`Firebase: ${fbOk?'conectado'+(lastReadStr?' (às '+lastReadStr+')':''):'sem conexão'} · ${sText}${sync.general.lastSuccess?' ('+fdt(sync.general.lastSuccess)+')':''}`;
+  $('#st').textContent=`Firebase: ${fbOk?'conexão confirmada':'sem conexão'} · ${sText}${sync.general.lastSuccess?' ('+fdt(sync.general.lastSuccess)+')':''}`;
 }
 
 function init(){
@@ -667,7 +559,6 @@ function init(){
   applyCfg();
   stLine();
   render();
-  setupChartTooltips();
   tickSync();
   setInterval(tickSync,30000);
 }
@@ -757,7 +648,7 @@ async function addM(){
   await saveCfg({metrics:[...(cfg.metrics||[]),m]});renderCfg();toast('Adicionado ao painel');
 }
 
-/* ---------- Importação Manual de Consultas ---------- */
+/* ---------- Importação Manual de Consultas com Prévia ---------- */
 let pastePreview=[];
 let isSavingPaste=false;
 
@@ -801,6 +692,7 @@ function parsePatientLine(l,defaultYear){
   if(!name||name.length<2)return null;
 
   return {
+    id:'prev_'+Math.random().toString(36).slice(2,8),
     patient:name.slice(0,200),
     origin,
     schedOn:today(),
@@ -817,24 +709,24 @@ function updatePastePreviewUI(){
   const btnSave=$('#ps_save_btn');
   if(!box||!btnSave)return;
 
-  const validItems=pastePreview.filter(p=>p&&typeof p.patient==='string'&&p.patient.trim().length>=2);
+  const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
   btnSave.textContent=`Salvar consultas (${validItems.length})`;
   btnSave.disabled=validItems.length===0||isSavingPaste;
 
   if(!txt&&!pastePreview.length){
-    box.innerHTML='<p class="note">Nenhum texto inserido. A prévia aparecerá aqui antes de salvar.</p>';
+    box.innerHTML='<p class="note">Nenhum texto inserido. A prévia aparecerá aqui após digitar ou colar.</p>';
     return;
   }
 
   if(txt&&!pastePreview.length){
-    box.innerHTML='<p class="note" style="color:var(--r)">Nenhum paciente válido identificado no texto. Formatos aceitos: <code>Nome ; Origem ; Data</code> (ex.: <i>Maria S. ; 3º contato ; 28/10</i>) ou conversa contendo nome e data.</p>';
+    box.innerHTML='<p class="note" style="color:var(--r)">Nenhum paciente válido identificado no texto. Verifique se informou ao menos o nome do paciente (ex.: <i>Maria S. ; 3º contato ; 28/10</i>).</p>';
     return;
   }
 
   box.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <b>Pré-visualização para revisão (${pastePreview.length} registro${pastePreview.length>1?'s':''})</b>
-      <span class="note">Revise ou edite os dados antes de gravar no Firebase</span>
+      <span class="note">Edite os campos ou clique no × para remover</span>
     </div>
     <div class="wrap">
       <table>
@@ -853,7 +745,7 @@ function updatePastePreviewUI(){
             <td><input type="date" data-pidx="${idx}" data-pk="schedOn" value="${item.schedOn||today()}"></td>
             <td><input type="date" data-pidx="${idx}" data-pk="consult" value="${item.consult||''}"></td>
             <td><select data-pidx="${idx}" data-pk="status">${opts(STAT,item.status)}</select></td>
-            <td><button class="x" type="button" data-pdel="${idx}" title="Remover da prévia" aria-label="Remover">×</button></td>
+            <td><button class="x" data-pdel="${idx}" title="Remover da prévia" aria-label="Remover">×</button></td>
           </tr>
         `).join('')}
       </table>
@@ -879,15 +771,10 @@ function parseInputText(){
   updatePastePreviewUI();
 }
 
-async function savePreviewAppts(isExplicitUserClick){
-  if(isExplicitUserClick!==true)return;
+async function savePreviewAppts(){
   if(isSavingPaste)return;
-
-  const validItems=pastePreview.filter(p=>p&&typeof p.patient==='string'&&p.patient.trim().length>=2);
-  if(!validItems.length){
-    alert("Nenhum paciente válido na prévia para salvar.");
-    return;
-  }
+  const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
+  if(!validItems.length)return;
 
   isSavingPaste=true;
   const btnSave=$('#ps_save_btn');
@@ -898,6 +785,7 @@ async function savePreviewAppts(isExplicitUserClick){
     for(const item of validItems){
       const p=item.patient.trim();
       const c=/^\d{4}-\d{2}-\d{2}$/.test(item.consult||'')?item.consult:'';
+      // Evita duplicação caso já exista idêntico na memória local
       if(Object.values(appts).some(a=>a.patient===p&&(a.consult||'')===c))continue;
 
       const newId='a'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -918,7 +806,7 @@ async function savePreviewAppts(isExplicitUserClick){
     updatePastePreviewUI();
   }catch(err){
     console.error("Erro ao salvar consultas:",err);
-    alert("Erro ao gravar consultas no Firebase: "+(err.message||err)+"\n\nO texto e a prévia foram preservados.");
+    alert("Erro ao gravar consultas no Firebase: "+(err.message||err)+"\n\nO texto e a prévia foram preservados para você tentar novamente.");
     toast("Falha ao salvar. Prévia preservada.");
   }finally{
     isSavingPaste=false;
@@ -926,404 +814,66 @@ async function savePreviewAppts(isExplicitUserClick){
   }
 }
 
-/* ---------- Motor de Resumo Dinâmico ---------- */
+/* ---------- Derived & Dashboard ---------- */
+const W=()=>{
+  const ids=Object.keys(weeks).sort(),ap=Object.values(appts);
+  return ids.map((id,i)=>{
+    const end=ids[i+1]||'9999-12-31';
+    const n=ap.filter(a=>(a.schedOn||'')>=id&&(a.schedOn||'')<end).length;
+    const dn=ap.filter(a=>(a.consult||'')>=id&&(a.consult||'')<end&&(a.status==='realizada'||a.status==='cancelada'||a.status==='reagendada'));
+    const o={id,...weeks[id],cagend:n||(weeks[id].cagend||0),auto:n>0};
+    if(dn.length){
+      o.creal=dn.filter(a=>a.status==='realizada').length;
+      o.ccanc=dn.filter(a=>a.status==='cancelada').length;
+      o.creag=dn.filter(a=>a.status==='reagendada').length;
+      o.autoS=true;
+    }
+    return o;
+  });
+};
 const msgs=w=>(w.fu2||0)+(w.fu3||0)+(w.fu4||0)+(w.fu5||0);
 function sum(arr,f){return arr.reduce((a,w)=>a+(typeof f==='function'?f(w):(w[f]||0)),0)}
 
-function calculatePeriodMetrics(ws,ap,allWeeks){
-  if(!ws||!ws.length)return null;
-
-  const numWeeks=ws.length;
-  const isMulti=numWeeks>1;
-  const startDate=ws[0].id;
-  const endDate=ws[numWeeks-1].id;
-
-  const totalNovos=sum(ws,'novos');
-  const totalAntigas=sum(ws,'antigas');
-  const totalAtivasSum=sum(ws,'ativas');
-  const totalFu2=sum(ws,'fu2');
-  const totalFu3=sum(ws,'fu3');
-  const totalFu4=sum(ws,'fu4');
-  const totalFu5=sum(ws,'fu5');
-  const totalMsgs=sum(ws,msgs);
-  const totalResp=sum(ws,'resp');
-  const totalAgend=sum(ws,'agend');
-
-  const totalCagend=sum(ws,'cagend');
-  const totalReal=sum(ws,'creal');
-  const totalCanc=sum(ws,'ccanc');
-  const totalReag=sum(ws,'creag');
-  const totalAgenda=totalReal+totalCanc+totalReag;
-
-  const lastW=ws[numWeeks-1];
-  const firstW=ws[0];
-
-  const ativasFinal=lastW.ativas||0;
-  const semrespFinal=lastW.semresp||0;
-  const pensandoFinal=lastW.pensando||0;
-  const aguardFinal=lastW.aguard||0;
-  const naoFinal=lastW.nao||0;
-
-  const respRate=totalMsgs>0?(totalResp/totalMsgs*100):0;
-  const convRate=totalResp>0?(totalAgend/totalResp*100):0;
-  const realRate=totalAgenda>0?(totalReal/totalAgenda*100):0;
-  const cancRate=totalAgenda>0?(totalCanc/totalAgenda*100):0;
-  const reagRate=totalAgenda>0?(totalReag/totalAgenda*100):0;
-
-  const perd=ap.filter(a=>a.status==='cancelada'||a.status==='reagendada');
-  const rec=perd.filter(a=>a.regained==='sim').length;
-  const recRate=perd.length>0?(rec/perd.length*100):0;
-  const andam=perd.filter(a=>a.regained==='contato').length;
-
-  let multiData=null;
-  if(isMulti){
-    const bestLeads=ws.reduce((max,w)=>(w.novos||0)>(max.novos||0)?w:max,ws[0]);
-    const worstLeads=ws.reduce((min,w)=>(w.novos||0)<(min.novos||0)?w:min,ws[0]);
-
-    const wsWithMsgs=ws.filter(w=>msgs(w)>0);
-    const bestResp=wsWithMsgs.length
-      ? wsWithMsgs.reduce((max,w)=>pct(w.resp||0,msgs(w))>pct(max.resp||0,msgs(max))?w:max,wsWithMsgs[0])
-      : null;
-    const worstResp=wsWithMsgs.length
-      ? wsWithMsgs.reduce((min,w)=>pct(w.resp||0,msgs(w))<pct(min.resp||0,msgs(min))?w:min,wsWithMsgs[0])
-      : null;
-
-    const bestAgend=ws.reduce((max,w)=>(w.agend||0)>(max.agend||0)?w:max,ws[0]);
-    const worstAgend=ws.reduce((min,w)=>(w.agend||0)<(min.agend||0)?w:min,ws[0]);
-
-    multiData={
-      bestLeads,
-      worstLeads,
-      bestResp,
-      worstResp,
-      bestAgend,
-      worstAgend,
-      deltaLeads:(lastW.novos||0)-(firstW.novos||0),
-      deltaMsgs:msgs(lastW)-msgs(firstW),
-      deltaRespRate:pct(lastW.resp||0,msgs(lastW))-pct(firstW.resp||0,msgs(firstW)),
-      deltaSemresp:(lastW.semresp||0)-(firstW.semresp||0),
-      deltaNao:(lastW.nao||0)-(firstW.nao||0)
-    };
-  }
-
-  let singleData=null;
-  if(!isMulti){
-    const curIdx=allWeeks.findIndex(w=>w.id===ws[0].id);
-    const prevW=(curIdx>0)?allWeeks[curIdx-1]:null;
-    singleData={
-      curW:ws[0],
-      prevW,
-      deltaLeads:prevW?(ws[0].novos||0)-(prevW.novos||0):0,
-      deltaMsgs:prevW?msgs(ws[0])-msgs(prevW):0,
-      deltaRespRate:prevW?pct(ws[0].resp||0,msgs(ws[0]))-pct(prevW.resp||0,msgs(prevW)):0,
-      deltaSemresp:prevW?(ws[0].semresp||0)-(prevW.semresp||0):0
-    };
-  }
-
-  return {
-    numWeeks,isMulti,startDate,endDate,
-    totalNovos,totalAntigas,totalAtivasSum,totalFu2,totalFu3,totalFu4,totalFu5,
-    totalMsgs,totalResp,totalAgend,totalCagend,totalReal,totalCanc,totalReag,totalAgenda,
-    ativasFinal,semrespFinal,pensandoFinal,aguardFinal,naoFinal,
-    respRate,convRate,realRate,cancRate,reagRate,
-    perdCount:perd.length,recCount:rec,recRate,andamCount:andam,
-    multiData,singleData
-  };
-}
-
-function generateDynamicSummary(m){
-  if(!m)return '<p class="note">Nenhum dado disponível para o período selecionado.</p>';
-
-  let secA='';
-  if(m.isMulti){
-    secA=`
-      <p style="margin:2px 0 6px"><b>A. Visão Geral do Período (${m.numWeeks} semanas: de ${fdf(m.startDate)} a ${fdf(m.endDate)})</b></p>
-      <p>No consolidado de ${m.numWeeks} semanas, o painel registrou <b>${m.totalNovos.toLocaleString('pt-BR')} novos leads</b> (média de ${Math.round(m.totalNovos/m.numWeeks)}/semana) e <b>${m.totalAntigas.toLocaleString('pt-BR')} conversas antigas retomadas</b>. Foram enviadas <b>${m.totalMsgs.toLocaleString('pt-BR')} mensagens de follow-up</b>, obtendo <b>${m.totalResp.toLocaleString('pt-BR')} respostas</b> (taxa média de <b>${pf(m.respRate)}</b>) e <b>${m.totalAgend} agendamentos gerados</b> (conversão de <b>${pf(m.convRate)}</b>). Pela agenda passaram <b>${m.totalAgenda} consultas</b> (${m.totalReal} realizadas, ${m.totalReag} reagendadas e ${m.totalCanc} canceladas).</p>
-    `;
-  }else{
-    const s=m.singleData;
-    secA=`
-      <p style="margin:2px 0 6px"><b>A. Visão Geral da Semana de ${fdf(m.startDate)}</b></p>
-      <p>Nesta semana específica, entraram <b>${m.totalNovos} novos leads</b> e <b>${m.totalAntigas} conversas antigas</b> foram retomadas. Foram disparadas <b>${m.totalMsgs.toLocaleString('pt-BR')} mensagens de follow-up</b>, gerando <b>${m.totalResp} respostas</b> (taxa de <b>${pf(m.respRate)}</b>) e <b>${m.totalAgend} agendamentos</b> diretos pelo follow-up (conversão de <b>${pf(m.convRate)}</b>). A agenda da semana processou <b>${m.totalAgenda} consultas</b> (${m.totalReal} comparecimentos confirmados).${s.prevW?` Em relação à semana anterior (${fdf(s.prevW.id)}), a entrada de leads variou em <b>${s.deltaLeads>=0?'+'+s.deltaLeads:s.deltaLeads}</b> e as mensagens em <b>${s.deltaMsgs>=0?'+'+s.deltaMsgs:s.deltaMsgs}</b>.`:''}</p>
-    `;
-  }
-
-  const secB=`
-    <p style="margin:10px 0 4px"><b>B. Indicadores Consolidados</b></p>
-    <div style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 14px;font-size:13px">
-      <div><b>Aquisição:</b> ${m.totalNovos.toLocaleString('pt-BR')} novos leads · ${m.totalAntigas} retomados · ${m.ativasFinal.toLocaleString('pt-BR')} ativas atuais</div>
-      <div><b>Follow-up enviado:</b> ${m.totalMsgs.toLocaleString('pt-BR')} msgs (FU2: ${m.totalFu2} · FU3: ${m.totalFu3} · FU4: ${m.totalFu4} · FU5: ${m.totalFu5})</div>
-      <div><b>Conversão FU:</b> ${m.totalResp.toLocaleString('pt-BR')} respostas (<b>${pf(m.respRate)}</b>) ➔ ${m.totalAgend} agendamentos (<b>${pf(m.convRate)}</b>)</div>
-      <div><b>Status atual no fim do período:</b> ${m.semrespFinal} sem resposta · ${m.pensandoFinal} pensando · ${m.aguardFinal} aguardando · ${m.naoFinal} descartados</div>
-      <div><b>Desfecho da Agenda (${m.totalAgenda}):</b> ${m.totalReal} realizadas (<b>${pf(m.realRate)}</b>) · ${m.totalReag} reagendadas (<b>${pf(m.reagRate)}</b>) · ${m.totalCanc} canceladas (<b>${pf(m.cancRate)}</b>)</div>
-      <div><b>Recuperação de perdas:</b> ${m.perdCount>0?`${m.recCount} de ${m.perdCount} recuperados (${pf(m.recRate)}) · ${m.andamCount} em andamento`:'Nenhum cancelamento no período'}</div>
-    </div>
-  `;
-
-  let secC='';
-  if(m.isMulti){
-    const d=m.multiData;
-    const bestRespText=d.bestResp?`semana de <b>${fdf(d.bestResp.id)}</b> com <b>${pf(pct(d.bestResp.resp||0,msgs(d.bestResp)))}</b> (${d.bestResp.resp} respostas)`:'—';
-    const worstRespText=d.worstResp?`semana de <b>${fdf(d.worstResp.id)}</b> com <b>${pf(pct(d.worstResp.resp||0,msgs(d.worstResp)))}</b>`:'—';
-
-    secC=`
-      <p style="margin:10px 0 4px"><b>C. Análise de Desempenho e Comparação entre Semanas</b></p>
-      <p>• <b>Destaques de volume e conversão:</b> A semana com maior captação de leads foi a de <b>${fdf(d.bestLeads.id)}</b> (${d.bestLeads.novos} leads), enquanto a de menor volume foi <b>${fdf(d.worstLeads.id)}</b> (${d.worstLeads.novos} leads). A melhor taxa de resposta do follow-up ocorreu na ${bestRespText}, contra ${worstRespText} no ponto mais baixo.</p>
-      <p>• <b>Evolução temporal (1ª vs. Última semana):</b> Entre ${fdf(m.startDate)} e ${fdf(m.endDate)}, a entrada semanal de leads variou em <b>${d.deltaLeads>=0?'+'+d.deltaLeads:d.deltaLeads}</b>, enquanto o envio de mensagens de follow-up variou em <b>${d.deltaMsgs>=0?'+'+d.deltaMsgs:d.deltaMsgs}</b>. A taxa de resposta oscilou <b>${d.deltaRespRate>=0?'+'+pf(d.deltaRespRate):pf(d.deltaRespRate)}</b> pontos percentuais. No mesmo intervalo, pacientes sem resposta variaram em <b>${d.deltaSemresp>=0?'+'+d.deltaSemresp:d.deltaSemresp}</b>.</p>
-      <p>• <b>Gargalos identificados:</b> ${m.semrespFinal>100?`Existe um acúmulo de <b>${m.semrespFinal} pacientes sem retorno</b> no follow-up. `:''}${m.cancRate>15?`A taxa de cancelamento da agenda (${pf(m.cancRate)}) representa um ponto de atenção crítico no período. `:''}${m.pensandoFinal+m.aguardFinal>10?`Há <b>${m.pensandoFinal+m.aguardFinal} pacientes</b> retidos nas fases 'pensando' e 'aguardando cadastro' exigindo ação de fechamento.`:''}</p>
-    `;
-  }else{
-    const s=m.singleData;
-    secC=`
-      <p style="margin:10px 0 4px"><b>C. Análise de Desempenho da Semana</b></p>
-      ${s.prevW?`
-        <p>• <b>Comparativo com a semana de ${fdf(s.prevW.id)}:</b> A entrada de novos leads variou em <b>${s.deltaLeads>=0?'+'+s.deltaLeads:s.deltaLeads}</b> (${s.curW.novos||0} vs. ${s.prevW.novos||0}). O volume de follow-up variou em <b>${s.deltaMsgs>=0?'+'+s.deltaMsgs:s.deltaMsgs} msgs</b>. A taxa de resposta foi de <b>${pf(m.respRate)}</b> (variação de <b>${s.deltaRespRate>=0?'+'+pf(s.deltaRespRate):pf(s.deltaRespRate)}</b>). O volume de pacientes sem resposta teve variação de <b>${s.deltaSemresp>=0?'+'+s.deltaSemresp:s.deltaSemresp}</b>.</p>
-      `:`
-        <p>• <b>Linha de base:</b> Esta é a primeira semana do histórico disponível no painel. Apresenta taxa de resposta de <b>${pf(m.respRate)}</b> e comparecimento na agenda de <b>${pf(m.realRate)}</b>.</p>
-      `}
-      <p>• <b>Ponto de atenção na semana:</b> ${m.cancRate>15?`Cancelamentos elevados (${pf(m.cancRate)} das consultas da semana). `:''}${m.semrespFinal>0?`Volume de pacientes sem resposta fechou em ${m.semrespFinal}. `:''}${m.totalResp>0&&m.convRate<15?`Conversão de respostas em agendamento em ${pf(m.convRate)}, indicando oportunidade na condução final da conversa.`:''}</p>
-    `;
-  }
-
-  const prioridades=[];
-  if(m.cancRate>15||(m.totalCanc>0&&m.recRate<30)){
-    prioridades.push(`<b>1. Protocolo ativo de confirmação e recuperação de cancelamentos:</b> ${m.totalCanc} consultas foram canceladas no período (taxa de cancelamento de ${pf(m.cancRate)}). Cada consulta resgatada impacta diretamente a taxa de comparecimento.`);
-  }
-  if(m.pensandoFinal+m.aguardFinal>=8){
-    prioridades.push(`<b>${prioridades.length+1}. Ação de fechamento com pacientes 'pensando' e 'aguardando':</b> Existem ${m.pensandoFinal} pacientes pesquisando e ${m.aguardFinal} aguardando cadastro. São contatos quentes com alta probabilidade de agendamento imediato.`);
-  }
-  if(m.semrespFinal>=80||(m.totalMsgs>0&&m.respRate<18)){
-    prioridades.push(`<b>${prioridades.length+1}. Otimização dos disparos de reengajamento (FU 2 a FU 4):</b> Taxa de resposta geral em ${pf(m.respRate)} e ${m.semrespFinal} pacientes parados sem retorno. Reformular a primeira pergunta do follow-up para incentivar respostas curtas.`);
-  }
-  if(prioridades.length<3&&m.totalNovos>0){
-    prioridades.push(`<b>${prioridades.length+1}. Acelerar a velocidade de resposta aos novos leads:</b> Foram ${m.totalNovos} leads no período. Atender no menor tempo possível assegura o melhor aproveitamento do topo de funil.`);
-  }
-
-  const secD=`
-    <p style="margin:10px 0 4px"><b>D. Conclusão e Prioridades Práticas</b></p>
-    <p><b>Diagnóstico:</b> ${m.isMulti?`O período consolidado demonstra ${m.totalAgend} agendamentos gerados a partir de ${m.totalNovos} leads. O maior gargalo de conversão concentra-se ${m.semrespFinal>150?'no reengajamento de contatos sem resposta':'na retenção e recuperação de cancelamentos na agenda'}.`:`A semana de ${fdf(m.startDate)} encerrou com ${m.totalReal} consultas realizadas e ${m.totalAgend} agendamentos originados no follow-up.`}</p>
-    <div style="margin-top:6px">
-      ${prioridades.slice(0,3).map(p=>`<p style="margin:3px 0">${p}</p>`).join('')}
-    </div>
-  `;
-
-  return secA+secB+secC+secD;
-}
-
-/* ---------- Gráficos SVG com Tooltip Completo ---------- */
-const NICE=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=5?5:10)*p};
-
-function chart(labels,series,mode,isPct,categories){
+const nice=m=>{const p=Math.pow(10,Math.floor(Math.log10(m))),r=m/p;return (r<=1?1:r<=2?2:r<=5?5:10)*p};
+function chart(labels,series,mode,isPct){
   const Wd=480,H=200,L=34,R=8,T=10,B=24,iw=Wd-L-R,ih=H-T-B,n=labels.length;
   let mx=mode==='stack'?Math.max(1,...labels.map((_,i)=>series.reduce((a,s)=>a+s.v[i],0))):Math.max(1,...series.flatMap(s=>s.v));
-  mx=NICE(mx);const y=v=>T+ih-v/mx*ih,bw=iw/n;let o='';
-
-  for(let i=0;i<=4;i++){
-    const v=mx*i/4,yy=y(v);
-    o+=`<line x1="${L}" x2="${Wd-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L-5}" y="${yy+3}" text-anchor="end">${isPct?Math.round(v)+'%':Math.round(v)}</text>`;
-  }
+  mx=nice(mx);const y=v=>T+ih-v/mx*ih,bw=iw/n;let o='';
+  for(let i=0;i<=4;i++){const v=mx*i/4,yy=y(v);o+=`<line x1="${L}" x2="${Wd-R}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text x="${L-5}" y="${yy+3}" text-anchor="end">${isPct?Math.round(v)+'%':Math.round(v)}</text>`}
   labels.forEach((l,i)=>{o+=`<text x="${L+bw*i+bw/2}" y="${H-7}" text-anchor="middle">${l}</text>`});
-
-  if(mode==='stack'){
-    labels.forEach((l,i)=>{
-      let acc=0;
-      const stackTotal=series.reduce((a,s)=>a+(s.v[i]||0),0);
-      const cat=categories&&categories[i]?categories[i]:('Semana '+l);
-      series.forEach(s=>{
-        const v=s.v[i];
-        if(!v)return;
-        const h=v/mx*ih;
-        const valStr=isPct?pf(v):v.toLocaleString('pt-BR');
-        const totalStr=isPct?pf(stackTotal):stackTotal.toLocaleString('pt-BR');
-        o+=`<rect x="${L+bw*i+bw*.2}" y="${y(acc+v)}" width="${bw*.6}" height="${h}" fill="${s.c}" rx="2"
-              data-tip-series="${esc(s.n)}"
-              data-tip-color="${s.c}"
-              data-tip-cat="${esc(cat)}"
-              data-tip-val="${valStr}"
-              data-tip-total="${totalStr}"
-              role="graphics-symbol"
-              aria-label="${esc(s.n)}: ${valStr} (${esc(cat)})">
-            </rect>`;
-        acc+=v;
-      });
-    });
-  }else if(mode==='group'){
-    const k=series.length,w=bw*.76/k;
-    labels.forEach((l,i)=>{
-      const cat=categories&&categories[i]?categories[i]:('Semana '+l);
-      series.forEach((s,j)=>{
-        const v=s.v[i],h=v/mx*ih;
-        const valStr=isPct?pf(v):(v||0).toLocaleString('pt-BR');
-        o+=`<rect x="${L+bw*i+bw*.12+w*j}" y="${y(v)}" width="${w-2}" height="${h}" fill="${s.c}" rx="2"
-              data-tip-series="${esc(s.n)}"
-              data-tip-color="${s.c}"
-              data-tip-cat="${esc(cat)}"
-              data-tip-val="${valStr}"
-              role="graphics-symbol"
-              aria-label="${esc(s.n)}: ${valStr} (${esc(cat)})">
-            </rect>`;
-        if(v)o+=`<text x="${L+bw*i+bw*.12+w*j+(w-2)/2}" y="${y(v)-3}" text-anchor="middle">${v}</text>`;
-      });
-    });
-  }else{
-    series.forEach(s=>{
-      const pts=s.v.map((v,i)=>[L+bw*i+bw/2,y(v)]);
-      o+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" points="${pts.map(p=>p.join(',')).join(' ')}"/>`;
-      pts.forEach((p,i)=>{
-        const v=s.v[i];
-        const valStr=isPct?pf(v):(v||0).toLocaleString('pt-BR');
-        const cat=categories&&categories[i]?categories[i]:('Semana '+labels[i]);
-        o+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${s.c}" stroke="var(--card)" stroke-width="1.5"
-              data-tip-series="${esc(s.n)}"
-              data-tip-color="${s.c}"
-              data-tip-cat="${esc(cat)}"
-              data-tip-val="${valStr}"
-              role="graphics-symbol"
-              aria-label="${esc(s.n)}: ${valStr} (${esc(cat)})">
-            </circle>`;
-        o+=`<circle cx="${p[0]}" cy="${p[1]}" r="14" fill="transparent"
-              data-tip-series="${esc(s.n)}"
-              data-tip-color="${s.c}"
-              data-tip-cat="${esc(cat)}"
-              data-tip-val="${valStr}">
-            </circle>`;
-        o+=`<text x="${p[0]}" y="${p[1]-8}" text-anchor="middle">${isPct?s.v[i].toFixed(1).replace('.',',')+'%':s.v[i]}</text>`;
-      });
-    });
-  }
+  if(mode==='stack'){labels.forEach((l,i)=>{let acc=0;series.forEach(s=>{const v=s.v[i];if(!v)return;const h=v/mx*ih;o+=`<rect x="${L+bw*i+bw*.2}" y="${y(acc+v)}" width="${bw*.6}" height="${h}" fill="${s.c}" rx="2"><title>${s.n}: ${v}</title></rect>`;acc+=v})})}
+  else if(mode==='group'){const k=series.length,w=bw*.76/k;labels.forEach((l,i)=>series.forEach((s,j)=>{const v=s.v[i],h=v/mx*ih;o+=`<rect x="${L+bw*i+bw*.12+w*j}" y="${y(v)}" width="${w-2}" height="${h}" fill="${s.c}" rx="2"><title>${s.n}: ${v}</title></rect>`;if(v)o+=`<text x="${L+bw*i+bw*.12+w*j+(w-2)/2}" y="${y(v)-3}" text-anchor="middle">${v}</text>`}))}
+  else{series.forEach(s=>{const pts=s.v.map((v,i)=>[L+bw*i+bw/2,y(v)]);o+=`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" points="${pts.map(p=>p.join(',')).join(' ')}"/>`;pts.forEach((p,i)=>{o+=`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="${s.c}"><title>${s.n}: ${isPct?s.v[i].toFixed(1)+'%':s.v[i]}</title></circle><text x="${p[0]}" y="${p[1]-8}" text-anchor="middle">${isPct?s.v[i].toFixed(1).replace('.',',')+'%':s.v[i]}</text>`})})}
   return `<svg viewBox="0 0 ${Wd} ${H}" role="img">${o}</svg>`;
 }
-
 const leg=s=>`<div class="lg" role="list" aria-label="Legenda"><b style="color:var(--ink)">Legenda:</b>${s.map(x=>`<span role="listitem"><i style="background:${x.c}"></i>${x.n}</span>`).join('')}</div>`;
 const TT={'Mensagens de follow-up por tentativa':['Mensagens de follow-up enviadas por tentativa (FU 2 a FU 5)','Cada barra soma as mensagens da semana.'],'Resposta e conversão do follow-up':['Taxa de resposta e conversão do follow-up (%)','Resposta = respostas ÷ mensagens. Conversão = agendamentos ÷ respostas.'],'Status dos pacientes (total acumulado em cada semana)':['Situação dos pacientes ao fim de cada semana','Total de pacientes em cada fase naquele momento.'],'Agenda: realizadas, canceladas e reagendadas':['Agenda da semana: realizadas, canceladas e reagendadas','Consultas por desfecho, semana a semana.'],'Funil: leads, respostas e agendamentos':['Funil: leads, respostas e agendamentos','Novos leads, respostas e agendamentos pelo follow-up.']};
 const card=(t,s,svg)=>(cfg.hide&&cfg.hide['c:'+t])?'':`<div class="card"><h2>${(TT[t]||[t])[0]}</h2>${TT[t]?`<p class="note" style="margin:-6px 0 8px">${TT[t][1]}</p>`:''}${leg(s)}${svg}</div>`;
 const css=n=>`var(--${n})`;
 
-function setupChartTooltips(){
-  const tip=$('#chart_tip');
-  if(!tip)return;
-
-  function showTip(el,clientX,clientY){
-    const series=el.dataset.tipSeries;
-    const color=el.dataset.tipColor||'var(--g)';
-    const cat=el.dataset.tipCat||'';
-    const val=el.dataset.tipVal||'';
-    const total=el.dataset.tipTotal||'';
-    if(!series&&!val)return;
-
-    tip.innerHTML=`
-      <div class="tip-title"><i style="background:${color}"></i>${esc(series)}</div>
-      ${cat?`<div class="tip-cat">${esc(cat)}</div>`:''}
-      <div class="tip-val">Valor: <b>${esc(val)}</b></div>
-      ${total?`<div class="tip-total">Total da semana: <b>${esc(total)}</b></div>`:''}
-    `;
-
-    const tipW=tip.offsetWidth||150;
-    const tipH=tip.offsetHeight||70;
-    let x=clientX;
-    let y=clientY;
-
-    const pad=12;
-    if(x-tipW/2<pad)x=pad+tipW/2;
-    if(x+tipW/2>window.innerWidth-pad)x=window.innerWidth-pad-tipW/2;
-    if(y-tipH<pad)y=clientY+tipH+26;
-
-    tip.style.left=x+'px';
-    tip.style.top=y+'px';
-    tip.classList.add('on');
-    tip.setAttribute('aria-hidden','false');
-  }
-
-  function hideTip(){
-    tip.classList.remove('on');
-    tip.setAttribute('aria-hidden','true');
-  }
-
-  document.addEventListener('mouseover',e=>{
-    const el=e.target.closest('[data-tip-series]');
-    if(el)showTip(el,e.clientX,e.clientY);
-  });
-
-  document.addEventListener('mousemove',e=>{
-    const el=e.target.closest('[data-tip-series]');
-    if(el&&tip.classList.contains('on')){
-      const tipW=tip.offsetWidth||150;
-      const tipH=tip.offsetHeight||70;
-      let x=e.clientX;
-      let y=e.clientY;
-      const pad=12;
-      if(x-tipW/2<pad)x=pad+tipW/2;
-      if(x+tipW/2>window.innerWidth-pad)x=window.innerWidth-pad-tipW/2;
-      if(y-tipH<pad)y=e.clientY+tipH+26;
-      tip.style.left=x+'px';
-      tip.style.top=y+'px';
-    }
-  });
-
-  document.addEventListener('mouseout',e=>{
-    if(e.target.closest('[data-tip-series]'))hideTip();
-  });
-
-  document.addEventListener('touchstart',e=>{
-    const el=e.target.closest('[data-tip-series]');
-    if(el&&e.touches.length>0){
-      showTip(el,e.touches[0].clientX,e.touches[0].clientY);
-    }else if(!e.target.closest('#chart_tip')){
-      hideTip();
-    }
-  },{passive:true});
-}
-
 function dash(){
   const WA=W();
-  const nW=WA.length;
-  pFrom=nW?WA[0].id:'';
-  pTo=nW?WA[nW-1].id:'';
-
-  if(pSel==='last4'&&nW){
-    pFrom=WA[Math.max(0,nW-4)].id;
-  }else if(pSel==='last'&&nW){
-    pFrom=pTo=WA[nW-1].id;
-  }else if(pSel!=='all'&&weeks[pSel]){
-    pFrom=pSel;
-    pTo=pSel;
-  }
-
-  const ws=WA.filter(w=>w.id>=pFrom&&w.id<=pTo);
-  const pEnd=(WA.find(w=>w.id>pTo)||{}).id||'9999-12-31';
-
-  if(!ws.length){
-    return `<div class="card"><h2>Ainda não há dados</h2><p class="note">Vá em “Lançar semana” para registrar a primeira semana ou carregar dados.</p><button class="b" onclick="go('sem')">Lançar semana</button></div>`;
-  }
-
-  const L=ws.map(w=>fd(w.id));
-  const fullCats=ws.map(w=>'Semana de '+fdf(w.id));
-  const last=ws[ws.length-1];
-
+  const nW=WA.length;pFrom=nW?WA[0].id:'';pTo=nW?WA[nW-1].id:'';
+  if(pSel==='last4'&&nW)pFrom=WA[Math.max(0,nW-4)].id;
+  else if(pSel==='last'&&nW){pFrom=pTo=WA[nW-1].id}
+  else if(pSel!=='all'&&weeks[pSel]){pFrom=pSel;pTo=pSel}
+  const ws=WA.filter(w=>w.id>=pFrom&&w.id<=pTo),pEnd=(WA.find(w=>w.id>pTo)||{}).id||'9999-12-31';
+  if(!ws.length)return `<div class="card"><h2>Ainda não há dados</h2><p class="note">Vá em “Lançar semana” para registrar a primeira semana ou importar dados.</p><button class="b" onclick="go('sem')">Lançar semana</button></div>`;
+  const L=ws.map(w=>fd(w.id)),last=ws[ws.length-1],prev=WA[WA.findIndex(w=>w.id===ws[ws.length-1].id)-1];
   const tm=sum(ws,msgs),tr=sum(ws,'resp'),ta=sum(ws,'agend'),tl=sum(ws,'novos');
   const real=sum(ws,'creal'),cag=sum(ws,'cagend'),can=sum(ws,'ccanc'),rea=sum(ws,'creag'),tot=real+rea+can;
-  const ap=Object.values(appts).filter(a=>(a.schedOn||'')>=pFrom&&(a.schedOn||'')<pEnd);
-  const perd=ap.filter(a=>a.status==='cancelada'||a.status==='reagendada');
-  const rec=perd.filter(a=>a.regained==='sim').length;
-  const andam=Object.values(appts).filter(a=>a.regained==='contato').length;
-
+  const ap=Object.values(appts).filter(a=>(a.schedOn||'')>=pFrom&&(a.schedOn||'')<pEnd),perd=ap.filter(a=>a.status==='cancelada'||a.status==='reagendada');
+  const rec=perd.filter(a=>a.regained==='sim').length,andam=Object.values(appts).filter(a=>a.regained==='contato').length;
   const GL={'Taxa Geral de Agendamento (%)':['tg',1],'Conversão do FU em Agendamento (%)':['conv',1],'Taxa de resposta do FU':['resp',1],'Comparecimento (check-in)':['comp',1],'Cancelamento':['canc',-1]};
-  const kp=(l,v,s)=>{
-    if(cfg.hide&&cfg.hide['k:'+l])return '';
-    const g=GL[l],mt=g&&cfg.goals&&cfg.goals[g[0]];
-    let b='';
-    if(mt!=null){
-      const n=parseFloat(String(v).replace(/\./g,'').replace(',','.'));
-      const ok=g[1]>0?n>=mt:n<=mt;
-      b=`<small style="color:${ok?'var(--g)':'var(--r)'};font-weight:500">Meta ${String(mt).replace('.',',')}% · ${ok?'dentro da meta':'fora da meta'}</small>`;
-    }
-    return `<div class="card kpi"><span>${l}</span><b>${v}</b>${s?`<small>${s}</small>`:''}${b}</div>`;
-  };
-
+  const kp=(l,v,s)=>{if(cfg.hide&&cfg.hide['k:'+l])return '';const g=GL[l],mt=g&&cfg.goals&&cfg.goals[g[0]];let b='';if(mt!=null){const n=parseFloat(String(v).replace(/\./g,'').replace(',','.')),ok=g[1]>0?n>=mt:n<=mt;b=`<small style="color:${ok?'var(--g)':'var(--r)'};font-weight:500">Meta ${String(mt).replace('.',',')}% · ${ok?'dentro da meta':'fora da meta'}</small>`}return `<div class="card kpi"><span>${l}</span><b>${v}</b>${s?`<small>${s}</small>`:''}${b}</div>`};
   const rt=w=>pct(w.resp||0,msgs(w));
 
-  const metrics=calculatePeriodMetrics(ws,ap,WA);
-  const dynamicSummaryHtml=generateDynamicSummary(metrics);
+  let ins='';
+  const lr=rt(last);
+  if(prev&&msgs(prev)&&msgs(last))ins+=`<p>Taxa de resposta do follow-up: <b>${pf(lr)}</b> (${lr>=rt(prev)?'acima':'abaixo'} dos ${pf(rt(prev))} da semana anterior).</p>`;
+  if(prev&&last.semresp!==prev.semresp)ins+=`<p>Pacientes sem resposta no follow-up: <b>${last.semresp}</b>.</p>`;
+  if(tot)ins+=`<p>Das ${tot} consultas da agenda, ${real} realizadas (${pf(pct(real,tot))}), ${rea} reagendadas (${pf(pct(rea,tot))}) e ${can} canceladas (${pf(pct(can,tot))}).</p>`;
+  if(!ins)ins='<p>Lance mais semanas para ver as observações automáticas.</p>';
 
   const st=[{n:'Sem resposta',c:css('k'),v:ws.map(w=>w.semresp||0)},{n:'Pensando ou pesquisando',c:css('a'),v:ws.map(w=>w.pensando||0)},{n:'Aguardando cadastro',c:css('g'),v:ws.map(w=>w.aguard||0)},{n:'Não vão seguir',c:css('r'),v:ws.map(w=>w.nao||0)}];
   const fu=[2,3,4,5].map((k,i)=>({n:'FU '+k,c:css(['b','g','a','p'][i]),v:ws.map(w=>w['fu'+k]||0)}));
@@ -1335,6 +885,9 @@ function dash(){
   const omax=Math.max(1,...oc.map(o=>o.t));
   const orig=ap.length?oc.map(o=>`<div style="margin:8px 0"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${ORIG[o.k]}</span><span class="note">${o.t} agendadas · ${o.r} realizadas · ${o.c} canceladas</span></div><div style="height:9px;background:var(--line);border-radius:5px;margin-top:3px"><div style="height:9px;width:${o.t/omax*100}%;background:var(--g);border-radius:5px"></div></div></div>`).join(''):'<p class="note">Registre consultas para analisar origens.</p>';
 
+  const rg=['sim','contato','nao'].map(k=>({k,n:perd.filter(a=>a.regained===k).length})),pend=perd.filter(a=>!a.regained).length;
+  const rgh=perd.length?`<div class="lg" style="font-size:14px;color:var(--ink)">${rg.map(r=>`<span class="tag">${REG[r.k]}: <b>${r.n}</b></span>`).join('')}${pend?`<span class="tag">Sem informação: <b>${pend}</b></span>`:''}</div><p class="note">Taxa de recuperação: ${pf(pct(rec,perd.length))}</p>`:'<p class="note">Sem cancelamentos registrados no período.</p>';
+
   const p2=v=>v.toFixed(cfg.dec??2).replace('.',',')+'%',ta2=sum(ws,'ativas');
   const sw=ws.some(w=>w.id===selWeek)?selWeek:last.id,wi=ws.findIndex(w=>w.id===sw),wk=ws[wi],wend=ws[wi+1]?ws[wi+1].id:pEnd;
   const apw=ap.filter(a=>(a.schedOn||'')>=sw&&(a.schedOn||'')<wend);
@@ -1343,12 +896,13 @@ function dash(){
   const stgT=(list,d,at,ca,lb)=>{const row=`<tr style="font-weight:700;border-top:2px solid var(--line)"><td>${lb||'Total (agendadas ÷ ativas)'}</td><td>${at.toLocaleString('pt-BR')}</td><td>${ca}</td><td><b>${p2(pct(ca,at))}</b></td><td></td></tr>`;const h=stg(list,d);return h.includes('</table>')?h.replace('</table>',row+'</table>'):h+`<div class="wrap"><table>${row}</table></div>`};
   const selW=`<label class="note">Semana <select id="selw">${ws.map(w=>`<option value="${w.id}"${w.id===sw?' selected':''}>${fdf(w.id)}</option>`).join('')}</select></label>`;
   const GER={novos:tl,fu2:sum(ws,'fu2'),fu3:sum(ws,'fu3'),fu4:sum(ws,'fu4'),fu5:sum(ws,'fu5')};
+  const cvW=pct(last.agend||0,last.resp||0);
   const po=[['all','Todas as semanas'],['last4','Últimas 4 semanas'],['last','Última semana lançada'],...WA.slice().reverse().map(w=>[w.id,'Semana de '+fdf(w.id)])].map(([v,l])=>`<option value="${v}"${v===pSel?' selected':''}>${l}</option>`).join('');
 
   const cm=cfg.metrics||[],cs=m=>{try{return ev(m.expr,ws)}catch(e){return null}};
   const cKpi=cm.filter(m=>m.where==='kpi').map(m=>{const v=cs(m);return kp(esc(m.title),v==null?'—':fmtM(v,m.fmt),'card personalizado')}).join('');
-  const cCh=cm.filter(m=>m.where!=='kpi').map(m=>{const v=ws.map(w=>{try{return Math.round(ev(m.expr,[w])*100)/100}catch(e){return 0}}),ser=[{n:m.title,c:css('p'),v}];return card(esc(m.title),ser,chart(L,ser,m.where==='bar'?'group':'line',m.fmt==='pct',fullCats))}).join('');
-  const fbar=`<div class="card" style="margin-bottom:14px"><div class="row" style="margin:0"><label class="note">Período Selecionado<br><select id="pp">${po}</select></label></div><p class="note" style="margin:8px 0 0">Mostrando ${ws.length} semana(s): de ${fdf(pFrom)} a ${fdf(pTo)}.</p></div>`;
+  const cCh=cm.filter(m=>m.where!=='kpi').map(m=>{const v=ws.map(w=>{try{return Math.round(ev(m.expr,[w])*100)/100}catch(e){return 0}}),ser=[{n:m.title,c:css('p'),v}];return card(esc(m.title),ser,chart(L,ser,m.where==='bar'?'group':'line',m.fmt==='pct'))}).join('');
+  const fbar=`<div class="card" style="margin-bottom:14px"><div class="row" style="margin:0"><label class="note">Período<br><select id="pp">${po}</select></label></div><p class="note" style="margin:8px 0 0">Mostrando ${ws.length} semana(s): ${fdf(pFrom)} a ${fdf(pTo)}.</p></div>`;
 
   return fbar+`<div class="grid kpis">
     ${kp('Total de conversas ativas',(last.ativas||0).toLocaleString('pt-BR'),'na semana de '+fd(last.id))}
@@ -1363,17 +917,17 @@ function dash(){
     ${kp('Reagendamentos em andamento',andam,'pacientes com “Em contato”')}
     ${cKpi}
   </div>
-  <div class="ins" id="dynamic_summary">${dynamicSummaryHtml}</div>
+  <div class="ins">${ins}</div>
   <div class="grid charts">
-    ${card('Mensagens de follow-up por tentativa',fu,chart(L,fu,'stack',false,fullCats))}
-    ${card('Resposta e conversão do follow-up',rs,chart(L,rs,'line',true,fullCats))}
-    ${card('Status dos pacientes (total acumulado em cada semana)',st,chart(L,st,'stack',false,fullCats))}
-    ${card('Agenda: realizadas, canceladas e reagendadas',ag,chart(L,ag,'group',false,fullCats))}
-    ${card('Funil: leads, respostas e agendamentos',fl,chart(L,fl,'group',false,fullCats))}
+    ${card('Mensagens de follow-up por tentativa',fu,chart(L,fu,'stack'))}
+    ${card('Resposta e conversão do follow-up',rs,chart(L,rs,'line',true))}
+    ${card('Status dos pacientes (total acumulado em cada semana)',st,chart(L,st,'stack'))}
+    ${card('Agenda: realizadas, canceladas e reagendadas',ag,chart(L,ag,'group'))}
+    ${card('Funil: leads, respostas e agendamentos',fl,chart(L,fl,'group'))}
     <div class="card"><h2>Taxa de agendamento por etapa · da semana</h2><div class="row" style="margin:0 0 8px">${selW}</div>${stgT(apw,wk,wk.ativas||0,wk.cagend||0)}</div>
     <div class="card"><h2>Taxa de agendamento por etapa · geral</h2>${stgT(ap,GER,last.ativas||0,last.cagend||0,'Total última semana')}</div>
     ${cCh}
-    <div class="card"><h2>De onde vêm as consultas</h2>${orig}</div>
+    <div class="card"><h2>De onde vêm as consultas</h2>${orig}<h2 style="margin-top:18px">Recuperação de cancelamentos</h2>${rgh}</div>
   </div>`;
 }
 
@@ -1461,23 +1015,19 @@ $('#al').onclick=async e=>{
 
 /* Eventos da Área de Colar Consultas (Sem Salvamento Automático) */
 $('#ps_btn_parse').onclick=parseInputText;
-$('#ps_t').oninput=()=>{parseInputText()};
+$('#ps_t').oninput=()=>{setTimeout(parseInputText,150)};
 $('#ps_btn_clear').onclick=()=>{
   $('#ps_t').value='';
   pastePreview=[];
   updatePastePreviewUI();
 };
-
-$('#ps_save_btn').addEventListener('click',e=>{
-  e.preventDefault();
-  savePreviewAppts(true);
-});
+$('#ps_save_btn').onclick=savePreviewAppts;
 
 $('#ps_preview_box').addEventListener('input',e=>{
   const t=e.target,idx=t.dataset.pidx,k=t.dataset.pk;
   if(idx!=null&&k&&pastePreview[idx]){
     pastePreview[idx][k]=t.value;
-    const validItems=pastePreview.filter(p=>p&&typeof p.patient==='string'&&p.patient.trim().length>=2);
+    const validItems=pastePreview.filter(p=>p.patient&&p.patient.trim().length>0);
     const btnSave=$('#ps_save_btn');
     if(btnSave){
       btnSave.textContent=`Salvar consultas (${validItems.length})`;
@@ -1529,12 +1079,7 @@ $('#cfg').onchange=e=>{
   if(t.dataset.ok){const os=Object.entries(ORIG).map(([k,n])=>({k,n:k===t.dataset.ok?(t.value.trim()||n):n}));saveCfg({origins:os});t.value=ORIG[t.dataset.ok]}
 };
 
-$('#dash').onchange=e=>{
-  const t=e.target;
-  if(t.id==='selw'){selWeek=t.value;render()}
-  if(t.id==='pp'){pSel=t.value;render()}
-};
-
+$('#dash').onchange=e=>{const t=e.target;if(t.id==='selw'){selWeek=t.value;render()}if(t.id==='pp'){pSel=t.value;render()}};
 $('#wl').addEventListener('click',async e=>{
   const t=e.target,d=t.dataset;
   if(d.we){editRow=d.we;$('#wl').innerHTML=weekList();return}
